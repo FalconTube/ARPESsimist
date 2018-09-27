@@ -3,6 +3,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+from natsort import natsorted
+import multiprocessing
 
 from PyQt5.QtWidgets import QProgressBar, QWidget, QApplication
 from progbar import ProgressBar
@@ -55,10 +57,27 @@ class Sp2_loader():
 
     def read_multiple_sp2(self, filenames, both_sets=False):
         ''' Only reads defined sp2 files '''
+        starttime = time.time()
+        self.multi_file_mode = True
+        iterate_list = natsorted(filenames)
+        p = multiprocessing.Pool()
+        out = p.map(self.read_sp2, iterate_list)
+        # Can be optimized by removing loop and putting it in self.read_sp2
+        for n, data in enumerate(out):
+            if n == 0:
+                out_arr = data
+            else:
+                out_arr = np.dstack((out_arr, data))
+        p.close()
+        p.join()
+        print('Time_elaped = {}'.format(time.time()-starttime))
+        return out_arr
+
+    def single_thread_sp2(self, filenames, both_sets=False):
+        starttime = time.time()
         pb = ProgressBar()
         files_max_count = len(filenames)
-        self.multi_file_mode = True
-        for n, filename in enumerate(filenames):
+        for n, filename in enumerate(natsorted(filenames)):
             data = self.read_sp2(filename, both_sets)
             if n == 0:
                 out_arr = data
@@ -67,7 +86,9 @@ class Sp2_loader():
             progress = round(n/files_max_count * 100, 0)
             pb.setValue(progress)
             QApplication.processEvents()
+
         pb.close()
+        print('Time_elaped = {}'.format(time.time()-starttime))
         return out_arr
 
     def read_all_sp2(self, folder='.', both_sets=False):

@@ -60,7 +60,7 @@ class ApplicationWindow(QMainWindow):
         self.main_widget = QWidget(self)
         # t = One_Dim_Canvas(self.main_widget)
         self.twoD_label = QLabel()
-        self.twoD_label.setText('Test')
+        self.twoD_label.setText('')
         self.twoD_widget = TwoD_Plotter(self.main_widget)
         # self.twoD_slider = self.add_slider(0, 2)
         # self.twoD_slider.valueChanged.connect(self.twoD_slider_changed)

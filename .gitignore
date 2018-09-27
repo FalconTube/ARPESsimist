@@ -1,0 +1,2 @@
+# Ignore all sp2 files, because they are for testing purposes
+*.sp2
