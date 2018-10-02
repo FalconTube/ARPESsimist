@@ -18,11 +18,17 @@ class TwoD_Plotter(MyMplCanvas):
         super().__init__()
         self.instance_counter = 0
 
-    def update_2dplot(self):
+    def update_2dplot(self, extent=None):
+        if extent:
+            x_range = abs(extent[1] - extent[0])
+            E_range = abs(extent[3] - extent[2])
+            aspectratio = x_range/E_range
+
         if self.instance_counter == 0:
             self.instance_counter += 1
             self.axes.cla()
-            self.thisax = self.axes.imshow(self.twoD_data)
+            self.thisax = self.axes.imshow(self.twoD_data,
+                                           extent=extent, aspect=aspectratio)
             self.toolbar.update()
             self.canvas.draw()
         else:

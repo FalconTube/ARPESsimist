@@ -6,7 +6,7 @@ import time
 from natsort import natsorted
 import multiprocessing
 
-from PyQt5.QtWidgets import QProgressBar, QWidget, QApplication
+from PyQt5.QtWidgets import QProgressBar, QWidget, QApplication, QMessageBox
 from progbar import ProgressBar
 
 
@@ -16,6 +16,8 @@ class Sp2_loader():
     def __init__(self, parent=None):
         self.multi_file_mode = False
         self.parent = parent
+        self.multi_file_mode = True
+        self.measurement_ranges = []
 
     def init_prog_bar(self):
         self.prog_widget = QWidget(self.parent)
@@ -24,6 +26,7 @@ class Sp2_loader():
         ''' Reads a single SP2 file. '''
         with open(filename, 'r') as f:
             comments = []
+            ranges_dict = {}
             rawdata = []
             rawdata1 = []
             data_set_count = -1
@@ -32,7 +35,7 @@ class Sp2_loader():
                 if str(stripline) == 'P2':
                     continue
                 if line.startswith('#'):
-                    comments.append(str(line))
+                    comments.append(str(line).strip())
                     continue
                 if len(line.split()) > 1:
                     # A new data set starts
@@ -47,31 +50,51 @@ class Sp2_loader():
                         break
                     rawdata1.append(float(stripline))
 
+        # Get E range and angle range
+        if not self.measurement_ranges:
+            for i in comments:
+                thisline = i.split()
+                if 'ERange' in i:
+                    ranges_dict.update({
+                        'E_min': float(thisline[3]),
+                        'E_max': float(thisline[4])})
+                if 'aRange' in i:
+                    ranges_dict.update({
+                        'a_min': float(thisline[3]),
+                        'a_max': float(thisline[4])})
+        # Reformat data
         data = self.reshape_data(rawdata, ydim)
+        extent = [ranges_dict['a_min'], ranges_dict['a_max'],
+                  ranges_dict['E_min'], ranges_dict['E_max']]
 
         if both_sets:
             data1 = self.reshape_data(rawdata1, ydim)
             return np.array(data), np.array(data1)
 
-        return np.array(data)
+        return np.array(data), extent
 
     def read_multiple_sp2(self, filenames, both_sets=False):
         ''' Only reads defined sp2 files '''
+        if len(filenames) == 1:
+            self.multi_file_mode = False
+
         starttime = time.time()
-        self.multi_file_mode = True
         iterate_list = natsorted(filenames)
-        p = multiprocessing.Pool()
-        out = p.map(self.read_sp2, iterate_list)
-        # Can be optimized by removing loop and putting it in self.read_sp2
-        for n, data in enumerate(out):
-            if n == 0:
-                out_arr = data
-            else:
-                out_arr = np.dstack((out_arr, data))
-        p.close()
-        p.join()
-        print('Time_elaped = {}'.format(time.time()-starttime))
-        return out_arr
+        with multiprocessing.Pool() as p:
+            out = p.map(self.read_sp2, iterate_list)
+
+            # Can be optimized by removing loop and putting it in self.read_sp2
+            ranges_dict = []
+            for n, results in enumerate(out):
+                data, this_dict = results[0], results[1]
+                ranges_dict.append(this_dict)
+                if n == 0:
+                    out_arr = data
+                else:
+                    out_arr = np.dstack((out_arr, data))
+        print('Loading {} took {:.1f} seconds'.format(len(filenames),
+                                                      time.time()-starttime))
+        return out_arr, ranges_dict
 
     def single_thread_sp2(self, filenames, both_sets=False):
         starttime = time.time()
@@ -91,17 +114,13 @@ class Sp2_loader():
         print('Time_elaped = {}'.format(time.time()-starttime))
         return out_arr
 
-    def read_all_sp2(self, folder='.', both_sets=False):
-        ''' Stacks all sp2 files in specified folder into 3d array. '''
-        self.multi_file_mode = True
-        os.chdir(folder)
-        for n, filename in enumerate(glob.glob('*.sp2')):
-            data = self.read_sp2(filename, both_sets)
-            if n == 0:
-                out_arr = data
-            else:
-                out_arr = np.dstack((out_arr, data))
-        return out_arr
+    def tidy_up_list(self, inlist):
+        ''' Remove all files that are not .sp2 '''
+        outlist = []
+        for i in inlist:
+            if i.endswith('.sp2'):
+                outlist.append(i)
+        return outlist
 
     def reshape_data(self, indata: list, ydim: int):
         ''' Turns 1D array into proper 2D array '''
