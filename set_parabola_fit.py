@@ -9,7 +9,7 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import \
     QMainWindow, QApplication, QWidget, QPushButton, QVBoxLayout, QHBoxLayout,\
     QMenu, QMessageBox, QSizePolicy, QFileDialog, QSlider, QLabel, QScrollBar,\
-    QRadioButton, QGroupBox
+    QRadioButton, QGroupBox, QTextEdit
 
 
 class FitParabola(QWidget):
@@ -17,53 +17,62 @@ class FitParabola(QWidget):
 
     def __init__(self, fig, parent):
         super().__init__()
-        self.ax = fig.add_subplot(111)
         self.setParent(parent)
+        self.thisax = fig
         self.init_plot()
 
     def disconnect(self):
-        self.ax.figure.canvas.mpl_disconnect(self.cid)
+        self.thisax.figure.canvas.mpl_disconnect(self.cid)
 
     def init_cursor_active(self):
         print('Selection called')
-        self.cid = self.ax.figure.canvas.mpl_connect(
+        self.cid = self.thisax.figure.canvas.mpl_connect(
             'button_press_event', self.on_press)
 
     def init_plot(self):
         self.xpoints = []
         self.ypoints = []
-        self.line, = self.ax.plot(self.xpoints, self.ypoints, 'rx', zorder=2)
+        self.plotline, = self.thisax.plot(self.xpoints, self.ypoints, 'rx')
+        # self.plotline, = self.thisax.plot(self.xpoints, self.ypoints, 'rx', zorder=-1)
 
     def on_press(self, event):
         if event.button == 3:  # Use right click
             self.xpoints.append(event.xdata)
             self.ypoints.append(event.ydata)
-            self.line.set_data(self.xpoints, self.ypoints)
-            self.line.figure.canvas.draw()
+            # self.thisax.plot(self.xpoints, self.ypoints,  'rx', zorder=-1)
+
+            self.plotline.set_data(self.xpoints, self.ypoints)
+            # self.plotline.figure.canvas.flush_events()
+            self.plotline.figure.canvas.draw()
 
     def clear_all(self):
+        # Remove all lines
         self.xpoints = []
         self.ypoints = []
-        # Remove all lines
-        for i in self.ax.lines:
-            i.remove()
+        self.plotline.set_data(self.xpoints, self.ypoints)
+        self.out_fit.set_data(self.xpoints, self.ypoints)
         # Redraw to show clearance
-        self.init_plot()
-        self.ax.figure.canvas.draw()
+
+        self.thisax.figure.canvas.draw()
 
     def perform_fit(self):
-        self.popt, self.pcov = curve_fit(
-            self.fitfunction, self.xpoints, self.ypoints)
+        try:
+            self.popt, self.pcov = curve_fit(
+                self.fitfunction, self.xpoints, self.ypoints)
+        except:
+            QMessageBox.about(self, "Error",
+                              """Could not Fit parabola""")
         self.draw_fit(self.popt)
-        print(self.calculateEffectiveMass(self.popt[0]), self.popt)
+        e_mass = self.calculateEffectiveMass(self.popt[0])
+        self.text_field.setText('{:.2e}'.format(e_mass))
 
     def draw_fit(self, popt):
         lower = min(self.xpoints)
         upper = max(self.xpoints)
         xvals = np.linspace(lower, upper, 100)
         yvals = [self.fitfunction(x, popt[0], popt[1], popt[2]) for x in xvals]
-        self.out_fit, = self.ax.plot(xvals, yvals, 'r', lw=2)
-        self.line.figure.canvas.draw()
+        self.out_fit, = self.thisax.plot(xvals, yvals, 'r', lw=2)
+        self.thisax.figure.canvas.draw()
 
     def fitfunction(self, x, a, b, c):
         return a*(x-c)**2 + b
@@ -82,6 +91,9 @@ class FitParabola(QWidget):
         self.selectbutton = QPushButton('&Select Points', self)
         self.clearbutton = QPushButton('&Clear', self)
         self.discobutton = QPushButton('&Stop Selection', self)
+        self.text_field = QTextEdit(self)
+        self.text_field.setReadOnly(True)
+        self.text_field.setPlaceholderText('Effective e-mass [eV]')
 
         self.fitbutton.released.connect(self.perform_fit)
         self.selectbutton.released.connect(self.init_cursor_active)
@@ -92,11 +104,15 @@ class FitParabola(QWidget):
         self.parabola_layout.addWidget(self.selectbutton)
         self.parabola_layout.addWidget(self.clearbutton)
         self.parabola_layout.addWidget(self.discobutton)
+        self.parabola_layout.addWidget(self.text_field)
 
         self.box.setLayout(self.parabola_layout)
 
     def get_widget(self):
         return self.box
+
+    def update_parabola(self):
+        self.init_plot()
 
 # class PointPeaks(object):
 #     def __init__(self, fig):
@@ -104,7 +120,7 @@ class FitParabola(QWidget):
 #         self.me = 9.11e-31
 
 #         self.FIG = fig
-#         # self.AX = self.FIG.add_subplot(111)
+#         # self.thisax = self.FIG.add_subplot(111)
 #         self.AX = self.FIG.get_axes()[0]
 #         self.AX.grid(b=False)
 #         plt.subplots_adjust(bottom=0.2)

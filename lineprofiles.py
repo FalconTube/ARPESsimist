@@ -10,73 +10,54 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import \
     QMainWindow, QApplication, QWidget, QPushButton, QVBoxLayout, QHBoxLayout,\
     QMenu, QMessageBox, QSizePolicy, QFileDialog, QSlider, QLabel, QScrollBar,\
-    QRadioButton, QGroupBox
-
-from mpl_canvas_class import MyMplCanvas
+    QRadioButton, QGroupBox, QInputDialog, QLineEdit
 
 
-class LineProfiles(MyMplCanvas):
+class LineProfiles(QWidget):
     ''' Attaches stuff for lineprofile to current 2D Plot '''
 
-    def __init__(self, data, ranges, twodfig, parent):
+    def __init__(self, twodfig, parent):
+        # Set up default values
         self.current_hline = False
         self.current_vline = False
         self.cid = False
         self.cid_hover = False
         self.xy_chooser = 'x'
-        MyMplCanvas.__init__(self)
+        self.breadth = 0.0
+        # MyMplCanvas.__init__(self)
+        super().__init__()
         self.setParent(parent)
-        self.data = data
-        self.ranges = ranges
-        self.ax = twodfig.add_subplot(111)
-        self.axes.remove()
-        self.xprof_ax = self.fig.add_subplot(211)
-        self.yprof_ax = self.fig.add_subplot(212)
+        self.data = 0
+        self.ranges = 0
 
-        self.init_plot()
+        # Get fig and axes
+        self.twodfig = twodfig
+        self.ax = self.twodfig.axes
+        self.xprof_ax = self.twodfig.xprof_ax
+        self.yprof_ax = self.twodfig.yprof_ax
 
     def disconnect(self):
+        ''' Disconnect from figure '''
         self.ax.figure.canvas.mpl_disconnect(self.cid)
         self.cid = False
 
     def init_cursor_active_x(self):
+        ''' Choose x profile generator '''
         self.xy_chooser = 'x'
         if not self.cid:
             self.cid = self.ax.figure.canvas.mpl_connect(
                 'button_press_event', self.on_press)
 
     def init_cursor_active_y(self):
+        ''' Choose y profile generator '''
         self.xy_chooser = 'y'
         if not self.cid:
             self.cid = self.ax.figure.canvas.mpl_connect(
                 'button_press_event', self.on_press)
 
-    def init_mouse_hover(self):
-        self.cid_hover = self.ax.figure.canvas.mpl_connect(
-            'motion_notify_event', self.on_hover)
-
-    def init_plot(self):
-        self.xpoints = []
-        self.ypoints = []
-        self.xline, = self.xprof_ax.plot(self.xpoints, self.ypoints)
-        self.yline, = self.yprof_ax.plot(self.xpoints, self.ypoints)
-
-    # def on_hover(self, event):
-    #     self.current_hline = self.ax.axhline(event.ydata,
-    #                                          color='r',  zorder=-1)
-    #     self.xpoints, self.ypoints = \
-    #         self.lineprofileX(self.data, self.ranges, event.ydata)
-    #     # print(self.xpoints, self.ypoints)
-    #     # self.axes.plot(self.xpoints, self.ypoints)
-    #     self.line.set_data(self.xpoints, self.ypoints)
-    #     self.axes.figure.canvas.draw()
-    #     self.ax.figure.canvas.draw()
-    #     # self.line.remove()
-    #     # self.current_hline.remove()
-
     def on_press(self, event):
+        ''' Show hline or vline, depending on lineprof chosen '''
         if event.button == 3:  # Use right click
-
             if self.xy_chooser == 'x':
                 if self.current_hline:
                     self.current_hline.remove()
@@ -93,20 +74,24 @@ class LineProfiles(MyMplCanvas):
 
                 self.xpoints, self.ypoints = \
                     self.lineprofileY(self.data, self.ranges, event.xdata)
-                self.yprof_ax.plot(self.xpoints, self.ypoints, zorder=-1)
+                self.yprof_ax.plot(self.ypoints, self.xpoints, zorder=-1)
 
-            # self.axes.plot(self.xpoints, self.ypoints)
-            self.xprof_ax.figure.canvas.draw()
-            self.ax.figure.canvas.draw()
+            self.ax.figure.canvas.draw()  # redraw
 
     def clear_all(self):
+        ''' Clear Lineprofiles and h,v lines '''
         # Remove all lines
         self.xprof_ax.clear()
         self.yprof_ax.clear()
+        if self.current_hline:
+            self.current_hline.remove()
+        if self.current_vline:
+            self.current_vline.remove()
+        self.current_hline = False
+        self.current_vline = False
+
         # Redraw to show clearance
         self.ax.figure.canvas.draw()
-        self.xprof_ax.figure.canvas.draw()
-        # self.yprof_ax.figure.canvas.draw()
 
     def processing_data_interpolator(self, data, thisrange):
         ''' Generates interpolator '''
@@ -118,13 +103,8 @@ class LineProfiles(MyMplCanvas):
 
     def lineprofileX(self, data: np.array, current_range: list,
                      yval: float, breadth=0.1):
-        """
-        returns the lineprofile along the x direction
-        for a given y value with a broadening breadth
-        :param yval: float
-        :param breadth: float
-        :return: xvalues, profile both as 1d arrays
-        """
+        ''' Returns Lineprofile along X'''
+        breadth = self.breadth
         self.idata, self.xvals, self.yvals = self.processing_data_interpolator(
             data, current_range)
         self.profile = np.sum(self.idata(self.xvals, [
@@ -134,13 +114,8 @@ class LineProfiles(MyMplCanvas):
 
     def lineprofileY(self, data: np.array, current_range: list,
                      xval: float, breadth=0.1):
-        """
-        returns the lineprofile along the x direction
-        for a given y value with a broadening breadth
-        :param xval: float
-        :param breadth: float
-        :return: yvalues, profile both as 1d arrays
-        """
+        ''' Returns Lineprofile along Y'''
+        breadth = self.breadth
         self.idata, self.xvals, self.yvals = self.processing_data_interpolator(
             data, current_range)
         self.profile = np.sum(self.idata([
@@ -148,9 +123,15 @@ class LineProfiles(MyMplCanvas):
             for i in range(21)], self.yvals), axis=1)
         return self.yvals[::-1], self.profile
 
-    def init_widget(self):
-        # self.parabola_widget = QWidget(self)
+    def get_breadth(self):
+        if not self.input_breadth.text() == '':
+            self.breadth = float(self.input_breadth.text())
+            print(self.breadth)
+        else:
+            self.breadth = 0.0
 
+    def init_widget(self):
+        ''' Creates widget and layout '''
         self.box = QGroupBox('LineProfileX')
         self.this_layout = QHBoxLayout()
 
@@ -158,18 +139,29 @@ class LineProfiles(MyMplCanvas):
         self.selectbutton_y = QPushButton('&Y Lineprofile', self)
         self.clearbutton = QPushButton('&Clear', self)
         self.discobutton = QPushButton('&Stop Selection', self)
+        self.input_breadth = QLineEdit(self)
+        self.input_breadth.setPlaceholderText('Breadth')
 
         self.selectbutton_x.released.connect(self.init_cursor_active_x)
         self.selectbutton_y.released.connect(self.init_cursor_active_y)
         self.clearbutton.released.connect(self.clear_all)
         self.discobutton.released.connect(self.disconnect)
+        self.input_breadth.returnPressed.connect(self.get_breadth)
 
         self.this_layout.addWidget(self.selectbutton_x)
         self.this_layout.addWidget(self.selectbutton_y)
         self.this_layout.addWidget(self.clearbutton)
         self.this_layout.addWidget(self.discobutton)
+        self.this_layout.addWidget(self.input_breadth)
 
         self.box.setLayout(self.this_layout)
 
     def get_widget(self):
+        ''' Returns this widget '''
         return self.box
+
+    def update_data_extent(self, data, extent):
+        ''' Update current data and extent '''
+        self.data = data
+        self.ranges = extent
+        self.clear_all()

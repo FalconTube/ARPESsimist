@@ -68,7 +68,7 @@ class ApplicationWindow(QMainWindow):
         self.menuBar().addSeparator()
         self.menuBar().addMenu(self.interact_menu)
         self.interact_menu.addAction('&Fit_parabola', self.fit_parabola)
-        self.interact_menu.addAction('&LineprofileX', self.lineprofilex)
+        self.interact_menu.addAction('&Lineprofile', self.lineprofile)
 
         # Set up Help Menu
         self.help_menu = QMenu('&Help', self)
@@ -77,17 +77,19 @@ class ApplicationWindow(QMainWindow):
 
         self.help_menu.addAction('&About', self.about)
 
+        # Set up subwidgets
+
         # Set up buttons
         # self.k_button = QPushButton('&Convert to k-space', self)
         # self.k_button.released.connect(self.gen_k_space)
 
         # Instantiate widgets
         self.main_widget = QWidget(self)
-        # t = One_Dim_Canvas(self.main_widget)
+
+        self.twoD_widget = TwoD_Plotter(self.main_widget)  # Start 2d plotter
         self.twoD_label = QLabel()
         self.twoD_label.setAlignment(QtCore.Qt.AlignCenter)
         self.twoD_label.setText('')
-        self.twoD_widget = TwoD_Plotter(self.main_widget)
 
         # Set up radio buttons
 
@@ -119,10 +121,13 @@ class ApplicationWindow(QMainWindow):
         self.angle_k_button_group.setLayout(self.radio_layout)
         self.main_layout.addWidget(self.angle_k_button_group)
 
+        # self.main_layout.addWidget(self.lineprof_widget)
+
         # self.setLayout(self.main_layout)
 
         self.main_widget.setFocus()
         self.setCentralWidget(self.main_widget)
+        # self.lineprofile()  # Start lineprofiles
 
         self.statusBar().showMessage("Initial Tests", 2000)
 
@@ -141,66 +146,57 @@ class ApplicationWindow(QMainWindow):
 
     def fit_parabola(self):
         # FitPar = FitParabola(self.twoD_widget.fig)
-        FitParGui = FitParabola(self.twoD_widget.fig, self.main_widget)
-        FitParGui.init_widget()
-        self.parabola_widget = FitParGui.get_widget()
+        self.FitParGui = FitParabola(self.twoD_widget.axes, self.main_widget)
+        self.FitParGui.init_widget()
+        self.parabola_widget = self.FitParGui.get_widget()
         self.main_layout.addWidget(self.parabola_widget)
 
-    def lineprofilex(self):
+    def lineprofile(self):
         # FitPar = FitParabola(self.twoD_widget.fig)
-        self.LinePx = LineProfiles(self.new_current_data, self.new_current_extent,
-                                   self.twoD_widget.fig, self.main_widget)
-        self.LinePx.init_widget()
-        self.this_widget = self.LinePx.get_widget()
-        self.main_layout.addWidget(self.this_widget)
-        self.main_layout.addWidget(self.LinePx)
+        self.LineProf = LineProfiles(self.twoD_widget, self.main_widget)
+        self.LineProf.init_widget()
+        self.lineprof_widget = self.LineProf.get_widget()
+        self.main_layout.addWidget(self.lineprof_widget)
 
     def angle_k_button_state(self):
         ''' Switch to angle or k space data set '''
-        if self.data_are_loaded:
-            self.twoD_widget.instance_counter = 0  # Reset plot
-            # if button.text() == '&Angles':
-            if self.angle_button.isChecked():
-                print('angle')
-                self.select_k_space = False
-                self.processing_data = self.angle_data
-                self.processing_extent = self.angle_extent
-                self.update_current_data()
-            # if button.text() == 'K-&Space':
-            if self.k_button.isChecked():
-                print('kspace')
-                self.select_k_space = True
-                self.processing_data = self.k_data
-                self.processing_extent = self.k_extent
-                self.update_current_data()
-            self.initialize_2D_plot()
+        if not self.k_space_generated:
+            QMessageBox.about(self, 'Error',
+                              'Please wait for K-space to finish processing')
         else:
-            self.angle_button.setChecked(True)
-            QMessageBox.about(self, 'Warning',
-                              'Please load some data')
-
-    # def init_k_window(self):
-    #     ''' Created new window for k data handling '''
-    #     if self.data_are_loaded:
-    #         if self.k_space_generated:
-    #             self.KWin = K_Window(self.k_data, self.k_range)
-    #             self.KWin.show()
-    #         else:
-    #             QMessageBox.about(self, 'Warning',
-    #                               'Please wait for k-space to be processed')
-    #     else:
-
-    #         QMessageBox.about(self, 'Warning',
-    #                           'Please load data')
+            if self.data_are_loaded:
+                self.twoD_widget.instance_counter = 0  # Reset plot
+                # if button.text() == '&Angles':
+                if self.angle_button.isChecked():
+                    print('angle')
+                    self.select_k_space = False
+                    self.processing_data = self.angle_data
+                    self.processing_extent = self.angle_extent
+                    self.update_current_data()
+                # if button.text() == 'K-&Space':
+                if self.k_button.isChecked():
+                    print('kspace')
+                    self.select_k_space = True
+                    self.processing_data = self.k_data
+                    self.processing_extent = self.k_extent
+                    self.update_current_data()
+                self.initialize_2D_plot()
+                self.update_widgets()
+            else:
+                self.angle_button.setChecked(True)
+                QMessageBox.about(self, 'Warning',
+                                  'Please load some data')
 
     def load_multiple_files(self):
+        self.lineprofile()  # Start lineprofiles
+        self.fit_parabola()
         self.sp2 = Sp2_loader()
-        # many_files = QFileDialog.getOpenFileNames(
-        #     self, 'Select one or more files to open',
-        #     '/home/yannic/Documents/stuff/feb/06/sampl2map/')
-        # self.loaded_filenames = self.sp2.tidy_up_list(many_files[0])
+        many_files = QFileDialog.getOpenFileNames(
+            self, 'Select one or more files to open',
+            '/home/yannic/Documents/stuff/feb/06/sampl2map/')
+        self.loaded_filenames = self.sp2.tidy_up_list(many_files[0])
         self.statusBar().showMessage("Loading Data...", 2000)
-        self.loaded_filenames = ['mos2_2_003.sp2', 'mos2_2_015.sp2']
+        # self.loaded_filenames = ['mos2_2_003.sp2', 'mos2_2_015.sp2']
 
         self.angle_data, self.angle_extent = self.sp2.read_multiple_sp2(
             self.loaded_filenames)
@@ -222,10 +218,15 @@ class ApplicationWindow(QMainWindow):
             self.twoD_slider.valueChanged.connect(self.twoD_slider_changed)
             self.main_layout.addWidget(self.twoD_slider)
             self.initialize_2D_plot()
+        self.update_widgets()
         self._current_labelname = os.path.basename(
             self.loaded_filenames[0])
         self.twoD_label.setText(self._current_labelname)
         self.data_are_loaded = True
+
+        # Set data for LineProf
+        # self.LineProf.update_data_extent(self.new_current_data,
+        #                                  self.new_current_extent)
 
         # After loading files, instantiate class for data handling
         self.k_thread = Calc_K_space(
@@ -238,6 +239,11 @@ class ApplicationWindow(QMainWindow):
     def update_current_data(self):
         self.new_current_data = self.processing_data[:, :, self.slider_pos]
         self.new_current_extent = self.processing_extent[self.slider_pos]
+
+    def update_widgets(self):
+        self.LineProf.update_data_extent(self.new_current_data,
+                                         self.new_current_extent)
+        self.FitParGui.update_parabola()
 
     def get_k_space(self):
         self.k_data, self.k_extent, self.k_space_generated = self.k_thread.get()
@@ -265,6 +271,7 @@ class ApplicationWindow(QMainWindow):
         self.update_current_data()
         self.initialize_2D_plot()
         self.twoD_label.setText(self._current_labelname)
+        self.update_widgets()
 
 
 # class K_Window(ApplicationWindow):
