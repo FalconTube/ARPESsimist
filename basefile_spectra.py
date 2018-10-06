@@ -132,7 +132,7 @@ class SpectraBase(object):
             vals, profile = np.array([]), np.array([])
         return vals, profile
 
-    def lineprofileFree(self, strtpnt, endpnt, N):
+    def lineprofileFree(self, strtpnt: np.array, endpnt: np.array, N: int):
         """
         Returns the line profile along an arbitrary line with N steps
         :param strtpnt: 2-point array [x,y] for starting position
@@ -140,14 +140,16 @@ class SpectraBase(object):
         :param N: integer on how many steps
         :return: lineprofile as a 1d array
         """
-        dv = (np.array(endpnt) - np.array(strtpnt))/float(N)
+        N = int(N)
+        dv = (np.array(endpnt) - np.array(strtpnt))/N
         profile = [self.IDATA(strtpnt[0] + dv[0]*i,
                               strtpnt[1]+dv[1]*i)[0] for i in range(N)]
         return np.linspace(0, 1, N), profile
 
     def adjust_Fermilevel(self, xList, yList):
         """
-        Method to correct the Fermi Level of the Spectrum. Give the position of the Fermi level in x and y coordinates,
+        Method to correct the Fermi Level of the Spectrum. 
+        Give the position of the Fermi level in x and y coordinates,
         the level will be adjusted to flatten the Fermilevel
         :param xList:
         :param yList:
@@ -195,21 +197,21 @@ class SpectraBase(object):
         """
         self.IDATA = interp2d(self.xvals, self.yvals, data, fill_value=0.)
 
-    def cutData(self, dim, min, max):
+    def cutData(self, dim: str, limit_min: float, limit_max: float):
         """
-        Cut the data between min and max along dimension dim
+        Cut the data between limit_min and limit_max along dimension dim
         :param dim: "x" or "y" string
-        :param min: float
-        :param max: float
+        :param limit_min: float
+        :param limit_max: float
         :return:
         """
         if dim == "x":
-            self.xLimits = np.array([min, max], dtype=float)
+            self.xLimits = np.array([limit_min, limit_max], dtype=float)
             self.regenerate_vals_from_limits()
             data = self.IDATA(self.xvals, self.yvals)
             self.reinterpolate_data(data)
         elif dim == "y":
-            self.yLimits = np.array([min, max], dtype=float)
+            self.yLimits = np.array([limit_min, limit_max], dtype=float)
             self.regenerate_vals_from_limits()
             data = self.IDATA(self.xvals, self.yvals)
             self.reinterpolate_data(data)
@@ -273,31 +275,6 @@ class Spectra(SpectraBase):
     xlabelK = 'Wavevector [$\mathrm{\AA^{-1}}]$'
     ylabel = 'Energy [eV]'
 
-    def plot_data(self, save=False, plot=True):
-        """
-        simple fast plotting to check the data without much features
-        :return:
-        """
-        fig, ax = plt.subplots(1, 1, figsize=(4, 3), dpi=200)
-        # print(self.IDATA(self.xvals, self.yvals))
-
-        ax.imshow(self.IDATA(self.xvals, self.yvals),
-                  extent=[self.xLimits[0], self.xLimits[1],
-                          self.yLimits[1], self.yLimits[0]],
-                  aspect='auto')
-        if self.kSpace:
-            ax.set_xlabel(self.xlabelK)
-        else:
-            ax.set_xlabel(self.xlabel)
-        ax.set_ylabel(self.ylabel)
-        plt.gca().invert_yaxis()
-        plt.tight_layout()
-        # if save:
-        #     plt.savefig(os.path.join(self.PATH, self.NAME[:-4]) + ".png")
-        if plot:
-            plt.show()
-        return ax
-
     def convertKtoAngle(self, k, E):
         """
         convert K to Angle
@@ -354,7 +331,7 @@ class Spectra(SpectraBase):
     def get_current_space(self):
         intens = self.IDATA(self.xvals, self.yvals)
         extent = [self.xLimits[0], self.xLimits[1],
-                  self.yLimits[1], self.yLimits[0]]
+                  self.yLimits[0], self.yLimits[1]]
         return intens, extent
 
 

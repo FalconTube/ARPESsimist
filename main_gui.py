@@ -6,7 +6,7 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import \
     QMainWindow, QApplication, QWidget, QPushButton, QVBoxLayout, QHBoxLayout,\
     QMenu, QMessageBox, QSizePolicy, QFileDialog, QSlider, QLabel, QScrollBar,\
-    QRadioButton, QGroupBox
+    QRadioButton, QGroupBox, QGridLayout
 import matplotlib
 from matplotlib.backends.backend_qt5agg \
     import FigureCanvasQTAgg as FigureCanvas,\
@@ -14,12 +14,15 @@ from matplotlib.backends.backend_qt5agg \
 from matplotlib.figure import Figure
 matplotlib.use("Qt5Agg")
 
-from load_sp2 import Sp2_loader
+import pyqtgraph as pg
+
+from load_sp2 import Sp2_loader, LoadHDF5
 from plot_2d import TwoD_Plotter
 from mpl_canvas_class import MyMplCanvas
 from data_treatment import Calc_K_space
 from set_parabola_fit import FitParabola
 from lineprofiles import LineProfiles
+from generate_maps import VerticalSlitPolarScan
 # from new_k_window import K_Window
 
 
@@ -27,6 +30,7 @@ class ApplicationWindow(QMainWindow):
     ''' Main Application Window '''
 
     def __init__(self):
+        self.hd5mode = False
         self.current_data = []
         self.angle_data = []
         self.angle_extent = []
@@ -50,7 +54,9 @@ class ApplicationWindow(QMainWindow):
         # Set up File Menu
         self.file_menu = QMenu('&File', self)
         self.file_menu.addAction(
-            '&Load Files', self.load_multiple_files)
+            '&Load Sp2 Files', self.choose_sp2)
+        self.file_menu.addAction(
+            '&Load NXS Files', self.choose_nxs)
         self.file_menu.addAction('&Quit', self.fileQuit,
                                  QtCore.Qt.CTRL + QtCore.Qt.Key_Q)
 
@@ -106,10 +112,31 @@ class ApplicationWindow(QMainWindow):
         #     lambda: self.angle_k_button_state(self.k_button))
 
         # Instantiate Layout and add widgets
-        self.main_layout = QVBoxLayout(self.main_widget)
+        self.over_layout = QGridLayout(self.main_widget)
+
+        # self.pgplot = pg.PlotWidget()
+        # self.imv = pg.ImageView(self.pgplot)
+        # self.imv.show()
+        # self.over_layout.addWidget(self.pgplot)
+
+        # self.over_layout = QVBoxLayout(self.main_widget)
+
         # layout.addWidget(t)
-        self.main_layout.addWidget(self.twoD_widget)
-        self.main_layout.addWidget(self.twoD_label)
+        self.over_layout.addWidget(self.twoD_widget, 1, 0)
+        self.over_layout.addWidget(self.twoD_label,  0, 0)
+        # self.over_layout.addWidget(self.pgplot, 0, 1)
+
+        # # Init Parabola Widget and add
+        # self.FitParGui = FitParabola(self.twoD_widget.axes, self.main_widget)
+        # self.FitParGui.init_widget()
+        # self.parabola_widget = self.FitParGui.get_widget()
+        # self.over_layout.addWidget(self.parabola_widget, 1, 2)
+
+        # # Init LineProfile Widget and add
+        # self.LineProf = LineProfiles(self.twoD_widget, self.main_widget)
+        # self.LineProf.init_widget()
+        # self.lineprof_widget = self.LineProf.get_widget()
+        # self.over_layout.addWidget(self.lineprof_widget, 0, 2)
 
         # Set up angle and k radio buttons
 
@@ -119,12 +146,12 @@ class ApplicationWindow(QMainWindow):
         self.radio_layout.addWidget(self.k_button)
 
         self.angle_k_button_group.setLayout(self.radio_layout)
-        self.main_layout.addWidget(self.angle_k_button_group)
+        self.over_layout.addWidget(self.angle_k_button_group, 2, 0)
 
-        # self.main_layout.addWidget(self.lineprof_widget)
+        # self.over_layout.addWidget(self.lineprof_widget)
 
-        # self.setLayout(self.main_layout)
-
+        # self.setLayout(self.over_layout)
+        # self.over_layout.addLayout(self, self.over_layout)
         self.main_widget.setFocus()
         self.setCentralWidget(self.main_widget)
         # self.lineprofile()  # Start lineprofiles
@@ -143,26 +170,28 @@ class ApplicationWindow(QMainWindow):
         ''' Prints about '''
         QMessageBox.about(self, "About",
                           """ARPyES""")
+        self.vertical_slit_maps()
 
     def fit_parabola(self):
         # FitPar = FitParabola(self.twoD_widget.fig)
         self.FitParGui = FitParabola(self.twoD_widget.axes, self.main_widget)
         self.FitParGui.init_widget()
         self.parabola_widget = self.FitParGui.get_widget()
-        self.main_layout.addWidget(self.parabola_widget)
+        self.over_layout.addWidget(self.parabola_widget, 1, 2)
 
     def lineprofile(self):
         # FitPar = FitParabola(self.twoD_widget.fig)
         self.LineProf = LineProfiles(self.twoD_widget, self.main_widget)
         self.LineProf.init_widget()
         self.lineprof_widget = self.LineProf.get_widget()
-        self.main_layout.addWidget(self.lineprof_widget)
+        self.over_layout.addWidget(self.lineprof_widget, 0, 2)
 
     def angle_k_button_state(self):
         ''' Switch to angle or k space data set '''
         if not self.k_space_generated:
-            QMessageBox.about(self, 'Error',
-                              'Please wait for K-space to finish processing')
+            self.k_space_generated = True
+            # QMessageBox.about(self, 'Error',
+            #   'Please wait for K-space to finish processing')
         else:
             if self.data_are_loaded:
                 self.twoD_widget.instance_counter = 0  # Reset plot
@@ -173,6 +202,7 @@ class ApplicationWindow(QMainWindow):
                     self.processing_data = self.angle_data
                     self.processing_extent = self.angle_extent
                     self.update_current_data()
+                    # self.vertical_slit_maps()
                 # if button.text() == 'K-&Space':
                 if self.k_button.isChecked():
                     print('kspace')
@@ -180,6 +210,7 @@ class ApplicationWindow(QMainWindow):
                     self.processing_data = self.k_data
                     self.processing_extent = self.k_extent
                     self.update_current_data()
+                    self.vertical_slit_maps()
                 self.initialize_2D_plot()
                 self.update_widgets()
             else:
@@ -187,9 +218,7 @@ class ApplicationWindow(QMainWindow):
                 QMessageBox.about(self, 'Warning',
                                   'Please load some data')
 
-    def load_multiple_files(self):
-        self.lineprofile()  # Start lineprofiles
-        self.fit_parabola()
+    def choose_sp2(self):
         self.sp2 = Sp2_loader()
         many_files = QFileDialog.getOpenFileNames(
             self, 'Select one or more files to open',
@@ -200,6 +229,26 @@ class ApplicationWindow(QMainWindow):
 
         self.angle_data, self.angle_extent = self.sp2.read_multiple_sp2(
             self.loaded_filenames)
+        self.load_multiple_files()
+
+    def choose_nxs(self):
+        self.hd5mode = True
+        self.sp2 = Sp2_loader()
+        self.sp2.multi_file_mode = True
+        location = QFileDialog.getOpenFileNames(
+            self, 'Select one NXS file to open',
+            '/home/yannic/Documents/PhD/ARPyES/zDisp/SnSe/')
+        location = str(location[0][0])
+        self.H5loader = LoadHDF5(location)
+        self.angle_data, self.angle_extent, self.p_min, self.p_max =\
+            self.H5loader.return_data()
+        print(self.angle_data.shape)
+        print(len(self.angle_extent))
+        self.load_multiple_files()
+
+    def load_multiple_files(self):
+        self.lineprofile()  # Start lineprofiles
+        self.fit_parabola()
 
         if not self.sp2.multi_file_mode:
             self.processing_data = self.angle_data  # Start with angle data
@@ -216,12 +265,17 @@ class ApplicationWindow(QMainWindow):
 
             self.twoD_slider = self.add_slider(0, stack_size)
             self.twoD_slider.valueChanged.connect(self.twoD_slider_changed)
-            self.main_layout.addWidget(self.twoD_slider)
+            self.over_layout.addWidget(self.twoD_slider, 3, 0)
             self.initialize_2D_plot()
+
+            # self.imv.setImage(self.new_current_data)
+            # self.over_layout.addWidget()
+            # self.pgplot.image(self.new_current_data)
         self.update_widgets()
-        self._current_labelname = os.path.basename(
-            self.loaded_filenames[0])
-        self.twoD_label.setText(self._current_labelname)
+        if not self.hd5mode:
+            self._current_labelname = os.path.basename(
+                self.loaded_filenames[0])
+            self.twoD_label.setText(self._current_labelname)
         self.data_are_loaded = True
 
         # Set data for LineProf
@@ -229,12 +283,28 @@ class ApplicationWindow(QMainWindow):
         #                                  self.new_current_extent)
 
         # After loading files, instantiate class for data handling
-        self.k_thread = Calc_K_space(
-            self.angle_data, self.angle_extent)
-        self.k_thread.finished.connect(self.get_k_space)
-        self.statusBar().showMessage("Converting to k-space in background...",
-                                     2000)
-        self.k_thread.start()
+        # self.k_thread = Calc_K_space(
+        #     self.angle_data, self.angle_extent)
+        # self.k_thread.finished.connect(self.get_k_space)
+        # self.statusBar().showMessage("Converting to k-space in background...",
+        #                              2000)
+        # self.k_thread.start()
+
+    def vertical_slit_maps(self):
+        All_maps = VerticalSlitPolarScan(
+            self.processing_data, self.processing_extent,
+            self.p_min, self.p_max)
+        # self.edc = All_maps.EDC(0.0, 0.0, 24, 25, 9, 15, NE=50)
+        xmin, xmax, ymin, ymax = -1., 1.6, -1., 1.6
+        self.k_slice = All_maps.SliceK(67.33, 0.01, 0., 0.,
+                                       kxmin=xmin, kxmax=xmax, kymin=ymin, kymax=ymax)
+        fig, ax = matplotlib.pyplot.subplots()
+        ax.imshow(self.k_slice, extent=[xmin, xmax, ymin, ymax])
+        ax.set_xlim(xmin, xmax)
+        ax.set_ylim(ymin, ymax)
+        # erange = np.linspace(24, 25, len(self.edc))
+        # matplotlib.pyplot.plot(erange, self.edc)
+        matplotlib.pyplot.show()
 
     def update_current_data(self):
         self.new_current_data = self.processing_data[:, :, self.slider_pos]
@@ -266,43 +336,14 @@ class ApplicationWindow(QMainWindow):
     def twoD_slider_changed(self, value):
         changed_slider = self.sender()
         self.slider_pos = changed_slider.value()
-        self._current_labelname = os.path.basename(
-            self.loaded_filenames[self.slider_pos])
+        if not self.hd5mode:
+            self._current_labelname = os.path.basename(
+                self.loaded_filenames[self.slider_pos])
+            self.twoD_label.setText(self._current_labelname)
         self.update_current_data()
         self.initialize_2D_plot()
-        self.twoD_label.setText(self._current_labelname)
+
         self.update_widgets()
-
-
-# class K_Window(ApplicationWindow):
-#     ''' Instantiates new window for k data treatment '''
-
-#     def __init__(self, kdata_stack, k_ranges_stack):
-#         # QMainWindow.__init__(self)
-#         super().__init__()
-#         self.kdata_stack, self.k_ranges_stack = kdata_stack, k_ranges_stack
-#         self.current_data_k = self.kdata_stack[:, :, self.slider_pos]
-#         self.current_extent_k = self.k_ranges_stack[self.slider_pos]
-#         self.setWindowTitle('K Data Handler')
-
-#         # Set up File Menu
-#         self.file_menu = QMenu('&File', self)
-#         self.file_menu.addAction('&Quit', self.fileQuit,
-#                                  QtCore.Qt.CTRL + QtCore.Qt.Key_Q)
-
-#         self.menuBar().addMenu(self.file_menu)
-
-#         # Instantiate widgets
-#         self.sub_widget = QWidget(self)
-#         self.k_plotter = TwoD_Plotter(self.sub_widget)
-
-#         # Instantiate layouts
-#         self.main_layout = QVBoxLayout(self.sub_widget)
-#         # layout.addWidget(t)
-#         self.main_layout.addWidget(self.k_plotter)
-#         # self.main_layout.addWidget(self.twoD_label)
-
-#         self.initialize_2D_plot()
 
 
 if __name__ == '__main__':

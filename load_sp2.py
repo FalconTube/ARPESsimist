@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import time
 from natsort import natsorted
 import multiprocessing
+import h5py as h5
+
 
 from PyQt5.QtWidgets import QProgressBar, QWidget, QApplication, QMessageBox
 from progbar import ProgressBar
@@ -66,6 +68,7 @@ class Sp2_loader():
         data = self.reshape_data(rawdata, ydim)
         extent = [ranges_dict['a_min'], ranges_dict['a_max'],
                   ranges_dict['E_min'], ranges_dict['E_max']]
+        print(extent)
 
         if both_sets:
             data1 = self.reshape_data(rawdata1, ydim)
@@ -127,8 +130,41 @@ class Sp2_loader():
         indata = np.array(indata)
         indata = np.array(indata)
         indata = np.reshape(indata, (ydim, -1))
-        data = np.swapaxes(indata, 0, 1)
+        data = np.swapaxes(indata, 0, 1)[::-1]
         return data
+
+
+class LoadHDF5(object):
+    def __init__(self, location):
+        self._filelocation = location
+        pmin, pmax, dmin, dmax, Emin, Emax, data = self.load()
+        self._pmin = pmin
+        self._pmax = pmax
+        self._dmin = dmin
+        self._dmax = dmax
+        self._Emin = Emin
+        self._Emax = Emax
+        self.data_stack = np.asarray(data)
+        self.data_stack = np.swapaxes(self.data_stack, 0, 2)
+        # self.data_stack = np.swapaxes(self.data_stack, 0, 1)
+        # self.data_stack = self.data_stack[::-1, :, :]
+        # self.data_stack = self.data_stack[:, :, ::-1]
+        self.extent = [self._dmin, self._dmax,
+                       self._Emin, self._Emax]
+        print(self.extent)
+        self.extent_stack = [list(self.extent)] \
+            * self.data_stack.shape[-1]
+
+    def load(self):
+        f = h5.File(self._filelocation, "r")
+        data = f['entry1/analyser/data']
+        d = f['entry1/analyser/angles']
+        E = f['entry1/analyser/energies']
+        p = f['entry1/analyser/sapolar']
+        return p[0], p[-1], d[0], d[-1], E[0], E[-1], data
+
+    def return_data(self):
+        return self.data_stack, self.extent_stack, self._pmin, self._pmax
 
 
 if __name__ == '__main__':

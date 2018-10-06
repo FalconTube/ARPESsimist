@@ -64,7 +64,8 @@ class FitParabola(QWidget):
                               """Could not Fit parabola""")
         self.draw_fit(self.popt)
         e_mass = self.calculateEffectiveMass(self.popt[0])
-        self.text_field.setText('{:.2e}'.format(e_mass))
+        eff_e_mass = e_mass/m_e
+        self.text_field.setText('m_eff/m_e: {:.2e}'.format(eff_e_mass))
 
     def draw_fit(self, popt):
         lower = min(self.xpoints)
