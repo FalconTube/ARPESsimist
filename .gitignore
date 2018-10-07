@@ -3,3 +3,7 @@
 PythonNiels/
 zDisp/
 __pycache__/
+fortran_routines/
+!fortran_routines/kmaps.f90
+!fortran_routines/test_kmaps.f90
+!fortran_routines/compile.sh
