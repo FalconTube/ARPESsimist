@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 # import mayavi.mlab as mlb
 # import h5py as h5
 import time
+from fortran_routines.kmaps import kmaps
 
 
 me = 9.11e-31
@@ -115,6 +116,7 @@ class VerticalSlitPolarScan(object):
                 arr_y = atilt*rad
                 arr_z = E  # +np.interp(inner_sqrt_term,
                 #         self._offsetsX, self._offsets)
+
                 ESlice[countK, countE] += self._f((arr_x, arr_y, arr_z),
                                                   inner_sqrt_term)
         return ESlice.T[::-1, :]
@@ -125,32 +127,97 @@ class VerticalSlitPolarScan(object):
         kx_range = int((kxmax-kxmin)/dk)
         ky_range = int((kymax-kymin)/dk)
         kSlice = np.zeros((kx_range, ky_range))
+        print('python slice, ', kx_range, ky_range)
         for i in range(0, int(kx_range)):
             a1 = kxmin + i*dk
             for j in range(0, int(ky_range)):
-                a2 = kymin + j*dk
-                k, inner_sqrt_term = self.calc_k(E, a1, a2)
-                # ky = a1/k
-                # kx = a2/k
-                kx = a1/k
-                ky = a2/k
-                kz = np.sqrt(1.-kx**2-ky**2)
-                # print(kx, ky, kz)
-                tlt = tilt*deg
-                az = -azi*deg
-                atilt = self.a_tilt(kx, ky, kz, az, tlt)
-                cospol = self.cos_pol(kz, tlt, atilt)
-                pol = self.pol(atilt, az, tlt, kx, cospol)
-                # print(atilt, cospol, pol)
-                arr_x = -pol*rad
-                arr_y = atilt*rad
-                arr_z = E  # +np.interp(inner_sqrt_term,
-                #         self._offsetsX, self._offsets)
-                # print(arr_x, arr_y, arr_z)
+                for numnum in range(10):
+                    a2 = kymin + j*dk
+                    k, inner_sqrt_term = self.calc_k(E, a1, a2)
+                    # ky = a1/k
+                    # kx = a2/k
+                    kx = a1/k
+                    ky = a2/k
+                    kz = np.sqrt(1.-kx**2-ky**2)
+                    # print(kx, ky, kz)
+                    tlt = tilt*deg
+                    az = -azi*deg
+                    atilt = self.a_tilt(kx, ky, kz, az, tlt)
+                    cospol = self.cos_pol(kz, tlt, atilt)
+                    pol = self.pol(atilt, az, tlt, kx, cospol)
+                    # print(atilt, cospol, pol)
+                    arr_x = -pol*rad
+                    arr_y = atilt*rad
+                    arr_z = E  # +np.interp(inner_sqrt_term,
+                    #         self._offsetsX, self._offsets)
+                    # print(arr_x, arr_y, arr_z)
+                    # print(arr_x, arr_y)
 
                 kSlice[i, j] += self._f((arr_x, arr_y, arr_z))
                 # if j == 20:
                 # print(arr_x, arr_y, arr_z)
+
+        return kSlice.T
+
+    def slice_K_fortran(self, Ecutmin, Ecutmax, dk, azi, tilt,
+                        kxmax=0.5, kxmin=-0.5, kymax=0.5, kymin=-0.5):
+        ''' Performs K Slice in fortran routine '''
+        indata_y = np.linspace(self.dmin + self._d0, self.dmax +
+                               self._d0, self.data.shape[1])
+        indata_z = np.linspace(self.Emin, self.Emax, self.data.shape[2])
+        indata_x = np.linspace(self.pmin, self.pmax, self.data.shape[0])
+        print('E length: ', self.data.shape[0])
+        kx_range = np.arange(kxmin, kxmax, dk)
+        ky_range = np.arange(kymin, kymax, dk)
+        Ecut_range = np.linspace(Ecutmin, Ecutmax, self.data.shape[0])
+
+        kSlice = kmaps.kslice_bilin(indata_x, indata_y, indata_z, self.data,
+                                    kx_range, ky_range, Ecut_range, tilt, azi)
+        # kSlice = kmaps.kslice_spline(indata_x, indata_y, indata_z, self.data,
+        #                              kx_range, ky_range, Ecut_range, tilt, azi)
+        out = np.swapaxes(kSlice, 0, 1)
+        print(out.shape)
+        # kSlice = np.swapaxes(kSlice.T, 0, 2)
+        return out
+
+    def SliceK_E_range(self, Ecutmin, Ecutmax, dk, azi, tilt, kxmax=0.5, kxmin=-0.5,
+                       kymax=0.5, kymin=-0.5):
+        # azi=0.
+        kx_range = int((kxmax-kxmin)/dk)
+        ky_range = int((kymax-kymin)/dk)
+
+        print('python slice, ', kx_range, ky_range)
+        Ecut_range = np.linspace(Ecutmin, Ecutmax, self.data.shape[0])
+        kSlice = np.zeros((kx_range, ky_range, self.data.shape[0]))
+        for h, E in enumerate(Ecut_range):
+            for i in range(0, int(kx_range)):
+                a1 = kxmin + i*dk
+                for j in range(0, int(ky_range)):
+                    for numnum in range(10):
+                        a2 = kymin + j*dk
+                        k, inner_sqrt_term = self.calc_k(E, a1, a2)
+                        # ky = a1/k
+                        # kx = a2/k
+                        kx = a1/k
+                        ky = a2/k
+                        kz = np.sqrt(1.-kx**2-ky**2)
+                        # print(kx, ky, kz)
+                        tlt = tilt*deg
+                        az = -azi*deg
+                        atilt = self.a_tilt(kx, ky, kz, az, tlt)
+                        cospol = self.cos_pol(kz, tlt, atilt)
+                        pol = self.pol(atilt, az, tlt, kx, cospol)
+                        # print(atilt, cospol, pol)
+                        arr_x = -pol*rad
+                        arr_y = atilt*rad
+                        arr_z = E  # +np.interp(inner_sqrt_term,
+                        #         self._offsetsX, self._offsets)
+                        # print(arr_x, arr_y, arr_z)
+                        # print(arr_x, arr_y)
+
+                    kSlice[i, j, h] += self._f((arr_x, arr_y, arr_z))
+                    # if j == 20:
+                    # print(arr_x, arr_y, arr_z)
 
         return kSlice.T
 

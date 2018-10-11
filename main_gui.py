@@ -73,8 +73,8 @@ class ApplicationWindow(QMainWindow):
         self.interact_menu = QMenu('&2D', self)
         self.menuBar().addSeparator()
         self.menuBar().addMenu(self.interact_menu)
-        self.interact_menu.addAction('&Fit_parabola', self.fit_parabola)
-        self.interact_menu.addAction('&Lineprofile', self.lineprofile)
+        # self.interact_menu.addAction('&Fit_parabola', self.fit_parabola)
+        # self.interact_menu.addAction('&Lineprofile', self.lineprofile)
 
         # Set up Help Menu
         self.help_menu = QMenu('&Help', self)
@@ -92,22 +92,22 @@ class ApplicationWindow(QMainWindow):
         # Instantiate widgets
         self.main_widget = QWidget(self)
 
-        self.twoD_widget = TwoD_Plotter(self.main_widget)  # Start 2d plotter
-        self.twoD_label = QLabel()
-        self.twoD_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.twoD_label.setText('')
+        # self.twoD_widget = TwoD_Plotter(self.main_widget)  # Start 2d plotter
+        # self.twoD_label = QLabel()
+        # self.twoD_label.setAlignment(QtCore.Qt.AlignCenter)
+        # self.twoD_label.setText('')
 
         # Set up radio buttons
 
-        self.angle_k_button_group = QGroupBox('Choose Dimensions to work in')
-        self.angle_button = QRadioButton("&Angles", self.main_widget)
-        self.angle_button.setChecked(True)
-        self.angle_button.clicked.connect(self.angle_k_button_state)
-        # self.angle_button.clicked.connect(
+        # self.angle_k_button_group = QGroupBox('Choose Dimensions to work in')
+        # self.angle_button = QRadioButton("&Angles", self.main_widget)
+        # self.angle_button.setChecked(True)
+        # self.angle_button.clicked.connect(self.angle_k_button_state)
+        # # self.angle_button.clicked.connect(
         #     lambda: self.angle_k_button_state(self.angle_button))
 
-        self.k_button = QRadioButton("K-&Space", self.main_widget)
-        self.k_button.clicked.connect(self.angle_k_button_state)
+        # self.k_button = QRadioButton("K-&Space", self.main_widget)
+        # self.k_button.clicked.connect(self.angle_k_button_state)
         # self.k_button.toggled.connect(
         #     lambda: self.angle_k_button_state(self.k_button))
 
@@ -122,8 +122,8 @@ class ApplicationWindow(QMainWindow):
         # self.over_layout = QVBoxLayout(self.main_widget)
 
         # layout.addWidget(t)
-        self.over_layout.addWidget(self.twoD_widget, 1, 0)
-        self.over_layout.addWidget(self.twoD_label,  0, 0)
+        # self.over_layout.addWidget(self.twoD_widget, 1, 0)
+        # self.over_layout.addWidget(self.twoD_label,  0, 0)
         # self.over_layout.addWidget(self.pgplot, 0, 1)
 
         # # Init Parabola Widget and add
@@ -140,13 +140,13 @@ class ApplicationWindow(QMainWindow):
 
         # Set up angle and k radio buttons
 
-        self.radio_layout = QHBoxLayout()
+        # self.radio_layout = QHBoxLayout()
 
-        self.radio_layout.addWidget(self.angle_button)
-        self.radio_layout.addWidget(self.k_button)
+        # self.radio_layout.addWidget(self.angle_button)
+        # self.radio_layout.addWidget(self.k_button)
 
-        self.angle_k_button_group.setLayout(self.radio_layout)
-        self.over_layout.addWidget(self.angle_k_button_group, 2, 0)
+        # self.angle_k_button_group.setLayout(self.radio_layout)
+        # self.over_layout.addWidget(self.angle_k_button_group, 2, 0)
 
         # self.over_layout.addWidget(self.lineprof_widget)
 
@@ -196,27 +196,18 @@ class ApplicationWindow(QMainWindow):
             if self.data_are_loaded:
                 self.twoD_widget.instance_counter = 0  # Reset plot
                 # if button.text() == '&Angles':
-                if self.angle_button.isChecked():
-                    print('angle')
-                    self.select_k_space = False
-                    self.processing_data = self.angle_data
-                    self.processing_extent = self.angle_extent
-                    self.update_current_data()
-                    # self.vertical_slit_maps()
-                # if button.text() == 'K-&Space':
-                if self.k_button.isChecked():
-                    print('kspace')
-                    self.select_k_space = True
-                    self.processing_data = self.k_data
-                    self.processing_extent = self.k_extent
-                    self.update_current_data()
-                    self.vertical_slit_maps()
+                # if self.angle_button.isChecked():
+                self.select_k_space = False
+                self.processing_data = self.angle_data
+                self.processing_extent = self.angle_extent
+                self.update_current_data()
+
                 self.initialize_2D_plot()
                 self.update_widgets()
-            else:
-                self.angle_button.setChecked(True)
-                QMessageBox.about(self, 'Warning',
-                                  'Please load some data')
+            # else:
+            #     self.angle_button.setChecked(True)
+            #     QMessageBox.about(self, 'Warning',
+            #                       'Please load some data')
 
     def choose_sp2(self):
         self.sp2 = Sp2_loader()
@@ -242,13 +233,11 @@ class ApplicationWindow(QMainWindow):
         self.H5loader = LoadHDF5(location)
         self.angle_data, self.angle_extent, self.p_min, self.p_max =\
             self.H5loader.return_data()
-        print(self.angle_data.shape)
-        print(len(self.angle_extent))
         self.load_multiple_files()
 
     def load_multiple_files(self):
-        self.lineprofile()  # Start lineprofiles
-        self.fit_parabola()
+        # self.lineprofile()  # Start lineprofiles
+        # self.fit_parabola()
 
         if not self.sp2.multi_file_mode:
             self.processing_data = self.angle_data  # Start with angle data
@@ -256,17 +245,17 @@ class ApplicationWindow(QMainWindow):
             self.new_current_data = self.processing_data
             self.new_current_extent = self.processing_extent
 
-            self.initialize_2D_plot()
+            # self.initialize_2D_plot()
         else:
             stack_size = self.angle_data.shape[-1]
             self.processing_data = self.angle_data  # Start with angle data
             self.processing_extent = self.angle_extent
             self.update_current_data()
 
-            self.twoD_slider = self.add_slider(0, stack_size)
-            self.twoD_slider.valueChanged.connect(self.twoD_slider_changed)
-            self.over_layout.addWidget(self.twoD_slider, 3, 0)
-            self.initialize_2D_plot()
+            # self.twoD_slider = self.add_slider(0, stack_size)
+            # self.twoD_slider.valueChanged.connect(self.twoD_slider_changed)
+            # self.over_layout.addWidget(self.twoD_slider, 3, 0)
+            # self.initialize_2D_plot()
 
             # self.imv.setImage(self.new_current_data)
             # self.over_layout.addWidget()
@@ -275,8 +264,13 @@ class ApplicationWindow(QMainWindow):
         if not self.hd5mode:
             self._current_labelname = os.path.basename(
                 self.loaded_filenames[0])
-            self.twoD_label.setText(self._current_labelname)
+            # self.twoD_label.setText(self._current_labelname)
         self.data_are_loaded = True
+
+        self.new_twoD_widget = TwoD_Plotter(self.processing_data,
+                                            self.processing_extent,
+                                            self.main_widget)
+        self.over_layout.addWidget(self.new_twoD_widget, 1, 0)
 
         # Set data for LineProf
         # self.LineProf.update_data_extent(self.new_current_data,
@@ -296,24 +290,41 @@ class ApplicationWindow(QMainWindow):
             self.p_min, self.p_max)
         # self.edc = All_maps.EDC(0.0, 0.0, 24, 25, 9, 15, NE=50)
         xmin, xmax, ymin, ymax = -1., 1.6, -1., 1.6
-        self.k_slice = All_maps.SliceK(67.33, 0.01, 0., 0.,
-                                       kxmin=xmin, kxmax=xmax, kymin=ymin, kymax=ymax)
-        fig, ax = matplotlib.pyplot.subplots()
-        ax.imshow(self.k_slice, extent=[xmin, xmax, ymin, ymax])
-        ax.set_xlim(xmin, xmax)
-        ax.set_ylim(ymin, ymax)
-        # erange = np.linspace(24, 25, len(self.edc))
-        # matplotlib.pyplot.plot(erange, self.edc)
-        matplotlib.pyplot.show()
+        starttime = time.time()
+        # self.k_slice = All_maps.SliceK_E_range(66.16, 67.33, 0.03, 0., 0.,
+        #                                        kxmin=xmin, kxmax=xmax, kymin=ymin, kymax=ymax)
+        print('Calctime python: {}'.format(time.time()-starttime))
+        starttime = time.time()
+        self.k_slice = All_maps.slice_K_fortran(66.16, 67.84, 0.03, 0., 0,
+                                                kxmin=xmin, kxmax=xmax,
+                                                kymin=ymin, kymax=ymax)
+        # self.k_slice = All_maps.slice_K_fortran(67.33, 67.33, 0.01, 0., 0,
+        #                                         kxmin=xmin, kxmax=xmax,
+        #                                         kymin=ymin, kymax=ymax)
+        extent_stack = list([[xmin, xmax, ymin, ymax]]) * \
+            self.k_slice.shape[-1]
+        # fig, ax = matplotlib.pyplot.subplots()
+
+        # ax.imshow(self.k_slice[:, :, 0], extent=[xmin, xmax, ymin, ymax])
+        # ax.set_xlim(xmin, xmax)
+        # ax.set_ylim(ymin, ymax)
+        print('Calctime fortran: {}'.format(time.time()-starttime))
+        self.KWin = K_Window(self.k_slice, extent_stack)
+        self.KWin.show()
+
+        # # erange = np.linspace(24, 25, len(self.edc))
+        # # matplotlib.pyplot.plot(erange, self.edc)
+        # matplotlib.pyplot.show()
 
     def update_current_data(self):
         self.new_current_data = self.processing_data[:, :, self.slider_pos]
         self.new_current_extent = self.processing_extent[self.slider_pos]
 
     def update_widgets(self):
-        self.LineProf.update_data_extent(self.new_current_data,
-                                         self.new_current_extent)
-        self.FitParGui.update_parabola()
+        pass
+        # self.twoD_widget.LineProf.update_data_extent(self.new_current_data,
+        #                                              self.new_current_extent)
+        # self.twoD_widget.FitParGui.update_parabola()
 
     def get_k_space(self):
         self.k_data, self.k_extent, self.k_space_generated = self.k_thread.get()
@@ -344,6 +355,39 @@ class ApplicationWindow(QMainWindow):
         self.initialize_2D_plot()
 
         self.update_widgets()
+
+
+class K_Window(QMainWindow):
+    ''' Instantiates new window for k data treatment '''
+
+    def __init__(self, k_stack, k_extent):
+        QMainWindow.__init__(self)
+        # super.__init__(self)
+        self.setWindowTitle('K Data Handler')
+
+        # Set up File Menu
+        self.file_menu = QMenu('&File', self)
+        self.file_menu.addAction('&Quit', self.fileQuit,
+                                 QtCore.Qt.CTRL + QtCore.Qt.Key_Q)
+
+        self.menuBar().addMenu(self.file_menu)
+        self.k_win_widget = QWidget(self)
+        self.k_k_widget = TwoD_Plotter(
+            k_stack, k_extent, self.k_win_widget
+        )  # Start 2d plotter
+        self.over_layout = QGridLayout(self.k_win_widget)
+        self.over_layout.addWidget(self.k_k_widget, 1, 0)
+        self.k_win_widget.setFocus()
+        self.setCentralWidget(self.k_win_widget)
+        # self.k_k_label = QLabel()
+        # self.k_k_label.setAlignment(QtCore.Qt.AlignCenter)
+        # self.k_k_label.setText('')
+        # self.k_k_widget.update_2d_data(k_stack)
+        # self.k_k_widget.update_2dplot(k_extent)
+
+    def fileQuit(self):
+        ''' Closes current instance '''
+        self.close()
 
 
 if __name__ == '__main__':

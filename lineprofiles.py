@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import \
 class LineProfiles(QWidget):
     ''' Attaches stuff for lineprofile to current 2D Plot '''
 
-    def __init__(self, twodfig, parent):
+    def __init__(self, twodfig, xprof_ax, yprof_ax, parent):
         # Set up default values
         self.current_hline = False
         self.current_vline = False
@@ -26,15 +26,15 @@ class LineProfiles(QWidget):
         self.breadth = 0.0
         # MyMplCanvas.__init__(self)
         super().__init__()
-        self.setParent(parent)
+        # self.setParent(parent)
         self.data = 0
         self.ranges = 0
 
         # Get fig and axes
         self.twodfig = twodfig
         self.ax = self.twodfig.axes
-        self.xprof_ax = self.twodfig.xprof_ax
-        self.yprof_ax = self.twodfig.yprof_ax
+        self.xprof_ax = xprof_ax
+        self.yprof_ax = yprof_ax
 
     def disconnect(self):
         ''' Disconnect from figure '''
@@ -66,6 +66,7 @@ class LineProfiles(QWidget):
                 self.xpoints, self.ypoints = \
                     self.lineprofileX(self.data, self.ranges, event.ydata)
                 self.xprof_ax.plot(self.xpoints, self.ypoints, zorder=-1)
+                self.xprof_ax.figure.canvas.draw()
 
             if self.xy_chooser == 'y':
                 if self.current_vline:
@@ -75,6 +76,7 @@ class LineProfiles(QWidget):
                 self.xpoints, self.ypoints = \
                     self.lineprofileY(self.data, self.ranges, event.xdata)
                 self.yprof_ax.plot(self.ypoints, self.xpoints, zorder=-1)
+                self.yprof_ax.figure.canvas.draw()
 
             self.ax.figure.canvas.draw()  # redraw
 
@@ -91,7 +93,8 @@ class LineProfiles(QWidget):
         self.current_vline = False
 
         # Redraw to show clearance
-        self.ax.figure.canvas.draw()
+        # self.ax.figure.canvas.draw()
+        self.twodfig.figure.canvas.draw()
 
     def processing_data_interpolator(self, data, thisrange):
         ''' Generates interpolator '''
