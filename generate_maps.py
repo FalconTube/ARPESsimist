@@ -171,10 +171,10 @@ class VerticalSlitPolarScan(object):
         ky_range = np.arange(kymin, kymax, dk)
         Ecut_range = np.linspace(Ecutmin, Ecutmax, self.data.shape[0])
 
-        kSlice = kmaps.kslice_bilin(indata_x, indata_y, indata_z, self.data,
-                                    kx_range, ky_range, Ecut_range, tilt, azi)
-        # kSlice = kmaps.kslice_spline(indata_x, indata_y, indata_z, self.data,
-        #                              kx_range, ky_range, Ecut_range, tilt, azi)
+        # kSlice = kmaps.kslice_bilin(indata_x, indata_y, indata_z, self.data,
+        #                             kx_range, ky_range, Ecut_range, tilt, azi)
+        kSlice = kmaps.kslice_spline(indata_x, indata_y, indata_z, self.data,
+                                     kx_range, ky_range, Ecut_range, tilt, azi)
         out = np.swapaxes(kSlice, 0, 1)
         print(out.shape)
         # kSlice = np.swapaxes(kSlice.T, 0, 2)

@@ -14,7 +14,7 @@ from matplotlib.backends.backend_qt5agg \
 from matplotlib.figure import Figure
 matplotlib.use("Qt5Agg")
 
-import pyqtgraph as pg
+# import pyqtgraph as pg
 
 from load_sp2 import Sp2_loader, LoadHDF5
 from plot_2d import TwoD_Plotter
@@ -47,7 +47,7 @@ class ApplicationWindow(QMainWindow):
         self.new_current_extent = []
         self._current_labelname = ''
         QMainWindow.__init__(self)
-        # self.resize(1000, 600)
+        self.resize(1000, 800)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("ARPyES")
 
@@ -67,7 +67,7 @@ class ApplicationWindow(QMainWindow):
         self.menuBar().addSeparator()
         self.menuBar().addMenu(self.map_menu)
 
-        # self.map_menu.addAction('&Plot_2D', self.init_k_window)
+        self.map_menu.addAction('&Gen K Slice', self.vertical_slit_maps)
 
         # Set up Interaction Menu
         self.interact_menu = QMenu('&2D', self)
@@ -170,7 +170,6 @@ class ApplicationWindow(QMainWindow):
         ''' Prints about '''
         QMessageBox.about(self, "About",
                           """ARPyES""")
-        self.vertical_slit_maps()
 
     def fit_parabola(self):
         # FitPar = FitParabola(self.twoD_widget.fig)
@@ -210,30 +209,35 @@ class ApplicationWindow(QMainWindow):
             #                       'Please load some data')
 
     def choose_sp2(self):
-        self.sp2 = Sp2_loader()
         many_files = QFileDialog.getOpenFileNames(
             self, 'Select one or more files to open',
             '/home/yannic/Documents/stuff/feb/06/sampl2map/')
-        self.loaded_filenames = self.sp2.tidy_up_list(many_files[0])
-        self.statusBar().showMessage("Loading Data...", 2000)
-        # self.loaded_filenames = ['mos2_2_003.sp2', 'mos2_2_015.sp2']
-
-        self.angle_data, self.angle_extent = self.sp2.read_multiple_sp2(
-            self.loaded_filenames)
-        self.load_multiple_files()
+        try:
+            self.sp2 = Sp2_loader()
+            self.loaded_filenames = self.sp2.tidy_up_list(many_files[0])
+            self.statusBar().showMessage("Loading Data...", 2000)
+            self.angle_data, self.angle_extent = self.sp2.read_multiple_sp2(
+                self.loaded_filenames)
+            self.load_multiple_files()
+        except:
+            pass
 
     def choose_nxs(self):
-        self.hd5mode = True
-        self.sp2 = Sp2_loader()
-        self.sp2.multi_file_mode = True
         location = QFileDialog.getOpenFileNames(
             self, 'Select one NXS file to open',
             '/home/yannic/Documents/PhD/ARPyES/zDisp/SnSe/')
+
         location = str(location[0][0])
-        self.H5loader = LoadHDF5(location)
-        self.angle_data, self.angle_extent, self.p_min, self.p_max =\
-            self.H5loader.return_data()
-        self.load_multiple_files()
+        try:
+            self.hd5mode = True
+            self.sp2 = Sp2_loader()
+            self.sp2.multi_file_mode = True
+            self.H5loader = LoadHDF5(location)
+            self.angle_data, self.angle_extent, self.p_min, self.p_max =\
+                self.H5loader.return_data()
+            self.load_multiple_files()
+        except:
+            pass
 
     def load_multiple_files(self):
         # self.lineprofile()  # Start lineprofiles
@@ -269,7 +273,9 @@ class ApplicationWindow(QMainWindow):
 
         self.new_twoD_widget = TwoD_Plotter(self.processing_data,
                                             self.processing_extent,
-                                            self.main_widget)
+                                            self.main_widget,
+                                            xlabel=r'Angle [$^\circ{}$]',
+                                            ylabel='Energy [eV]')
         self.over_layout.addWidget(self.new_twoD_widget, 1, 0)
 
         # Set data for LineProf

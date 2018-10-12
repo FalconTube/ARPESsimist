@@ -14,22 +14,36 @@ class TwoD_Plotter(MyMplCanvas):
     ''' Plots 2D images '''
 
     # def __init__(self, *args, **kwargs):
-    def __init__(self, processing_data, processing_extent, parent=None, width=5, height=6, dpi=100,
-                 multifig=True):
-        super().__init__(parent, width, height, dpi,
-                         multifig)
+    def __init__(self, processing_data, processing_extent, parent=None, width=3, height=3, dpi=100,
+                 xlabel='', ylabel=''):
+        super().__init__(parent, width, height, dpi)
+        self.xlabel = xlabel
+        self.ylabel = ylabel
+
         self.processing_data, self.processing_extent = processing_data, processing_extent
         stack_size = processing_data.shape[-1]
         self.instance_counter = 0
         self.slider_pos = 0
         self.update_current_data()
+        self.update_widgets()
         self.initialize_2D_plot()
         self.twoD_slider = self.add_slider(0, stack_size)
         self.twoD_slider.valueChanged.connect(self.twoD_slider_changed)
+        self.main_layout.addWidget(self.twoD_slider)
+        self.set_xylabels()
+
+    def set_xylabels(self):
+        self.axes.set_xlabel(self.xlabel)
+        self.axes.set_ylabel(self.ylabel)
+        self.xprof_ax.set_xlabel(self.xlabel)
+        self.xprof_ax.set_ylabel('I [a.u.]')
+        self.yprof_ax.set_xlabel(self.ylabel)
+        self.yprof_ax.set_ylabel('I [a.u.]')
+        self.axes.figure.canvas.update()
+        self.xprof_ax.figure.canvas.update()
+        self.yprof_ax.figure.canvas.update()
 
     def update_2dplot(self, extent=None):
-        ''' Really slow at the moment, due to having three axis
-        in here. Have to use blitting '''
         if extent:
             x_range = abs(extent[1] - extent[0])
             e_range = abs(extent[3] - extent[2])
@@ -51,10 +65,12 @@ class TwoD_Plotter(MyMplCanvas):
             self.toolbar.update()
             self.canvas.draw()
         else:
+            print('Updating only')
             self.twoD_ax.set_data(self.twoD_data)
-            # self.axes.draw_artist(self.twoD_ax)
-            self.axes.figure.canvas.update()
+            self.axes.draw_artist(self.twoD_ax)
+            # self.axes.figure.canvas.update()
             # self.axes.figure.canvas.flush_events()
+            self.axes.figure.canvas.draw()
             self.toolbar.update()
 
     def update_2d_data(self, data):
@@ -91,11 +107,7 @@ class TwoD_Plotter(MyMplCanvas):
     def twoD_slider_changed(self, value):
         changed_slider = self.sender()
         self.slider_pos = changed_slider.value()
-        # if not self.hd5mode:
-        #     self._current_labelname = os.path.basename(
-        #         self.loaded_filenames[self.slider_pos])
-        # self.twoD_label.setText(self._current_labelname)
         self.update_current_data()
         self.initialize_2D_plot()
 
-        self.update_widgets()
+        # self.update_widgets()

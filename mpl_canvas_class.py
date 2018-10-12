@@ -19,13 +19,12 @@ from lineprofiles import LineProfiles
 class MyMplCanvas(QWidget):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
-    def __init__(self, parent=None, width=5, height=5, dpi=100,
-                 multifig=True):
+    def __init__(self, parent=None, width=5, height=5, dpi=100):
         super().__init__()
         self.parent = parent
         self.fig = Figure(figsize=(width, height), dpi=dpi)
-        self.fig_xax = Figure(figsize=(width, 0.5*height), dpi=dpi)
-        self.fig_yax = Figure(figsize=(0.5*width, height), dpi=dpi)
+        self.fig_xax = Figure(figsize=(width, 0.2*height), dpi=dpi)
+        self.fig_yax = Figure(figsize=(0.2*width, height), dpi=dpi)
 
         self.axes = self.fig.add_subplot(111)  # 2D Data
         self.xprof_ax = self.fig_xax.add_subplot(111)  # LineProfile X
@@ -34,14 +33,21 @@ class MyMplCanvas(QWidget):
         self.compute_initial_figure()
 
         self.canvas = FigureCanvas(self.fig)
+        # print('Setting size policy')
+        # self.canvas.setSizePolicy(QSizePolicy.Expanding)
+        # print('Finished with size policy')
+        # FigureCanvas.setSizePolicy(self,
+        #                            QSizePolicy.Expanding,
+        #                            QSizePolicy.Expanding)
+        # FigureCanvas.updateGeometry(self)
         self.x_canvas = FigureCanvas(self.fig_xax)
         self.y_canvas = FigureCanvas(self.fig_yax)
         self.setParent(self.parent)
+        # self.canvas.setSizePolicy(self,
+        #                           QSizePolicy.Expanding,
+        #                           QSizePolicy.Expanding)
+        # self.canvas.updateGeometry(self)
 
-        FigureCanvas.setSizePolicy(self,
-                                   QSizePolicy.Expanding,
-                                   QSizePolicy.Expanding)
-        FigureCanvas.updateGeometry(self)
         self.fig.tight_layout()
         self.toolbar = NavigationToolbar(self.canvas, self)
 
@@ -54,7 +60,7 @@ class MyMplCanvas(QWidget):
         self.grid_layout.addWidget(self.canvas, 0, 0)
         self.grid_layout.addWidget(self.x_canvas, 1, 0)
         self.grid_layout.addWidget(self.y_canvas, 0, 1)
-        self.fit_parabola()
+        # self.fit_parabola()
         self.lineprofile()
 
     def compute_initial_figure(self):
@@ -71,7 +77,7 @@ class MyMplCanvas(QWidget):
                                      self.parent)
         self.LineProf.init_widget()
         self.lineprof_widget = self.LineProf.get_widget()
-        self.main_layout.addWidget(self.lineprof_widget)
+        self.grid_layout.addWidget(self.lineprof_widget, 1, 1)
 
     def add_slider(self, lower: int, upper: int):
         slider_bar = QSlider(QtCore.Qt.Horizontal, self)

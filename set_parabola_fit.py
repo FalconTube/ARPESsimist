@@ -32,8 +32,9 @@ class FitParabola(QWidget):
     def init_plot(self):
         self.xpoints = []
         self.ypoints = []
-        self.plotline, = self.thisax.plot(self.xpoints, self.ypoints, 'rx')
-        # self.plotline, = self.thisax.plot(self.xpoints, self.ypoints, 'rx', zorder=-1)
+        # self.plotline, = self.thisax.plot(self.xpoints, self.ypoints, 'rx')
+        self.plotline, = self.thisax.plot(
+            self.xpoints, self.ypoints, 'rx', zorder=-1)
 
     def on_press(self, event):
         if event.button == 3:  # Use right click

@@ -10,7 +10,7 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import \
     QMainWindow, QApplication, QWidget, QPushButton, QVBoxLayout, QHBoxLayout,\
     QMenu, QMessageBox, QSizePolicy, QFileDialog, QSlider, QLabel, QScrollBar,\
-    QRadioButton, QGroupBox, QInputDialog, QLineEdit
+    QRadioButton, QGroupBox, QInputDialog, QLineEdit, QGridLayout
 
 
 class LineProfiles(QWidget):
@@ -93,8 +93,9 @@ class LineProfiles(QWidget):
         self.current_vline = False
 
         # Redraw to show clearance
-        # self.ax.figure.canvas.draw()
         self.twodfig.figure.canvas.draw()
+        self.xprof_ax.figure.canvas.draw()
+        self.yprof_ax.figure.canvas.draw()
 
     def processing_data_interpolator(self, data, thisrange):
         ''' Generates interpolator '''
@@ -119,6 +120,7 @@ class LineProfiles(QWidget):
                      xval: float, breadth=0.1):
         ''' Returns Lineprofile along Y'''
         breadth = self.breadth
+        print(breadth)
         self.idata, self.xvals, self.yvals = self.processing_data_interpolator(
             data, current_range)
         self.profile = np.sum(self.idata([
@@ -135,27 +137,33 @@ class LineProfiles(QWidget):
 
     def init_widget(self):
         ''' Creates widget and layout '''
-        self.box = QGroupBox('LineProfileX')
-        self.this_layout = QHBoxLayout()
+        self.box = QGroupBox('Line Profiles')
+        # self.this_layout = QHBoxLayout()
+        self.this_layout = QGridLayout()
 
-        self.selectbutton_x = QPushButton('&X Lineprofile', self)
-        self.selectbutton_y = QPushButton('&Y Lineprofile', self)
+        self.selectbutton_x = QRadioButton('&X Lineprofile', self)
+        self.selectbutton_y = QRadioButton('&Y Lineprofile', self)
+        self.discobutton = QRadioButton('&Stop Selection', self)
+        self.discobutton.setChecked(True)
+        # self.selectbutton_x = QPushButton('&X Lineprofile', self)
+        # self.selectbutton_y = QPushButton('&Y Lineprofile', self)
         self.clearbutton = QPushButton('&Clear', self)
-        self.discobutton = QPushButton('&Stop Selection', self)
+
         self.input_breadth = QLineEdit(self)
         self.input_breadth.setPlaceholderText('Breadth')
 
-        self.selectbutton_x.released.connect(self.init_cursor_active_x)
-        self.selectbutton_y.released.connect(self.init_cursor_active_y)
+        self.selectbutton_x.clicked.connect(self.init_cursor_active_x)
+        self.selectbutton_y.clicked.connect(self.init_cursor_active_y)
+        self.discobutton.clicked.connect(self.disconnect)
         self.clearbutton.released.connect(self.clear_all)
-        self.discobutton.released.connect(self.disconnect)
+
         self.input_breadth.returnPressed.connect(self.get_breadth)
 
-        self.this_layout.addWidget(self.selectbutton_x)
-        self.this_layout.addWidget(self.selectbutton_y)
-        self.this_layout.addWidget(self.clearbutton)
-        self.this_layout.addWidget(self.discobutton)
-        self.this_layout.addWidget(self.input_breadth)
+        self.this_layout.addWidget(self.selectbutton_x, 0, 0)
+        self.this_layout.addWidget(self.selectbutton_y, 1, 0)
+        self.this_layout.addWidget(self.discobutton, 2, 0)
+        self.this_layout.addWidget(self.clearbutton, 0, 1)
+        self.this_layout.addWidget(self.input_breadth, 1, 1)
 
         self.box.setLayout(self.this_layout)
 
