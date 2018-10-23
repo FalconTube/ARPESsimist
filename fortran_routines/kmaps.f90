@@ -1,6 +1,5 @@
 module kmaps
 use bspline_sub_module
-use interpolator_3d
   implicit none  
 
   contains
