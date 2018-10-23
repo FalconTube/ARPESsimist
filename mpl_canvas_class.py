@@ -33,15 +33,19 @@ class MyMplCanvas(QWidget):
         self.compute_initial_figure()
 
         self.canvas = FigureCanvas(self.fig)
+
         # print('Setting size policy')
         # self.canvas.setSizePolicy(QSizePolicy.Expanding)
         # print('Finished with size policy')
-        # FigureCanvas.setSizePolicy(self,
-        #                            QSizePolicy.Expanding,
-        #                            QSizePolicy.Expanding)
-        # FigureCanvas.updateGeometry(self)
+        sizePolicy = QSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(2)
         self.x_canvas = FigureCanvas(self.fig_xax)
         self.y_canvas = FigureCanvas(self.fig_yax)
+        self.canvas.setSizePolicy(sizePolicy)
+        # self.canvas.updateGeometry(self)
+        # self.x_canvas.setSizePolicy(QSizePolicy.Preferred)
+        # self.y_canvas.setSizePolicy(QSizePolicy.Preferred)
         self.setParent(self.parent)
         # self.canvas.setSizePolicy(self,
         #                           QSizePolicy.Expanding,
@@ -62,6 +66,7 @@ class MyMplCanvas(QWidget):
         self.grid_layout.addWidget(self.y_canvas, 0, 1)
         # self.fit_parabola()
         self.lineprofile()
+        self.show()
 
     def compute_initial_figure(self):
         pass

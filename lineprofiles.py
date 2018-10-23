@@ -176,3 +176,12 @@ class LineProfiles(QWidget):
         self.data = data
         self.ranges = extent
         self.clear_all()
+
+    def get_axes(self):
+        # if not self.xprof_ax and not self.yprof_ax:
+        #     return None, None
+        # if not self.xprof_ax and self.yprof_ax:
+        #     return None, self.yprof_ax
+        # if self.xprof_ax and not self.yprof_ax:
+        #     return self.xprof_ax, None
+        return self.xprof_ax, self.yprof_ax

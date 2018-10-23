@@ -84,53 +84,31 @@ use interpolator_3d
       double PRECISION :: pol_angle
 
       double PRECISION :: rad
-      
-      print *, 'init'
 
-      ! type(bspline_3d) :: s
       allocate (tx(nx+knot_x))
       allocate (ty(ny+knot_y))
       allocate (tz(nz+knot_z))
-      ! allocate (tx(141))
-      ! allocate (ty(1004))
-      ! allocate (tz(1044))
-      ! print *, nx, ny, nz
-      ! print *, outx, outy, outz
       ! convert to rad
       PI=4.D0*DATAN(1.D0)
       rad = 180.D0/PI
       tlt = tilt * PI/180.D0 
       az = azimuth*PI/180.D0
-      print *, nx, ny, nz
-      ! print *, 'Sleeping before dbink'
-      ! call sleep(10)
-
 
       call db3ink(xgrid,nx,ygrid,ny,zgrid,nz,indata,knot_x,knot_y,knot_z,&
                           iknot,tx,ty,tz,outcoeff,iflag(1))
 
-      print *, get_status_message(iflag(1))
-      print *, 'iknot', iknot
-      print *, SIZEOF(outcoeff)
-      ! print *, 'Sleeping after dbink'
-      ! call sleep(10)
-      ! print *, 'over db3ink'
-      ! print *, 'coeff', outcoeff
-      print *, iflag(1)
-      print *, 'starting loop'
       do countz=1, outz
         zeval = zevalgrid(countz)
         do countx=1, outx
           xeval = xevalgrid(countx)
           do county=1, outy
             yeval = yevalgrid(county)
-          
-            ! print *,  'xeval', xeval, 'yeval', yeval, 'zeval', zeval
-
+            
             call calc_k(zeval, xeval, yeval, inner_sqrt_term, k)
             kx = xeval/k
             ky = yeval/k
             kz = sqrt(1.D0- kx*kx - ky*ky)
+            
             call c_a_tilt(kx, ky, kz, az, tlt, atilt)
             call c_cos_pol(kz, tlt, atilt, cospol)
             call c_pol(atilt, az, tlt, kx, cospol, pol_angle)
@@ -138,7 +116,6 @@ use interpolator_3d
             xpoint = -pol_angle * rad
             ypoint = atilt * rad
             zpoint = zeval
-            ! print *, xpoint, ypoint, zpoint
         
             call db3val(xpoint,ypoint,zpoint,idx,idy,idz,tx,ty,tz,nx,ny,nz,&
                         knot_x,knot_y,knot_z,outcoeff,outval,iflag(2),&
@@ -146,15 +123,140 @@ use interpolator_3d
             
             outarray(countx, county, countz) = outval
             
-
-          end do
+          end do  
         end do
       end do
-      ! print *, iflag(1), iflag(2)
 
   end subroutine kslice_spline
+  
+  
+  
+  subroutine kslice_spline_horizontal(xgrid, ygrid, zgrid, nx, ny, nz, indata,&
+                      xevalgrid, yevalgrid, zevalgrid, outx, outy, outz,&
+                      tilt, azimuth, outarray)
+      integer, intent(in) :: nx ! length of arrays
+      integer, intent(in) :: ny
+      integer, intent(in) :: nz
+      integer, intent(in) :: outx ! length of out arrays
+      integer, intent(in) :: outy
+      integer, intent(in) :: outz
+      
 
-  subroutine kslice_bilin(xgrid, ygrid, zgrid, nx, ny, nz, indata,&
+      
+      double precision, dimension(nx), intent(in) :: xgrid
+      double precision, dimension(ny), intent(in) :: ygrid
+      double precision, dimension(nz), intent(in) :: zgrid
+      double precision, dimension(nx, ny, nz), intent(in) :: indata
+
+      double precision, dimension(outx), intent(in) :: xevalgrid
+      double precision, dimension(outy), intent(in) :: yevalgrid
+      double precision, dimension(outz), intent(in) :: zevalgrid
+
+      double PRECISION, intent(in) :: tilt
+      double PRECISION, intent(in) :: azimuth
+
+      double precision, dimension(outx, outy, outz), intent(out) :: outarray 
+
+
+      double precision :: outval
+
+      double precision :: xeval
+      double precision :: yeval
+      double precision :: zeval
+      double precision :: xpoint
+      double precision :: ypoint
+      double precision :: zpoint
+      integer :: countx
+      integer :: county
+      integer :: countz
+
+      integer :: knot_x = 2 ! order of knots
+      integer :: knot_y = 2
+      integer :: knot_z = 2
+
+      integer :: idx = 0
+      integer :: idy = 0
+      integer :: idz = 0
+      integer, dimension(2) :: iflag 
+      integer :: iknot = 0
+
+      integer :: inbvx = 0
+      integer :: inbvy = 0
+      integer :: inbvz = 0
+      integer :: iloy  = 0
+      integer :: iloz  = 0
+
+!      real(wp) :: tx(nx+kx),ty(ny+ky),tz(nz+kz)
+      double PRECISION, allocatable, dimension(:) :: tx
+      double PRECISION, allocatable, dimension(:) :: ty
+      double PRECISION, allocatable, dimension(:) :: tz
+      ! double PRECISION, dimension(141) :: tx
+      ! double PRECISION, dimension(1004) :: ty
+      ! double PRECISION, dimension(1044) :: tz
+      double PRECISION, dimension(nx, ny, nz) :: outcoeff
+      
+
+      double PRECISION :: inner_sqrt_term
+      double PRECISION :: k
+      double PRECISION :: pi
+      double PRECISION :: tlt
+      double PRECISION :: az
+      double PRECISION :: kx
+      double PRECISION :: ky
+      double PRECISION :: kz
+      double PRECISION :: atilt
+      double PRECISION :: cospol
+      double PRECISION :: pol_angle
+
+      double PRECISION :: rad
+
+      allocate (tx(nx+knot_x))
+      allocate (ty(ny+knot_y))
+      allocate (tz(nz+knot_z))
+      ! convert to rad
+      PI=4.D0*DATAN(1.D0)
+      rad = 180.D0/PI
+      tlt = tilt * PI/180.D0 
+      az = azimuth*PI/180.D0
+
+      call db3ink(xgrid,nx,ygrid,ny,zgrid,nz,indata,knot_x,knot_y,knot_z,&
+                          iknot,tx,ty,tz,outcoeff,iflag(1))
+
+      do countz=1, outz
+        zeval = zevalgrid(countz)
+        do countx=1, outx
+          xeval = xevalgrid(countx)
+          do county=1, outy
+            yeval = yevalgrid(county)
+            
+            ! call calc_k(zeval, xeval, yeval, inner_sqrt_term, k)
+            k = 0.512317 * SQRT(zeval)
+            kx = xeval/k
+            ky = yeval/k
+            kz = sqrt(1.D0- kx*kx - ky*ky)
+            
+            call az_horiz(kx, ky, kz, tlt, az)
+            call pol_horiz(kx, ky, az, pol_angle)
+
+            xpoint = -pol_angle * rad
+            ypoint = zeval
+            zpoint = -az * rad
+            print *, pol_angle, az
+            print *, xpoint, ypoint, zpoint
+        
+            call db3val(xpoint,ypoint,zpoint,idx,idy,idz,tx,ty,tz,nx,ny,nz,&
+                        knot_x,knot_y,knot_z,outcoeff,outval,iflag(2),&
+                        inbvx,inbvy,inbvz,iloy,iloz)
+            print *, outval
+            outarray(countx, county, countz) = outval
+            
+          end do  
+        end do
+      end do
+
+  end subroutine kslice_spline_horizontal
+
+  subroutine kslice_trilin(xgrid, ygrid, zgrid, nx, ny, nz, indata,&
     xevalgrid, yevalgrid, zevalgrid, outx, outy, outz,&
     tilt, azimuth, outarray)
 integer, intent(in) :: nx ! length of arrays
@@ -179,10 +281,10 @@ double PRECISION, intent(in) :: tilt
 double PRECISION, intent(in) :: azimuth
 
 double precision, dimension(outx, outy, outz), intent(out) :: outarray 
+double precision, dimension(outx, outy, nz) :: tmp_array 
 
 
 double precision :: outval
-double precision :: outval_2d
 
 double precision :: xeval
 double precision :: yeval
@@ -222,13 +324,16 @@ print *, nx, ny, nz
 
 print *, 'starting loop'
 
-do countz=1, outz
-  zeval = zevalgrid(countz)
+!$omp parallel private(zeval, xeval, yeval, countx, county) &
+!$omp& private(kx, ky, kz, k, az, tlt, atilt, cospol, pol_angle) &
+!$omp& private(xpoint, ypoint, zpoint, outval)
+!$omp do
+do countz=1, nz
+  zeval = zgrid(countz)
   do countx=1, outx
     xeval = xevalgrid(countx)
     do county=1, outy
       yeval = yevalgrid(county)
-      ! print *,  'xeval', xeval, 'yeval', yeval, 'zeval', zeval
 
       call calc_k(zeval, xeval, yeval, inner_sqrt_term, k)
       kx = xeval/k
@@ -240,21 +345,46 @@ do countz=1, outz
 
       xpoint = -pol_angle * rad
       ypoint = atilt * rad
-      zpoint = zeval
+      ! zpoint = zeval
       call interpolate_2D(nx, xgrid, ny, ygrid, indata(:,:, countz),&
                           xpoint, ypoint, outval)
       
-      ! call interpolate_1D(nz, zgrid, indata(countz, countz, :),&
-      !                      outval_2d, outval)
+      tmp_array(countx, county, countz) = outval
 
+    end do
+  end do
+end do
+!$omp end do
+!$omp end parallel
+print *, 'finished first loop'
+
+
+print *, 'starting second loop'
+
+!!$omp parallel private(zeval, countx, county, outval)
+!!$omp do
+do countz=1, outz
+  zeval=zevalgrid(countz)
+  do countx=1, outx
+    do county=1, outy
+
+      call interpolate_1D(nz, zgrid, tmp_array(countx, county, :),&
+                      zeval, outval)
+      
       outarray(countx, county, countz) = outval
 
     end do
   end do
 end do
+! !$omp end do
+! !$omp end parallel
+
+print *, 'finished second loop'
 
 
-end subroutine kslice_bilin
+
+
+end subroutine kslice_trilin
 
 
   subroutine calc_k(E, k1, k2, inner_sqrt_term, k)
@@ -292,6 +422,25 @@ end subroutine kslice_bilin
                    * sin(az)*sin(tlt))/(cos(atilt)*cos(az)))
       
   end subroutine c_pol
+
+  subroutine az_horiz(kx, ky, kz, tlt, az)
+  double precision, intent(in) :: kx, ky, kz, tlt
+  double precision, intent(out) :: az
+  
+  az = asin(&
+    (abs(kx) * kz * tan(tlt) - abs(ky) * sqrt(1d0-kz**2/(cos(tlt)**2)))/&
+    (1d0-kz**2))
+  
+  end subroutine
+
+  subroutine pol_horiz(kx, ky, az, pol)
+  double precision, intent(in) :: ky, kx, az
+  double precision, intent(out) :: pol
+  
+
+  pol = asin(abs(ky) * sin(az) - abs(kx) * cos(az))
+
+  end subroutine
 
   function binarysearch(length, array, value, delta)
     ! Given an array and a value, returns the index of the element that

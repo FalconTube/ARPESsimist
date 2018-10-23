@@ -7,18 +7,21 @@ from mpl_canvas_class import MyMplCanvas
 from set_parabola_fit import FitParabola
 from lineprofiles import LineProfiles
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QSlider
+from PyQt5.QtWidgets import QSlider, QFileDialog, QMenu, QLabel
 
 
 class TwoD_Plotter(MyMplCanvas):
     ''' Plots 2D images '''
 
     # def __init__(self, *args, **kwargs):
-    def __init__(self, processing_data, processing_extent, parent=None, width=3, height=3, dpi=100,
-                 xlabel='', ylabel=''):
+    def __init__(self, processing_data, processing_extent, labellist,
+                 parent=None, width=3, height=3, dpi=100,
+                 xlabel='', ylabel='', appwindow=None, labelprefix=''):
         super().__init__(parent, width, height, dpi)
         self.xlabel = xlabel
         self.ylabel = ylabel
+        self.labellist = labellist
+        self.labelprefix = labelprefix
 
         self.processing_data, self.processing_extent = processing_data, processing_extent
         stack_size = processing_data.shape[-1]
@@ -27,10 +30,19 @@ class TwoD_Plotter(MyMplCanvas):
         self.update_current_data()
         self.update_widgets()
         self.initialize_2D_plot()
+        # Add Slider and its Label
         self.twoD_slider = self.add_slider(0, stack_size)
+        self.twoD_Label = QLabel(self)
+        self.twoD_Label.setAlignment(QtCore.Qt.AlignCenter)
         self.twoD_slider.valueChanged.connect(self.twoD_slider_changed)
         self.main_layout.addWidget(self.twoD_slider)
+        self.main_layout.addWidget(self.twoD_Label)
         self.set_xylabels()
+        self.export_menu = QMenu('&Export Data', parent)
+        appwindow.menuBar().addSeparator()
+        appwindow.menuBar().addMenu(self.export_menu)
+        self.export_menu.addAction('&Save txt', self.save_txt)
+        self.export_menu.addAction('&Save Figures', self.save_figs)
 
     def set_xylabels(self):
         self.axes.set_xlabel(self.xlabel)
@@ -65,7 +77,6 @@ class TwoD_Plotter(MyMplCanvas):
             self.toolbar.update()
             self.canvas.draw()
         else:
-            print('Updating only')
             self.twoD_ax.set_data(self.twoD_data)
             self.axes.draw_artist(self.twoD_ax)
             # self.axes.figure.canvas.update()
@@ -102,12 +113,55 @@ class TwoD_Plotter(MyMplCanvas):
         slider_bar.setTickInterval(5)
         slider_bar.setSingleStep(1)
         slider_bar.setPageStep(10)
+        slider_bar.setToolTip('0')
         return slider_bar
 
     def twoD_slider_changed(self, value):
         changed_slider = self.sender()
         self.slider_pos = changed_slider.value()
+        labelpos = self.labellist[self.slider_pos]
+        self.twoD_slider.setToolTip(str(self.slider_pos))
+        self.twoD_Label.setText(
+            '{}: {:4f}'.format(self.labelprefix, labelpos))
         self.update_current_data()
         self.initialize_2D_plot()
 
-        # self.update_widgets()
+    def save_txt(self):
+        td_dat = self.new_current_data
+        td_extent = self.new_current_extent
+        xprof_ax, yprof_ax = self.LineProf.get_axes()
+        location = QFileDialog.getSaveFileName(
+            self, 'Choose savename', '.')
+        location = str(location[0])
+        # TODO: Check with basename stuff for potential endings and remove them
+
+        # Save 1D if they are available
+        try:
+            last_line = xprof_ax.lines[-1]
+            xdat, ydat = last_line.get_data()
+            xname = location + '_Xprofile.txt'
+            x_header = 'X Profile\n{}   Intensity'.format(self.xlabel)
+            np.savetxt(xname, np.c_[xdat, ydat], header=x_header)
+        except:
+            print('x error')
+        try:
+            last_line = yprof_ax.lines[-1]
+            xdat, ydat = last_line.get_data()
+            yname = location + '_Yprofile.txt'
+            y_header = 'Y Profile\n{}   Intensity'.format(self.ylabel)
+            np.savetxt(yname, np.c_[xdat, ydat], header=y_header)
+        except:
+            print('y error')
+        # 2D always available, so save them
+        td_name = location + '_2d.txt'
+        td_header = 'Data shape: {}\n Data extent: {}'\
+            .format(td_dat.shape, td_extent)
+        np.savetxt(td_name, td_dat, header=td_header)
+
+    def save_figs(self):
+        location = QFileDialog.getSaveFileName(
+            self, 'Choose savename', '.')
+        location = str(location[0])
+        self.fig.savefig(location + '_2d.png')
+        self.fig_xax.savefig(location + '_XProfile.png')
+        self.fig_yax.savefig(location + '_YProfile.png')

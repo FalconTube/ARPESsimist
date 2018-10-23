@@ -4,17 +4,16 @@ import numpy as np
 import time
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import \
-    QMainWindow, QApplication, QWidget, QPushButton, QVBoxLayout, QHBoxLayout,\
-    QMenu, QMessageBox, QSizePolicy, QFileDialog, QSlider, QLabel, QScrollBar,\
-    QRadioButton, QGroupBox, QGridLayout
-import matplotlib
-from matplotlib.backends.backend_qt5agg \
-    import FigureCanvasQTAgg as FigureCanvas,\
-    NavigationToolbar2QT as NavigationToolbar
-from matplotlib.figure import Figure
-matplotlib.use("Qt5Agg")
+    QMainWindow, QApplication, QWidget,  \
+    QMenu, QMessageBox,  QFileDialog,\
+    QGridLayout, QDialog
+# import matplotlib
+# from matplotlib.backends.backend_qt5agg \
+#     import FigureCanvasQTAgg as FigureCanvas,\
+#     NavigationToolbar2QT as NavigationToolbar
+# from matplotlib.figure import Figure
+# matplotlib.use("Qt5Agg")
 
-# import pyqtgraph as pg
 
 from load_sp2 import Sp2_loader, LoadHDF5
 from plot_2d import TwoD_Plotter
@@ -22,8 +21,9 @@ from mpl_canvas_class import MyMplCanvas
 from data_treatment import Calc_K_space
 from set_parabola_fit import FitParabola
 from lineprofiles import LineProfiles
-from generate_maps import VerticalSlitPolarScan
-# from new_k_window import K_Window
+from generate_maps import VerticalSlitPolarScan, ThreadingKMaps
+from ask_map_parameters import MapParameterBox
+from new_k_window import K_Window
 
 
 class ApplicationWindow(QMainWindow):
@@ -46,8 +46,10 @@ class ApplicationWindow(QMainWindow):
         self.new_current_data = []
         self.new_current_extent = []
         self._current_labelname = ''
+        self.p_min = False
         QMainWindow.__init__(self)
-        self.resize(1000, 800)
+
+        self.resize(950, 950)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("ARPyES")
 
@@ -67,14 +69,13 @@ class ApplicationWindow(QMainWindow):
         self.menuBar().addSeparator()
         self.menuBar().addMenu(self.map_menu)
 
-        self.map_menu.addAction('&Gen K Slice', self.vertical_slit_maps)
+        self.map_menu.addAction('&3D-Map Polar', self.polar_maps)
+        self.map_menu.addAction('&3D-Map Azimuth', self.azi_maps)
 
         # Set up Interaction Menu
-        self.interact_menu = QMenu('&2D', self)
-        self.menuBar().addSeparator()
-        self.menuBar().addMenu(self.interact_menu)
-        # self.interact_menu.addAction('&Fit_parabola', self.fit_parabola)
-        # self.interact_menu.addAction('&Lineprofile', self.lineprofile)
+        # self.interact_menu = QMenu('&2D', self)
+        # self.menuBar().addSeparator()
+        # self.menuBar().addMenu(self.interact_menu)
 
         # Set up Help Menu
         self.help_menu = QMenu('&Help', self)
@@ -92,71 +93,13 @@ class ApplicationWindow(QMainWindow):
         # Instantiate widgets
         self.main_widget = QWidget(self)
 
-        # self.twoD_widget = TwoD_Plotter(self.main_widget)  # Start 2d plotter
-        # self.twoD_label = QLabel()
-        # self.twoD_label.setAlignment(QtCore.Qt.AlignCenter)
-        # self.twoD_label.setText('')
-
-        # Set up radio buttons
-
-        # self.angle_k_button_group = QGroupBox('Choose Dimensions to work in')
-        # self.angle_button = QRadioButton("&Angles", self.main_widget)
-        # self.angle_button.setChecked(True)
-        # self.angle_button.clicked.connect(self.angle_k_button_state)
-        # # self.angle_button.clicked.connect(
-        #     lambda: self.angle_k_button_state(self.angle_button))
-
-        # self.k_button = QRadioButton("K-&Space", self.main_widget)
-        # self.k_button.clicked.connect(self.angle_k_button_state)
-        # self.k_button.toggled.connect(
-        #     lambda: self.angle_k_button_state(self.k_button))
-
         # Instantiate Layout and add widgets
         self.over_layout = QGridLayout(self.main_widget)
 
-        # self.pgplot = pg.PlotWidget()
-        # self.imv = pg.ImageView(self.pgplot)
-        # self.imv.show()
-        # self.over_layout.addWidget(self.pgplot)
-
-        # self.over_layout = QVBoxLayout(self.main_widget)
-
-        # layout.addWidget(t)
-        # self.over_layout.addWidget(self.twoD_widget, 1, 0)
-        # self.over_layout.addWidget(self.twoD_label,  0, 0)
-        # self.over_layout.addWidget(self.pgplot, 0, 1)
-
-        # # Init Parabola Widget and add
-        # self.FitParGui = FitParabola(self.twoD_widget.axes, self.main_widget)
-        # self.FitParGui.init_widget()
-        # self.parabola_widget = self.FitParGui.get_widget()
-        # self.over_layout.addWidget(self.parabola_widget, 1, 2)
-
-        # # Init LineProfile Widget and add
-        # self.LineProf = LineProfiles(self.twoD_widget, self.main_widget)
-        # self.LineProf.init_widget()
-        # self.lineprof_widget = self.LineProf.get_widget()
-        # self.over_layout.addWidget(self.lineprof_widget, 0, 2)
-
-        # Set up angle and k radio buttons
-
-        # self.radio_layout = QHBoxLayout()
-
-        # self.radio_layout.addWidget(self.angle_button)
-        # self.radio_layout.addWidget(self.k_button)
-
-        # self.angle_k_button_group.setLayout(self.radio_layout)
-        # self.over_layout.addWidget(self.angle_k_button_group, 2, 0)
-
-        # self.over_layout.addWidget(self.lineprof_widget)
-
-        # self.setLayout(self.over_layout)
-        # self.over_layout.addLayout(self, self.over_layout)
         self.main_widget.setFocus()
         self.setCentralWidget(self.main_widget)
-        # self.lineprofile()  # Start lineprofiles
 
-        self.statusBar().showMessage("Initial Tests", 2000)
+        self.statusBar().showMessage("Welcome to ARPyES", 2000)
 
     def fileQuit(self):
         ''' Closes current instance '''
@@ -170,20 +113,6 @@ class ApplicationWindow(QMainWindow):
         ''' Prints about '''
         QMessageBox.about(self, "About",
                           """ARPyES""")
-
-    def fit_parabola(self):
-        # FitPar = FitParabola(self.twoD_widget.fig)
-        self.FitParGui = FitParabola(self.twoD_widget.axes, self.main_widget)
-        self.FitParGui.init_widget()
-        self.parabola_widget = self.FitParGui.get_widget()
-        self.over_layout.addWidget(self.parabola_widget, 1, 2)
-
-    def lineprofile(self):
-        # FitPar = FitParabola(self.twoD_widget.fig)
-        self.LineProf = LineProfiles(self.twoD_widget, self.main_widget)
-        self.LineProf.init_widget()
-        self.lineprof_widget = self.LineProf.get_widget()
-        self.over_layout.addWidget(self.lineprof_widget, 0, 2)
 
     def angle_k_button_state(self):
         ''' Switch to angle or k space data set '''
@@ -223,177 +152,116 @@ class ApplicationWindow(QMainWindow):
             pass
 
     def choose_nxs(self):
-        location = QFileDialog.getOpenFileNames(
-            self, 'Select one NXS file to open',
-            '/home/yannic/Documents/PhD/ARPyES/zDisp/SnSe/')
-
-        location = str(location[0][0])
         try:
+            location = QFileDialog.getOpenFileNames(
+                self, 'Select one NXS file to open',
+                '/home/yannic/Documents/PhD/ARPyES/zDisp/SnSe/')
+
+            location = str(location[0][0])
             self.hd5mode = True
             self.sp2 = Sp2_loader()
             self.sp2.multi_file_mode = True
             self.H5loader = LoadHDF5(location)
+            self.statusBar().showMessage("Loading Data...", 2000)
             self.angle_data, self.angle_extent, self.p_min, self.p_max =\
                 self.H5loader.return_data()
+            self.loaded_filenames = range(self.angle_data.shape[0])
             self.load_multiple_files()
         except:
             pass
 
     def load_multiple_files(self):
-        # self.lineprofile()  # Start lineprofiles
-        # self.fit_parabola()
-
         if not self.sp2.multi_file_mode:
             self.processing_data = self.angle_data  # Start with angle data
             self.processing_extent = self.angle_extent
             self.new_current_data = self.processing_data
             self.new_current_extent = self.processing_extent
 
-            # self.initialize_2D_plot()
         else:
             stack_size = self.angle_data.shape[-1]
             self.processing_data = self.angle_data  # Start with angle data
             self.processing_extent = self.angle_extent
             self.update_current_data()
 
-            # self.twoD_slider = self.add_slider(0, stack_size)
-            # self.twoD_slider.valueChanged.connect(self.twoD_slider_changed)
-            # self.over_layout.addWidget(self.twoD_slider, 3, 0)
-            # self.initialize_2D_plot()
-
-            # self.imv.setImage(self.new_current_data)
-            # self.over_layout.addWidget()
-            # self.pgplot.image(self.new_current_data)
-        self.update_widgets()
+        # self.update_widgets()
         if not self.hd5mode:
             self._current_labelname = os.path.basename(
                 self.loaded_filenames[0])
             # self.twoD_label.setText(self._current_labelname)
         self.data_are_loaded = True
-
         self.new_twoD_widget = TwoD_Plotter(self.processing_data,
                                             self.processing_extent,
+                                            self.loaded_filenames,
                                             self.main_widget,
                                             xlabel=r'Angle [$^\circ{}$]',
-                                            ylabel='Energy [eV]')
+                                            ylabel='Energy [eV]',
+                                            appwindow=self,
+                                            labelprefix='Dataset')
         self.over_layout.addWidget(self.new_twoD_widget, 1, 0)
 
-        # Set data for LineProf
-        # self.LineProf.update_data_extent(self.new_current_data,
-        #                                  self.new_current_extent)
-
-        # After loading files, instantiate class for data handling
-        # self.k_thread = Calc_K_space(
-        #     self.angle_data, self.angle_extent)
-        # self.k_thread.finished.connect(self.get_k_space)
-        # self.statusBar().showMessage("Converting to k-space in background...",
-        #                              2000)
-        # self.k_thread.start()
-
-    def vertical_slit_maps(self):
-        All_maps = VerticalSlitPolarScan(
-            self.processing_data, self.processing_extent,
-            self.p_min, self.p_max)
-        # self.edc = All_maps.EDC(0.0, 0.0, 24, 25, 9, 15, NE=50)
+    def thread_polar_maps(self):
         xmin, xmax, ymin, ymax = -1., 1.6, -1., 1.6
-        starttime = time.time()
-        # self.k_slice = All_maps.SliceK_E_range(66.16, 67.33, 0.03, 0., 0.,
-        #                                        kxmin=xmin, kxmax=xmax, kymin=ymin, kymax=ymax)
-        print('Calctime python: {}'.format(time.time()-starttime))
-        starttime = time.time()
-        self.k_slice = All_maps.slice_K_fortran(66.16, 67.84, 0.03, 0., 0,
-                                                kxmin=xmin, kxmax=xmax,
-                                                kymin=ymin, kymax=ymax)
-        # self.k_slice = All_maps.slice_K_fortran(67.33, 67.33, 0.01, 0., 0,
-        #                                         kxmin=xmin, kxmax=xmax,
-        #                                         kymin=ymin, kymax=ymax)
-        extent_stack = list([[xmin, xmax, ymin, ymax]]) * \
-            self.k_slice.shape[-1]
-        # fig, ax = matplotlib.pyplot.subplots()
+        self.kmap_thread = ThreadingKMaps(self.processing_data, self.processing_extent,
+                                          self.p_min, self.p_max, 66.16, 67.84, 0.01, 0., 0,
+                                          kxmin=xmin, kxmax=xmax,
+                                          kymin=ymin, kymax=ymax)
 
-        # ax.imshow(self.k_slice[:, :, 0], extent=[xmin, xmax, ymin, ymax])
-        # ax.set_xlim(xmin, xmax)
-        # ax.set_ylim(ymin, ymax)
-        print('Calctime fortran: {}'.format(time.time()-starttime))
-        self.KWin = K_Window(self.k_slice, extent_stack)
-        self.KWin.show()
+        self.kmap_thread.finished.connect(self.kmap_thread.get)
+        self.kmap_thread.start()
+        # extent_stack = list([[xmin, xmax, ymin, ymax]]) * \
+        #     self.k_slice.shape[-1]
 
-        # # erange = np.linspace(24, 25, len(self.edc))
-        # # matplotlib.pyplot.plot(erange, self.edc)
-        # matplotlib.pyplot.show()
+        # self.KWin = K_Window(self.k_slice, extent_stack)
+        # self.KWin.show()
+
+    def gen_maps(self):
+        if self.p_min:
+            parameters = MapParameterBox(pol_present=True)
+        else:
+            parameters = MapParameterBox(pol_present=False)
+        if parameters.exec_() == parameters.Accepted:
+            outvalues = parameters.get_values()
+            self.statusBar().showMessage(
+                "Generating Map. This will take a couple seconds...", 2000)
+            if not self.p_min:
+                ksteps, esteps, pol_off, d_tilt, d_azi, tilt, azi,\
+                    self.p_min, self.p_max = outvalues
+            else:
+                ksteps, esteps, pol_off, d_tilt, d_azi, tilt, azi = outvalues
+            All_maps = VerticalSlitPolarScan(
+                self.processing_data, self.processing_extent,
+                self.p_min, self.p_max, d0=pol_off)
+            kx_slice, ky_slice, ke_slice,\
+                kxmin, kxmax, kymin, kymax,\
+                kx_list, ky_list, E_list =\
+                All_maps.slice_K_fortran(
+                    ksteps, esteps, azi, tilt, self.use_azi)
+
+            extent_stack = list([[kxmin, kxmax, kymin, kymax]]) * \
+                kx_slice.shape[-1]
+            self.KxWin = K_Window(
+                kx_slice, extent_stack, E_list, labelprefix='Energy [eV]')
+            self.KxWin.show()
+
+            self.KyWin = K_Window(
+                ky_slice, extent_stack, kx_list, labelprefix='Kx')
+            self.KyWin.show()
+
+            self.KEWin = K_Window(
+                ke_slice, extent_stack, ky_list, labelprefix='Ky')
+            self.KEWin.show()
+
+    def polar_maps(self):
+        self.use_azi = False
+        self.gen_maps()
+
+    def azi_maps(self):
+        self.use_azi = True
+        self.gen_maps()
 
     def update_current_data(self):
         self.new_current_data = self.processing_data[:, :, self.slider_pos]
         self.new_current_extent = self.processing_extent[self.slider_pos]
-
-    def update_widgets(self):
-        pass
-        # self.twoD_widget.LineProf.update_data_extent(self.new_current_data,
-        #                                              self.new_current_extent)
-        # self.twoD_widget.FitParGui.update_parabola()
-
-    def get_k_space(self):
-        self.k_data, self.k_extent, self.k_space_generated = self.k_thread.get()
-        # self.current_data_k = self.k_data[:, :, self.slider_pos]
-        # self.current_extent_k = self.k_extent[self.slider_pos]
-        self.statusBar().showMessage("k-space conversion finished!", 2000)
-
-    def initialize_2D_plot(self):
-        self.twoD_widget.update_2d_data(self.new_current_data)
-        self.twoD_widget.update_2dplot(self.new_current_extent)
-
-    def add_slider(self, lower: int, upper: int):
-        slider_bar = QSlider(QtCore.Qt.Horizontal, self)
-        slider_bar.setRange(lower, upper-1)
-        slider_bar.setTickInterval(5)
-        slider_bar.setSingleStep(1)
-        slider_bar.setPageStep(10)
-        return slider_bar
-
-    def twoD_slider_changed(self, value):
-        changed_slider = self.sender()
-        self.slider_pos = changed_slider.value()
-        if not self.hd5mode:
-            self._current_labelname = os.path.basename(
-                self.loaded_filenames[self.slider_pos])
-            self.twoD_label.setText(self._current_labelname)
-        self.update_current_data()
-        self.initialize_2D_plot()
-
-        self.update_widgets()
-
-
-class K_Window(QMainWindow):
-    ''' Instantiates new window for k data treatment '''
-
-    def __init__(self, k_stack, k_extent):
-        QMainWindow.__init__(self)
-        # super.__init__(self)
-        self.setWindowTitle('K Data Handler')
-
-        # Set up File Menu
-        self.file_menu = QMenu('&File', self)
-        self.file_menu.addAction('&Quit', self.fileQuit,
-                                 QtCore.Qt.CTRL + QtCore.Qt.Key_Q)
-
-        self.menuBar().addMenu(self.file_menu)
-        self.k_win_widget = QWidget(self)
-        self.k_k_widget = TwoD_Plotter(
-            k_stack, k_extent, self.k_win_widget
-        )  # Start 2d plotter
-        self.over_layout = QGridLayout(self.k_win_widget)
-        self.over_layout.addWidget(self.k_k_widget, 1, 0)
-        self.k_win_widget.setFocus()
-        self.setCentralWidget(self.k_win_widget)
-        # self.k_k_label = QLabel()
-        # self.k_k_label.setAlignment(QtCore.Qt.AlignCenter)
-        # self.k_k_label.setText('')
-        # self.k_k_widget.update_2d_data(k_stack)
-        # self.k_k_widget.update_2dplot(k_extent)
-
-    def fileQuit(self):
-        ''' Closes current instance '''
-        self.close()
 
 
 if __name__ == '__main__':

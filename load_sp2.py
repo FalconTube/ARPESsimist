@@ -68,7 +68,6 @@ class Sp2_loader():
         data = self.reshape_data(rawdata, ydim)
         extent = [ranges_dict['a_min'], ranges_dict['a_max'],
                   ranges_dict['E_min'], ranges_dict['E_max']]
-        print(extent)
 
         if both_sets:
             data1 = self.reshape_data(rawdata1, ydim)
