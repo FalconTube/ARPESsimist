@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import \
     QMainWindow, QApplication, QWidget,  \
     QMenu, QMessageBox,  QFileDialog,\
     QGridLayout, QDialog
+from PyQt5.QtGui import QIcon
 # import matplotlib
 # from matplotlib.backends.backend_qt5agg \
 #     import FigureCanvasQTAgg as FigureCanvas,\
@@ -51,7 +52,9 @@ class ApplicationWindow(QMainWindow):
 
         self.resize(950, 950)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        self.setWindowTitle("ARPyES")
+        self.setWindowTitle("ARPESsimist")
+        self.setWindowIcon(QIcon('logo_black.png'))
+        # self.setWindowIcon(QtCore.Qt.QIcon('logo.png'))
 
         # Set up File Menu
         self.file_menu = QMenu('&File', self)
@@ -140,7 +143,7 @@ class ApplicationWindow(QMainWindow):
     def choose_sp2(self):
         many_files = QFileDialog.getOpenFileNames(
             self, 'Select one or more files to open',
-            '/home/yannic/Documents/stuff/feb/06/sampl2map/')
+            '/home/yannic/Documents/PhD/ARPyES/zDisp/azimap/')
         try:
             self.sp2 = Sp2_loader()
             self.loaded_filenames = self.sp2.tidy_up_list(many_files[0])
@@ -158,11 +161,11 @@ class ApplicationWindow(QMainWindow):
                 '/home/yannic/Documents/PhD/ARPyES/zDisp/SnSe/')
 
             location = str(location[0][0])
+            self.statusBar().showMessage("Loading Data...", 2000)
             self.hd5mode = True
             self.sp2 = Sp2_loader()
             self.sp2.multi_file_mode = True
             self.H5loader = LoadHDF5(location)
-            self.statusBar().showMessage("Loading Data...", 2000)
             self.angle_data, self.angle_extent, self.p_min, self.p_max =\
                 self.H5loader.return_data()
             self.loaded_filenames = range(self.angle_data.shape[0])
@@ -216,21 +219,22 @@ class ApplicationWindow(QMainWindow):
 
     def gen_maps(self):
         if self.p_min:
-            parameters = MapParameterBox(pol_present=True)
+            parameters = MapParameterBox(pol_map=True)
         else:
-            parameters = MapParameterBox(pol_present=False)
+            parameters = MapParameterBox(pol_map=False)
         if parameters.exec_() == parameters.Accepted:
             outvalues = parameters.get_values()
             self.statusBar().showMessage(
                 "Generating Map. This will take a couple seconds...", 2000)
             if not self.p_min:
-                ksteps, esteps, pol_off, d_tilt, d_azi, tilt, azi,\
+                ksteps, esteps, pol_off, angle_off, tilt, azi,\
                     self.p_min, self.p_max = outvalues
             else:
-                ksteps, esteps, pol_off, d_tilt, d_azi, tilt, azi = outvalues
+                ksteps, esteps, pol_off, angle_off, tilt, azi = outvalues
             All_maps = VerticalSlitPolarScan(
                 self.processing_data, self.processing_extent,
-                self.p_min, self.p_max, d0=pol_off)
+                self.p_min, self.p_max, angle_offset=angle_off)
+
             kx_slice, ky_slice, ke_slice,\
                 kxmin, kxmax, kymin, kymax,\
                 kx_list, ky_list, E_list =\
@@ -239,6 +243,7 @@ class ApplicationWindow(QMainWindow):
 
             extent_stack = list([[kxmin, kxmax, kymin, kymax]]) * \
                 kx_slice.shape[-1]
+
             self.KxWin = K_Window(
                 kx_slice, extent_stack, E_list, labelprefix='Energy [eV]')
             self.KxWin.show()
@@ -250,6 +255,7 @@ class ApplicationWindow(QMainWindow):
             self.KEWin = K_Window(
                 ke_slice, extent_stack, ky_list, labelprefix='Ky')
             self.KEWin.show()
+        self.p_min = None
 
     def polar_maps(self):
         self.use_azi = False

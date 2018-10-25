@@ -240,13 +240,19 @@ use bspline_sub_module
             xpoint = -pol_angle * rad
             ypoint = zeval
             zpoint = -az * rad
-            print *, pol_angle, az
-            print *, xpoint, ypoint, zpoint
+            if (isnan(xpoint)) then
+              xpoint = 0d0
+            end if
+            if (isnan(zpoint)) then
+              zpoint = 0d0
+            end if
+            ! print *, pol_angle, az
+            ! print *, 'x', xpoint, 'y', ypoint, 'z', zpoint
+            ! print *, 'z', zpoint
         
             call db3val(xpoint,ypoint,zpoint,idx,idy,idz,tx,ty,tz,nx,ny,nz,&
                         knot_x,knot_y,knot_z,outcoeff,outval,iflag(2),&
                         inbvx,inbvy,inbvz,iloy,iloz)
-            print *, outval
             outarray(countx, county, countz) = outval
             
           end do  

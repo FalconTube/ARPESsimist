@@ -1,4 +1,5 @@
 from PyQt5 import QtCore
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import \
     QMainWindow, QWidget, QGridLayout, QMenu
 from plot_2d import TwoD_Plotter
@@ -11,6 +12,7 @@ class K_Window(QMainWindow):
         QMainWindow.__init__(self)
         # super.__init__(self)
         self.setWindowTitle('K Data Handler')
+        self.setWindowIcon(QIcon('logo_black.png'))
 
         # Set up File Menu
         self.file_menu = QMenu('&File', self)

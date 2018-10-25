@@ -35,8 +35,20 @@ class TwoD_Plotter(MyMplCanvas):
         self.twoD_Label = QLabel(self)
         self.twoD_Label.setAlignment(QtCore.Qt.AlignCenter)
         self.twoD_slider.valueChanged.connect(self.twoD_slider_changed)
+
+        # Add vmax Slider
+        self.vmax_slider = self.add_slider(0, np.amax(self.processing_data),
+                                           'vert')
+        self.vmax_slider.setSliderPosition(np.amax(self.processing_data))
+        self.vmax_label = QLabel('L\nU\nT', self)
+        self.vmax_label.setAlignment(QtCore.Qt.AlignCenter)
+        # self.vmax_label.setAlignment(QtCore.Qt.Vertical)
+        self.vmax_slider.valueChanged.connect(self.update_vmax)
+
         self.main_layout.addWidget(self.twoD_slider)
         self.main_layout.addWidget(self.twoD_Label)
+        self.grid_layout.addWidget(self.vmax_slider, 0, 2)
+        self.grid_layout.addWidget(self.vmax_label, 0, 3)
         self.set_xylabels()
         self.export_menu = QMenu('&Export Data', parent)
         appwindow.menuBar().addSeparator()
@@ -54,6 +66,12 @@ class TwoD_Plotter(MyMplCanvas):
         self.axes.figure.canvas.update()
         self.xprof_ax.figure.canvas.update()
         self.yprof_ax.figure.canvas.update()
+
+    def update_vmax(self, value):
+        changed_slider = self.sender()
+        self.slider_pos = changed_slider.value()
+        self.twoD_ax.set_clim(0, self.slider_pos)
+        self.update_2dplot()
 
     def update_2dplot(self, extent=None):
         if extent:
@@ -107,8 +125,11 @@ class TwoD_Plotter(MyMplCanvas):
         self.update_2d_data(self.new_current_data)
         self.update_2dplot(self.new_current_extent)
 
-    def add_slider(self, lower: int, upper: int):
-        slider_bar = QSlider(QtCore.Qt.Horizontal, self)
+    def add_slider(self, lower: int, upper: int, orient='hor'):
+        if orient == 'hor':
+            slider_bar = QSlider(QtCore.Qt.Horizontal, self)
+        else:
+            slider_bar = QSlider(QtCore.Qt.Vertical, self)
         slider_bar.setRange(lower, upper-1)
         slider_bar.setTickInterval(5)
         slider_bar.setSingleStep(1)
@@ -121,8 +142,12 @@ class TwoD_Plotter(MyMplCanvas):
         self.slider_pos = changed_slider.value()
         labelpos = self.labellist[self.slider_pos]
         self.twoD_slider.setToolTip(str(self.slider_pos))
-        self.twoD_Label.setText(
-            '{}: {:4f}'.format(self.labelprefix, labelpos))
+        try:
+            self.twoD_Label.setText(
+                '{}: {:4f}'.format(self.labelprefix, labelpos))
+        except:
+            self.twoD_Label.setText(
+                '{}: {}'.format(self.labelprefix, labelpos))
         self.update_current_data()
         self.initialize_2D_plot()
 
