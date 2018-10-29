@@ -24,5 +24,5 @@ def main():
     # A new instance of QApplication
     app = QtWidgets.QApplication(sys.argv)
     # We set the form to be our MainWindow (design)
-    form = ProgressBar('pbar')
+    form = ProgressBar("pbar")
     app.exec_()

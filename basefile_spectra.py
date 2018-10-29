@@ -87,35 +87,43 @@ class SpectraBase(object):
         self.xvals = np.linspace(xlimits[0], xlimits[1], data.shape[1])
         self.yvals = np.linspace(ylimits[0], ylimits[1], data.shape[0])
         # linear interpolation of data
-        self.IDATA = interp2d(self.xvals, self.yvals, data, fill_value=0.)
+        self.IDATA = interp2d(self.xvals, self.yvals, data, fill_value=0.0)
         self.xLimits = np.array(xlimits)
         self.yLimits = np.array(ylimits)
 
-    def lineprofileX(self, yval, breadth=0.):
+    def lineprofileX(self, yval, breadth=0.0):
         """
         returns the lineprofile along the x direction for a given y value with a broadening breadth
         :param yval: float
         :param breadth: float
         :return: xvalues, profile both as 1d arrays
         """
-        profile = np.sum(self.IDATA(self.xvals, [
-                         yval - 0.5*breadth + breadth*float(i)/20.
-                         for i in range(21)]), axis=0)
+        profile = np.sum(
+            self.IDATA(
+                self.xvals,
+                [yval - 0.5 * breadth + breadth * float(i) / 20.0 for i in range(21)],
+            ),
+            axis=0,
+        )
         return self.xvals, profile
 
-    def lineprofileY(self, xval, breadth=0.):
+    def lineprofileY(self, xval, breadth=0.0):
         """
         returns the lineprofile along the y direction for a given x value with a broadening breadth
         :param xval: float
         :param breadth: float
         :return: yvalues, profile both as 1d arrays
         """
-        profile = np.sum(self.IDATA(
-            [xval - 0.5 * breadth + breadth * float(i)/20.
-             for i in range(21)], self.yvals), axis=1)
+        profile = np.sum(
+            self.IDATA(
+                [xval - 0.5 * breadth + breadth * float(i) / 20.0 for i in range(21)],
+                self.yvals,
+            ),
+            axis=1,
+        )
         return self.yvals, profile
 
-    def lineprofileXY(self, dim, val, breadth=0.):
+    def lineprofileXY(self, dim, val, breadth=0.0):
         """
         combines lineprofileX and lineprofileY, choose dimension via dim
         :param dim: "x" or "y" string
@@ -141,9 +149,11 @@ class SpectraBase(object):
         :return: lineprofile as a 1d array
         """
         N = int(N)
-        dv = (np.array(endpnt) - np.array(strtpnt))/N
-        profile = [self.IDATA(strtpnt[0] + dv[0]*i,
-                              strtpnt[1]+dv[1]*i)[0] for i in range(N)]
+        dv = (np.array(endpnt) - np.array(strtpnt)) / N
+        profile = [
+            self.IDATA(strtpnt[0] + dv[0] * i, strtpnt[1] + dv[1] * i)[0]
+            for i in range(N)
+        ]
         return np.linspace(0, 1, N), profile
 
     def adjust_Fermilevel(self, xList, yList):
@@ -160,8 +170,7 @@ class SpectraBase(object):
         temp_data = np.zeros((len(self.yvals), len(self.xvals)))
         count = 0
         for xi in self.xvals:
-            temp_data[:, count] = self.IDATA(
-                xi, self.yvals + level(xi) - level0)[:, 0]
+            temp_data[:, count] = self.IDATA(xi, self.yvals + level(xi) - level0)[:, 0]
             count += 1
         # self.DATA = temp_data
         self.reinterpolate_data(temp_data)
@@ -186,16 +195,14 @@ class SpectraBase(object):
         """
         generate new xvals and yvals after changing limits
         """
-        self.xvals = np.linspace(
-            self.xLimits[0], self.xLimits[1], len(self.xvals))
-        self.yvals = np.linspace(
-            self.yLimits[0], self.yLimits[1], len(self.yvals))
+        self.xvals = np.linspace(self.xLimits[0], self.xLimits[1], len(self.xvals))
+        self.yvals = np.linspace(self.yLimits[0], self.yLimits[1], len(self.yvals))
 
     def reinterpolate_data(self, data):
         """
         reinterpolate data after changing xvals or yvals
         """
-        self.IDATA = interp2d(self.xvals, self.yvals, data, fill_value=0.)
+        self.IDATA = interp2d(self.xvals, self.yvals, data, fill_value=0.0)
 
     def cutData(self, dim: str, limit_min: float, limit_max: float):
         """
@@ -228,16 +235,24 @@ class SpectraBase(object):
         if dim == "x":
             tempdat = self.IDATA(self.xvals, self.yvals)
             for p in range(passes):
-                tempdat = convolve1d(tempdat, np.array(
-                    [1.]*num), axis=1, mode='nearest')
+                tempdat = convolve1d(
+                    tempdat, np.array([1.0] * num), axis=1, mode="nearest"
+                )
         elif dim == "y":
             tempdat = self.IDATA(self.xvals, self.yvals)
             for p in range(passes):
-                tempdat = convolve1d(tempdat, np.array(
-                    [1.] * num), axis=0, mode='nearest')
+                tempdat = convolve1d(
+                    tempdat, np.array([1.0] * num), axis=0, mode="nearest"
+                )
         else:
-            print("smoothing not possible: (dim, num, passes) ",
-                  dim, ",", num, ",", passes)
+            print(
+                "smoothing not possible: (dim, num, passes) ",
+                dim,
+                ",",
+                num,
+                ",",
+                passes,
+            )
             tempdat = self.IDATA(self.xvals, self.yvals)
         return tempdat
 
@@ -252,14 +267,18 @@ class SpectraBase(object):
         """
         smth = self.smoothData(dim, num, passes)
         if dim == "x":
-            d2 = convolve1d(smth, np.array(
-                [1., -2., 1.]), axis=1, mode='nearest')
+            d2 = convolve1d(smth, np.array([1.0, -2.0, 1.0]), axis=1, mode="nearest")
         elif dim == "y":
-            d2 = convolve1d(smth, np.array(
-                [1., -2., 1.]), axis=0, mode='nearest')
+            d2 = convolve1d(smth, np.array([1.0, -2.0, 1.0]), axis=0, mode="nearest")
         else:
-            print("2nd derivative not possible: (dim, num, passes) ",
-                  dim, ",", num, ",", passes)
+            print(
+                "2nd derivative not possible: (dim, num, passes) ",
+                dim,
+                ",",
+                num,
+                ",",
+                passes,
+            )
             d2 = self.IDATA(self.xvals, self.yvals)
         return d2
 
@@ -271,9 +290,9 @@ class Spectra(SpectraBase):
     """
 
     kSpace = False
-    xlabel = 'Angle [deg]'
-    xlabelK = 'Wavevector [$\mathrm{\AA^{-1}}]$'
-    ylabel = 'Energy [eV]'
+    xlabel = "Angle [deg]"
+    xlabelK = "Wavevector [$\mathrm{\AA^{-1}}]$"
+    ylabel = "Energy [eV]"
 
     def convertKtoAngle(self, k, E):
         """
@@ -283,8 +302,12 @@ class Spectra(SpectraBase):
         :return:
         """
         ev_to_j = 1.6e-19
-        return np.sign(k)*np.arcsin(hbar*(np.sign(k)*k*1e10)
-                                    / np.sqrt(2*m_e*E*ev_to_j))*180./np.pi
+        return (
+            np.sign(k)
+            * np.arcsin(hbar * (np.sign(k) * k * 1e10) / np.sqrt(2 * m_e * E * ev_to_j))
+            * 180.0
+            / np.pi
+        )
 
     def convertAngleToK(self, a, E):
         """
@@ -294,7 +317,7 @@ class Spectra(SpectraBase):
         :return:
         """
         ev_to_j = 1.6e-19
-        return np.sqrt(2*m_e*E*ev_to_j)*np.sin(a*np.pi/180.)*1e-10 / hbar
+        return np.sqrt(2 * m_e * E * ev_to_j) * np.sin(a * np.pi / 180.0) * 1e-10 / hbar
 
     def convertToKSpace(self):
         """
@@ -308,14 +331,23 @@ class Spectra(SpectraBase):
             amax, amin = np.amax(self.xvals), np.amin(self.xvals)
             Emax, Emin = np.amax(self.yvals), np.amin(self.yvals)
             if amax < 0 and amin < 0:
-                kvals = np.linspace(self.convertAngleToK(
-                    amin, Emax), self.convertAngleToK(amax, Emin), len(self.xvals))
+                kvals = np.linspace(
+                    self.convertAngleToK(amin, Emax),
+                    self.convertAngleToK(amax, Emin),
+                    len(self.xvals),
+                )
             elif amax > 0 and amin > 0:
-                kvals = np.linspace(self.convertAngleToK(
-                    amin, Emin), self.convertAngleToK(amax, Emax), len(self.xvals))
+                kvals = np.linspace(
+                    self.convertAngleToK(amin, Emin),
+                    self.convertAngleToK(amax, Emax),
+                    len(self.xvals),
+                )
             else:
-                kvals = np.linspace(self.convertAngleToK(
-                    amin, Emax), self.convertAngleToK(amax, Emax), len(self.xvals))
+                kvals = np.linspace(
+                    self.convertAngleToK(amin, Emax),
+                    self.convertAngleToK(amax, Emax),
+                    len(self.xvals),
+                )
             kmax, kmin = np.amax(kvals), np.amin(kvals)
             count = 0
             for E in self.yvals:
@@ -330,18 +362,23 @@ class Spectra(SpectraBase):
 
     def get_current_space(self):
         intens = self.IDATA(self.xvals, self.yvals)
-        extent = [self.xLimits[0], self.xLimits[1],
-                  self.yLimits[0], self.yLimits[1]]
+        extent = [self.xLimits[0], self.xLimits[1], self.yLimits[0], self.yLimits[1]]
         return intens, extent
 
 
-if __name__ == '__main__':
-    dat = np.loadtxt('C:\\Users\\Niels Ehlen\\Desktop\\SnSe\\data.txt')
-    Spec = Spectra(dat, [-23.943889, 23.943889], [66.158410, 67.841590],
-                   'C:\\Users\\Niels Ehlen\\Desktop\\SnSe\\i05-80039.axe')
+if __name__ == "__main__":
+    dat = np.loadtxt("C:\\Users\\Niels Ehlen\\Desktop\\SnSe\\data.txt")
+    Spec = Spectra(
+        dat,
+        [-23.943889, 23.943889],
+        [66.158410, 67.841590],
+        "C:\\Users\\Niels Ehlen\\Desktop\\SnSe\\i05-80039.axe",
+    )
     Spec.cutData("y", 66.2, 67.8)
-    Spec.adjust_Fermilevel([-17.72, -12.75, -7.75, -2.36, 0.29, 5.5, 10.9, 14.0, 18.5],
-                           [67.33, 67.3475, 67.3635, 67.3678, 67.3718, 67.369, 67.36, 67.351, 67.33])
+    Spec.adjust_Fermilevel(
+        [-17.72, -12.75, -7.75, -2.36, 0.29, 5.5, 10.9, 14.0, 18.5],
+        [67.33, 67.3475, 67.3635, 67.3678, 67.3718, 67.369, 67.36, 67.351, 67.33],
+    )
 
     # Spec.secondDerivative("x",3,10)
     Spec.cutData("x", -16, 16)

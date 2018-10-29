@@ -3,11 +3,18 @@ import os
 import numpy as np
 import time
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import \
-    QMainWindow, QApplication, QWidget,  \
-    QMenu, QMessageBox,  QFileDialog,\
-    QGridLayout, QDialog
+from PyQt5.QtWidgets import (
+    QMainWindow,
+    QApplication,
+    QWidget,
+    QMenu,
+    QMessageBox,
+    QFileDialog,
+    QGridLayout,
+    QDialog,
+)
 from PyQt5.QtGui import QIcon
+
 # import matplotlib
 # from matplotlib.backends.backend_qt5agg \
 #     import FigureCanvasQTAgg as FigureCanvas,\
@@ -28,7 +35,7 @@ from new_k_window import K_Window
 
 
 class ApplicationWindow(QMainWindow):
-    ''' Main Application Window '''
+    """ Main Application Window """
 
     def __init__(self):
         self.hd5mode = False
@@ -42,38 +49,38 @@ class ApplicationWindow(QMainWindow):
         self.k_space_generated = False
         self.data_are_loaded = False
         self.select_k_space = False
+        self.new_twoD_widget = False
         self.k_data = []
         self.k_extent = []
         self.new_current_data = []
         self.new_current_extent = []
-        self._current_labelname = ''
+        self._current_labelname = ""
         self.p_min = False
         QMainWindow.__init__(self)
 
         self.resize(950, 950)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("ARPESsimist")
-        self.setWindowIcon(QIcon('logo_black.png'))
+        self.setWindowIcon(QIcon("logo_black.png"))
         # self.setWindowIcon(QtCore.Qt.QIcon('logo.png'))
 
         # Set up File Menu
-        self.file_menu = QMenu('&File', self)
+        self.file_menu = QMenu("&File", self)
+        self.file_menu.addAction("&Load Sp2 Files", self.choose_sp2)
+        self.file_menu.addAction("&Load NXS Files", self.choose_nxs)
         self.file_menu.addAction(
-            '&Load Sp2 Files', self.choose_sp2)
-        self.file_menu.addAction(
-            '&Load NXS Files', self.choose_nxs)
-        self.file_menu.addAction('&Quit', self.fileQuit,
-                                 QtCore.Qt.CTRL + QtCore.Qt.Key_Q)
+            "&Quit", self.fileQuit, QtCore.Qt.CTRL + QtCore.Qt.Key_Q
+        )
 
         self.menuBar().addMenu(self.file_menu)
 
         # Set up Mapping Menu
-        self.map_menu = QMenu('&Map', self)
+        self.map_menu = QMenu("&Map", self)
         self.menuBar().addSeparator()
         self.menuBar().addMenu(self.map_menu)
 
-        self.map_menu.addAction('&3D-Map Polar', self.polar_maps)
-        self.map_menu.addAction('&3D-Map Azimuth', self.azi_maps)
+        self.map_menu.addAction("&3D-Map Polar", self.polar_maps)
+        self.map_menu.addAction("&3D-Map Azimuth", self.azi_maps)
 
         # Set up Interaction Menu
         # self.interact_menu = QMenu('&2D', self)
@@ -81,17 +88,11 @@ class ApplicationWindow(QMainWindow):
         # self.menuBar().addMenu(self.interact_menu)
 
         # Set up Help Menu
-        self.help_menu = QMenu('&Help', self)
+        self.help_menu = QMenu("&Help", self)
         self.menuBar().addSeparator()
         self.menuBar().addMenu(self.help_menu)
 
-        self.help_menu.addAction('&About', self.about)
-
-        # Set up subwidgets
-
-        # Set up buttons
-        # self.k_button = QPushButton('&Convert to k-space', self)
-        # self.k_button.released.connect(self.gen_k_space)
+        self.help_menu.addAction("&About", self.about)
 
         # Instantiate widgets
         self.main_widget = QWidget(self)
@@ -105,20 +106,19 @@ class ApplicationWindow(QMainWindow):
         self.statusBar().showMessage("Welcome to ARPyES", 2000)
 
     def fileQuit(self):
-        ''' Closes current instance '''
+        """ Closes current instance """
         self.close()
 
     def closeEvent(self, ce):
-        ''' Closes current event '''
+        """ Closes current event """
         self.fileQuit()
 
     def about(self):
-        ''' Prints about '''
-        QMessageBox.about(self, "About",
-                          """ARPyES""")
+        """ Prints about """
+        QMessageBox.about(self, "About", """ARPyES""")
 
     def angle_k_button_state(self):
-        ''' Switch to angle or k space data set '''
+        """ Switch to angle or k space data set """
         if not self.k_space_generated:
             self.k_space_generated = True
             # QMessageBox.about(self, 'Error',
@@ -141,24 +141,31 @@ class ApplicationWindow(QMainWindow):
             #                       'Please load some data')
 
     def choose_sp2(self):
+        self.p_min = None
         many_files = QFileDialog.getOpenFileNames(
-            self, 'Select one or more files to open',
-            '/home/yannic/Documents/PhD/ARPyES/zDisp/azimap/')
+            self,
+            "Select one or more files to open",
+            "/home/yannic/Documents/PhD/ARPyES/zDisp/azimap/",
+        )
         try:
             self.sp2 = Sp2_loader()
             self.loaded_filenames = self.sp2.tidy_up_list(many_files[0])
             self.statusBar().showMessage("Loading Data...", 2000)
             self.angle_data, self.angle_extent = self.sp2.read_multiple_sp2(
-                self.loaded_filenames)
+                self.loaded_filenames
+            )
             self.load_multiple_files()
         except:
             pass
 
     def choose_nxs(self):
+        self.p_min = None
         try:
             location = QFileDialog.getOpenFileNames(
-                self, 'Select one NXS file to open',
-                '/home/yannic/Documents/PhD/ARPyES/zDisp/SnSe/')
+                self,
+                "Select one NXS file to open",
+                "/home/yannic/Documents/PhD/ARPyES/zDisp/SnSe/",
+            )
 
             location = str(location[0][0])
             self.statusBar().showMessage("Loading Data...", 2000)
@@ -166,14 +173,18 @@ class ApplicationWindow(QMainWindow):
             self.sp2 = Sp2_loader()
             self.sp2.multi_file_mode = True
             self.H5loader = LoadHDF5(location)
-            self.angle_data, self.angle_extent, self.p_min, self.p_max =\
+            self.angle_data, self.angle_extent, self.p_min, self.p_max = (
                 self.H5loader.return_data()
+            )
+
             self.loaded_filenames = range(self.angle_data.shape[0])
             self.load_multiple_files()
         except:
             pass
 
     def load_multiple_files(self):
+        if self.new_twoD_widget:
+            self.new_twoD_widget.deleteLater()
         if not self.sp2.multi_file_mode:
             self.processing_data = self.angle_data  # Start with angle data
             self.processing_extent = self.angle_extent
@@ -188,26 +199,38 @@ class ApplicationWindow(QMainWindow):
 
         # self.update_widgets()
         if not self.hd5mode:
-            self._current_labelname = os.path.basename(
-                self.loaded_filenames[0])
+            self._current_labelname = os.path.basename(self.loaded_filenames[0])
             # self.twoD_label.setText(self._current_labelname)
         self.data_are_loaded = True
-        self.new_twoD_widget = TwoD_Plotter(self.processing_data,
-                                            self.processing_extent,
-                                            self.loaded_filenames,
-                                            self.main_widget,
-                                            xlabel=r'Angle [$^\circ{}$]',
-                                            ylabel='Energy [eV]',
-                                            appwindow=self,
-                                            labelprefix='Dataset')
+        self.new_twoD_widget = TwoD_Plotter(
+            self.processing_data,
+            self.processing_extent,
+            self.loaded_filenames,
+            self.main_widget,
+            xlabel=r"Angle [$^\circ{}$]",
+            ylabel="Energy [eV]",
+            appwindow=self,
+            labelprefix="Dataset",
+        )
         self.over_layout.addWidget(self.new_twoD_widget, 1, 0)
 
     def thread_polar_maps(self):
-        xmin, xmax, ymin, ymax = -1., 1.6, -1., 1.6
-        self.kmap_thread = ThreadingKMaps(self.processing_data, self.processing_extent,
-                                          self.p_min, self.p_max, 66.16, 67.84, 0.01, 0., 0,
-                                          kxmin=xmin, kxmax=xmax,
-                                          kymin=ymin, kymax=ymax)
+        xmin, xmax, ymin, ymax = -1.0, 1.6, -1.0, 1.6
+        self.kmap_thread = ThreadingKMaps(
+            self.processing_data,
+            self.processing_extent,
+            self.p_min,
+            self.p_max,
+            66.16,
+            67.84,
+            0.01,
+            0.0,
+            0,
+            kxmin=xmin,
+            kxmax=xmax,
+            kymin=ymin,
+            kymax=ymax,
+        )
 
         self.kmap_thread.finished.connect(self.kmap_thread.get)
         self.kmap_thread.start()
@@ -225,36 +248,67 @@ class ApplicationWindow(QMainWindow):
         if parameters.exec_() == parameters.Accepted:
             outvalues = parameters.get_values()
             self.statusBar().showMessage(
-                "Generating Map. This will take a couple seconds...", 2000)
+                "Generating Map. This will take a couple seconds...", 2000
+            )
             if not self.p_min:
-                ksteps, esteps, pol_off, angle_off, tilt, azi,\
-                    self.p_min, self.p_max = outvalues
+                ksteps, esteps, pol_off, angle_off, tilt, azi, self.p_min, self.p_max = (
+                    outvalues
+                )
             else:
                 ksteps, esteps, pol_off, angle_off, tilt, azi = outvalues
+
+            # Check if data will overflow memory
+            self.check_ram_usage()
+
             All_maps = VerticalSlitPolarScan(
-                self.processing_data, self.processing_extent,
-                self.p_min, self.p_max, angle_offset=angle_off)
+                self.processing_data,
+                self.processing_extent,
+                self.p_min,
+                self.p_max,
+                angle_offset=angle_off,
+            )
 
-            kx_slice, ky_slice, ke_slice,\
-                kxmin, kxmax, kymin, kymax,\
-                kx_list, ky_list, E_list =\
-                All_maps.slice_K_fortran(
-                    ksteps, esteps, azi, tilt, self.use_azi)
+            ke_slice, ky_slice, kx_slice, kxmin, kxmax, kymin, kymax, kx_list, ky_list, E_list = All_maps.slice_K_fortran(
+                ksteps, esteps, azi, tilt, self.use_azi
+            )
 
-            extent_stack = list([[kxmin, kxmax, kymin, kymax]]) * \
-                kx_slice.shape[-1]
-
-            self.KxWin = K_Window(
-                kx_slice, extent_stack, E_list, labelprefix='Energy [eV]')
-            self.KxWin.show()
-
-            self.KyWin = K_Window(
-                ky_slice, extent_stack, kx_list, labelprefix='Kx')
-            self.KyWin.show()
+            extent_stack_E = list([[kxmin, kxmax, kymax, kymin]]) * ke_slice.shape[-1]
+            extent_stack_ky = (
+                list([[kxmin, kxmax, min(E_list), max(E_list)]]) * ky_slice.shape[-1]
+            )
+            extent_stack_kx = (
+                list([[kxmin, kxmax, min(E_list), max(E_list)]]) * kx_slice.shape[-1]
+            )
 
             self.KEWin = K_Window(
-                ke_slice, extent_stack, ky_list, labelprefix='Ky')
+                ke_slice,
+                extent_stack_E,
+                E_list,
+                labelprefix="Energy [eV]",
+                xlabel=r"kx [$\mathrm{\AA^{-1}}$]",
+                ylabel=r"ky [$\mathrm{\AA^{-1}}$]",
+            )
             self.KEWin.show()
+
+            self.KyWin = K_Window(
+                ky_slice,
+                extent_stack_ky,
+                kx_list,
+                labelprefix="Kx",
+                xlabel=r"ky [$\mathrm{\AA^{-1}}$]",
+                ylabel="E [eV]",
+            )
+            self.KyWin.show()
+
+            self.KxWin = K_Window(
+                kx_slice,
+                extent_stack_kx,
+                ky_list,
+                labelprefix="Ky",
+                xlabel=r"kx [$\mathrm{\AA^{-1}}$]",
+                ylabel="E [eV]",
+            )
+            self.KxWin.show()
         self.p_min = None
 
     def polar_maps(self):
@@ -269,8 +323,41 @@ class ApplicationWindow(QMainWindow):
         self.new_current_data = self.processing_data[:, :, self.slider_pos]
         self.new_current_extent = self.processing_extent[self.slider_pos]
 
+    def check_ram_usage(self):
+        ram_usage = (
+            np.product(self.processing_data.shape) * 8 * 1e-9
+        )  # Convert to RAM usage in GB for single array
+        ram_usage *= 4  # Three times for spline, once for data
+        if ram_usage > 2.0:  # TODO: Is 2GB a good value?
+            # Prevent from too high RAM usage
+            reduced_ram = (
+                np.product(self.processing_data[::2, ::2, ::2].shape) * 8 * 1e-9 * 4
+            )  # Convert to RAM usage in GB for single array
 
-if __name__ == '__main__':
+            ram_question = (
+                "Your dataset is very large. Map transformation "
+                + "will therefore use {:.2f} GB RAM. Should I only use every second ".format(
+                    ram_usage
+                )
+                + "value and reduce RAM usage to {} GB? This should not ".format(
+                    reduced_ram
+                )
+                + "impact the accuracy of the interpolation! "
+                + "<b>(Highly recommended on machines with le 8 GB RAM)</b> "
+            )
+            if (
+                QMessageBox.Yes
+                == QMessageBox(
+                    QMessageBox.Information,
+                    "High RAM usage",
+                    ram_question,
+                    QMessageBox.Yes | QMessageBox.No,
+                ).exec()
+            ):
+                self.processing_data = self.processing_data[::2, ::2, ::2]
+
+
+if __name__ == "__main__":
     # test = Sp2_loader()
     # stack, ranges = test.read_multiple_sp2(
     #     ['mos2_2_003.sp2', 'mos2_2_015.sp2'])

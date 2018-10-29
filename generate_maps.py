@@ -3,6 +3,7 @@ import os
 import scipy.interpolate as itpt
 import matplotlib.pyplot as plt
 from PyQt5.QtCore import QThread
+
 # import mayavi.mlab as mlb
 # import h5py as h5
 import time
@@ -12,14 +13,27 @@ from new_k_window import K_Window
 me = 9.11e-31
 m_e = 9.11e-31
 hbar = 1.054e-34
-deg = np.pi/180
-rad = 180/np.pi
+deg = np.pi / 180
+rad = 180 / np.pi
 
 
 class ThreadingKMaps(QThread):
-    def __init__(self, processing_data, processing_extent, p_min,
-                 p_max, Ecutmin, Ecutmax, dk, azi, tilt,
-                 kxmax=0.5, kxmin=-0.5, kymax=0.5, kymin=-0.5):
+    def __init__(
+        self,
+        processing_data,
+        processing_extent,
+        p_min,
+        p_max,
+        Ecutmin,
+        Ecutmax,
+        dk,
+        azi,
+        tilt,
+        kxmax=0.5,
+        kxmin=-0.5,
+        kymax=0.5,
+        kymin=-0.5,
+    ):
         pass
         # QThread.__init__(self, parent=None)
         # self.Ecutmin = Ecutmin
@@ -54,11 +68,13 @@ class ThreadingKMaps(QThread):
 
 
 class VerticalSlitPolarScan(object):
-    ''' Calculate K-Map with Vertical Slits '''
+    """ Calculate K-Map with Vertical Slits """
 
-    def __init__(self, data_stack, ranges_stack, map_start,
-                 map_end, angle_offset=0, p_offset=0):
-        self.data = np.swapaxes(data_stack, 0, 2)
+    def __init__(
+        self, data_stack, ranges_stack, map_start, map_end, angle_offset=0, p_offset=0
+    ):
+        # self.data = np.swapaxes(data_stack, 0, 2)
+        self.data = data_stack
         ranges_stack = ranges_stack[0]
         self.dmin, self.dmax = ranges_stack[0], ranges_stack[1]
         self.Emin, self.Emax = ranges_stack[2], ranges_stack[3]
@@ -72,47 +88,57 @@ class VerticalSlitPolarScan(object):
 
     def convertAngleToK(self, a, E):
         ev_to_j = 1.6e-19
-        return np.sqrt(2*m_e*E*ev_to_j)*np.sin(a*np.pi/180.)*1e-10 / hbar
+        return np.sqrt(2 * m_e * E * ev_to_j) * np.sin(a * np.pi / 180.0) * 1e-10 / hbar
 
     def get_kmap(self):
         return self.kmap_out
 
     def interpolatePointCloud(self, array):
-        ''' Generate interpolator for 3D space '''
-        y = np.linspace(self.dmin + self.angle_offset, self.dmax +
-                        self.angle_offset, self.data.shape[1])
+        """ Generate interpolator for 3D space """
+        y = np.linspace(
+            self.dmin + self.angle_offset,
+            self.dmax + self.angle_offset,
+            self.data.shape[1],
+        )
         z = np.linspace(self.Emin, self.Emax, self.data.shape[2])
         x = np.linspace(self.pmin, self.pmax, self.data.shape[0])
 
         f = itpt.RegularGridInterpolator(
-            (x, y, z), array, bounds_error=False, fill_value=0.)
+            (x, y, z), array, bounds_error=False, fill_value=0.0
+        )
 
         return f
 
     def getkVals(self, kstart, theta, N):
         k = np.linspace(0, 1.0, int(N))
-        kx = k*np.cos(theta*np.pi/180) + kstart[0]
-        ky = k*np.sin(theta*np.pi/180) + kstart[1]
+        kx = k * np.cos(theta * np.pi / 180) + kstart[0]
+        ky = k * np.sin(theta * np.pi / 180) + kstart[1]
         return kx, ky
 
     def calc_k(self, E, kpar, kperp):
-        ''' Calculate K value depending on E, kpar, kperp '''
-        inner_sqrt_term = np.sqrt(kpar**2+kperp**2)*0.512317**(-2)
-        return 0.512317*np.sqrt(E + inner_sqrt_term), inner_sqrt_term
+        """ Calculate K value depending on E, kpar, kperp """
+        inner_sqrt_term = np.sqrt(kpar ** 2 + kperp ** 2) * 0.512317 ** (-2)
+        return 0.512317 * np.sqrt(E + inner_sqrt_term), inner_sqrt_term
 
     def a_tilt(self, kx, ky, kz, az, tlt):
         atilt = np.arcsin(
-            (kx*np.sin(az)+ky*np.cos(az))*np.cos(tlt)-kz*np.sin(tlt))
+            (kx * np.sin(az) + ky * np.cos(az)) * np.cos(tlt) - kz * np.sin(tlt)
+        )
         return atilt
 
     def cos_pol(self, kz, tlt, atilt):
-        cospol = (kz - np.sin(tlt)*np.sin(atilt)) / \
-            (np.cos(tlt)*np.cos(atilt))
+        cospol = (kz - np.sin(tlt) * np.sin(atilt)) / (np.cos(tlt) * np.cos(atilt))
         return cospol
 
     def pol(self, atilt, az, tlt, kx, cospol):
-        pol = np.arcsin((np.sin(atilt)*np.sin(az)*np.cos(tlt) - kx+np.cos(atilt)*cospol
-                         * np.sin(az)*np.sin(tlt))/(np.cos(atilt)*np.cos(az)))
+        pol = np.arcsin(
+            (
+                np.sin(atilt) * np.sin(az) * np.cos(tlt)
+                - kx
+                + np.cos(atilt) * cospol * np.sin(az) * np.sin(tlt)
+            )
+            / (np.cos(atilt) * np.cos(az))
+        )
         return pol
 
     def EDC(self, _kx, _ky, Estart, Estop, azi, tilt, NE=120):
@@ -126,19 +152,19 @@ class VerticalSlitPolarScan(object):
                     a1 = _kx + i
                     a2 = _ky + j
                     k, inner_sqrt_term = self.calc_k(E, a1, a2)
-                    kx = a1/k
-                    ky = a2/k
-                    kz = np.sqrt(1.-kx**2-ky**2)
+                    kx = a1 / k
+                    ky = a2 / k
+                    kz = np.sqrt(1.0 - kx ** 2 - ky ** 2)
 
-                    tlt = tilt*deg
-                    az = -azi*deg
+                    tlt = tilt * deg
+                    az = -azi * deg
                     # Perform euler transformations
                     atilt = self.a_tilt(kx, ky, kz, az, tlt)
                     cospol = self.cos_pol(kz, tlt, atilt)
                     pol = self.pol(atilt, az, tlt, kx, cospol)
                     # Add results
-                    arr_x = -pol*rad
-                    arr_y = atilt*rad
+                    arr_x = -pol * rad
+                    arr_y = atilt * rad
                     arr_z = E  # +np.interp(inner_sqrt_term,
                     #           self._offsetsX, self._offsets)
                     EDC[countE] += self._f((arr_x, arr_y, arr_z))
@@ -151,97 +177,132 @@ class VerticalSlitPolarScan(object):
         for countK, (a1, a2) in enumerate(zip(kx, ky)):
             for countE, E in enumerate(erange):
                 k, inner_sqrt_term = self.calc_k(E, a1, a2)
-                kx = a1/k
-                ky = a2/k
-                kz = np.sqrt(1.-kx**2-ky**2)
+                kx = a1 / k
+                ky = a2 / k
+                kz = np.sqrt(1.0 - kx ** 2 - ky ** 2)
 
-                tlt = tilt*deg
-                az = -azi*deg
+                tlt = tilt * deg
+                az = -azi * deg
                 atilt = self.a_tilt(kx, ky, kz, az, tlt)
                 cospol = self.cos_pol(kz, tlt, atilt)
                 pol = self.pol(atilt, az, tlt, kx, cospol)
-                arr_x = -pol*rad
-                arr_y = atilt*rad
+                arr_x = -pol * rad
+                arr_y = atilt * rad
                 arr_z = E  # +np.interp(inner_sqrt_term,
                 #         self._offsetsX, self._offsets)
 
-                ESlice[countK, countE] += self._f((arr_x, arr_y, arr_z),
-                                                  inner_sqrt_term)
+                ESlice[countK, countE] += self._f(
+                    (arr_x, arr_y, arr_z), inner_sqrt_term
+                )
         return ESlice.T[::-1, :]
 
-    def SliceK(self, E, dk, azi, tilt, kxmax=0.5, kxmin=-0.5,
-               kymax=0.5, kymin=-0.5):
+    def SliceK(self, E, dk, azi, tilt, kxmax=0.5, kxmin=-0.5, kymax=0.5, kymin=-0.5):
         # azi=0.
-        kx_range = int((kxmax-kxmin)/dk)
-        ky_range = int((kymax-kymin)/dk)
+        kx_range = int((kxmax - kxmin) / dk)
+        ky_range = int((kymax - kymin) / dk)
         kSlice = np.zeros((kx_range, ky_range))
-        print('python slice, ', kx_range, ky_range)
+        print("python slice, ", kx_range, ky_range)
         for i in range(0, int(kx_range)):
-            a1 = kxmin + i*dk
+            a1 = kxmin + i * dk
             for j in range(0, int(ky_range)):
-                a2 = kymin + j*dk
+                a2 = kymin + j * dk
                 k, inner_sqrt_term = self.calc_k(E, a1, a2)
                 # ky = a1/k
                 # kx = a2/k
-                kx = a1/k
-                ky = a2/k
-                kz = np.sqrt(1.-kx**2-ky**2)
+                kx = a1 / k
+                ky = a2 / k
+                kz = np.sqrt(1.0 - kx ** 2 - ky ** 2)
                 # print(kx, ky, kz)
-                tlt = tilt*deg
-                az = -azi*deg
+                tlt = tilt * deg
+                az = -azi * deg
                 atilt = self.a_tilt(kx, ky, kz, az, tlt)
                 cospol = self.cos_pol(kz, tlt, atilt)
                 pol = self.pol(atilt, az, tlt, kx, cospol)
                 # print(atilt, cospol, pol)
-                arr_x = -pol*rad
-                arr_y = atilt*rad
+                arr_x = -pol * rad
+                arr_y = atilt * rad
                 arr_z = E
                 kSlice[i, j] += self._f((arr_x, arr_y, arr_z))
 
         return kSlice.T
 
     def slice_K_fortran(self, dk, dE, azi, tilt, useazi=False):
-        ''' Performs K Slice in fortran routine '''
+        """ Performs K Slice in fortran routine """
         # self.data = self.data[:, ::2, ::2]
         Ecutmin = self.Emin
         Ecutmax = self.Emax
-        kxmin = kymin = self.convertAngleToK(self.pmin, self.Emin)
-        kxmax = kymax = self.convertAngleToK(self.pmax, self.Emax)
+        kxmin = kymin = 0  # self.convertAngleToK(
+        # self.dmin + self.angle_offset, self.Emin)
+        kxmax = kymax = 2  # self.convertAngleToK(
+        # self.dmax + self.angle_offset, self.Emax)
         print(kxmin, kxmax)
         kx_range = np.arange(kxmin, kxmax, dk)
         ky_range = np.arange(kymin, kymax, dk)
         Ecut_range = np.arange(Ecutmin, Ecutmax, dE)
 
         if useazi:
+            self.data = np.swapaxes(self.data, 0, 1)
             # Azimuthal range
-            indata_z = np.linspace(
-                self.pmin, self.pmax, self.data.shape[2]) + self.p_offset  # Azimuth
-            indata_x = np.linspace(
-                self.dmin, self.dmax, self.data.shape[0]) + self.angle_offset  # Angle
-            indata_y = np.linspace(self.Emin, self.Emax,
-                                   self.data.shape[1])  # Energy
+            indata_z = (
+                np.linspace(self.pmin, self.pmax, self.data.shape[2]) + self.p_offset
+            )  # Azimuth
+            indata_x = (
+                np.linspace(self.dmin, self.dmax, self.data.shape[0])
+                + self.angle_offset
+            )  # Angle
+            indata_y = np.linspace(self.Emin, self.Emax, self.data.shape[1])  # Energy
 
             kSlice = kmaps.kslice_spline_horizontal(
-                indata_x, indata_y, indata_z, self.data, kx_range, ky_range,
-                Ecut_range, tilt, azi)
+                indata_x,
+                indata_y,
+                indata_z,
+                self.data,
+                kx_range,
+                ky_range,
+                Ecut_range,
+                tilt,
+                azi,
+            )
         else:
+            self.data = np.swapaxes(self.data, 0, 2)
             # Polar range
-            indata_x = np.linspace(
-                self.pmin, self.pmax, self.data.shape[0]) + self.p_offset  # Azimuth
-            indata_y = np.linspace(
-                self.dmin, self.dmax, self.data.shape[1]) + self.angle_offset  # Angle
-            indata_z = np.linspace(self.Emin, self.Emax,
-                                   self.data.shape[2])  # Energy
+            indata_x = (
+                np.linspace(self.pmin, self.pmax, self.data.shape[0]) + self.p_offset
+            )  # Azimuth
+            indata_y = (
+                np.linspace(self.dmin, self.dmax, self.data.shape[1])
+                + self.angle_offset
+            )  # Angle
+            indata_z = np.linspace(self.Emin, self.Emax, self.data.shape[2])  # Energy
 
-            kSlice = kmaps.kslice_spline(indata_x, indata_y, indata_z, self.data,
-                                         kx_range, ky_range, Ecut_range, tilt,
-                                         azi)
+            kSlice = kmaps.kslice_spline(
+                indata_x,
+                indata_y,
+                indata_z,
+                self.data,
+                kx_range,
+                ky_range,
+                Ecut_range,
+                tilt,
+                azi,
+            )
         outx = np.swapaxes(kSlice, 0, 1)
         outy = np.swapaxes(kSlice, 0, 2)
         outE = np.swapaxes(kSlice, 1, 2)
+        outE = np.swapaxes(outE, 0, 1)
 
-        return outx, outy, outE, kxmin, kxmax, kymin, kymax,\
-            kx_range, ky_range, Ecut_range
+        return (
+            outx,
+            outy,
+            outE,
+            kxmin,
+            kxmax,
+            kymin,
+            kymax,
+            kx_range,
+            ky_range,
+            Ecut_range,
+        )
 
     # def SliceK_horizontal(self, dk, dE, azi, tilt):
     #     k = 0.512317*np.sqrt(E)
@@ -312,9 +373,9 @@ class PointCloudHorizontalSlitAziScan(object):
 
     def __init__(self, files, deltaTheta, theta0, d0):
         self._folder = files._folder
-        self._dT = deltaTheta   # delta Theta Azimut between each measurement
-        self._theta0 = theta0    # Azimut offset
-        self.angle_offset = d0   # shift the middle
+        self._dT = deltaTheta  # delta Theta Azimut between each measurement
+        self._theta0 = theta0  # Azimut offset
+        self.angle_offset = d0  # shift the middle
         self.data = files
         # self.load()
         self._I = self.generatePointCloud()
@@ -342,31 +403,43 @@ class PointCloudHorizontalSlitAziScan(object):
 
     def interpolatePointCloud(self, I):
         count = len(self.data._files)
-        x = np.linspace(self.data._files[0]._dmin + self.angle_offset,
-                        self.data._files[0]._dmax+self.angle_offset, self.data._files[0]._data.shape[1])
+        x = np.linspace(
+            self.data._files[0]._dmin + self.angle_offset,
+            self.data._files[0]._dmax + self.angle_offset,
+            self.data._files[0]._data.shape[1],
+        )
         y = np.linspace(
-            self.data._files[0]._Emin, self.data._files[0]._Emax, self.data._files[0]._data.shape[0])
-        z = np.linspace(self._theta0, self._theta0+count*self._dT, count)
+            self.data._files[0]._Emin,
+            self.data._files[0]._Emax,
+            self.data._files[0]._data.shape[0],
+        )
+        z = np.linspace(self._theta0, self._theta0 + count * self._dT, count)
         f = itpt.RegularGridInterpolator(
-            (x, y, z), I, bounds_error=False, fill_value=0.)
+            (x, y, z), I, bounds_error=False, fill_value=0.0
+        )
         return f
 
-    def SliceK(self, E, dk, tilt, kxmax=.5, kxmin=-.5, kymax=.5, kymin=-.5):
-        k = 0.512317*np.sqrt(E)
-        kSlice = np.zeros(((kxmax-kxmin)/dk, (kymax-kymin)/dk))
-        for i in range(0, int((kxmax-kxmin)/dk)):
-            a1 = kxmin + i*dk
-            kx = a1/k
-            for j in range(0, int((kymax-kymin)/dk)):
-                a2 = kymin + j*dk
-                ky = a2/k
-                kz = np.sqrt(1-kx**2-ky**2)
+    def SliceK(self, E, dk, tilt, kxmax=0.5, kxmin=-0.5, kymax=0.5, kymin=-0.5):
+        k = 0.512317 * np.sqrt(E)
+        kSlice = np.zeros(((kxmax - kxmin) / dk, (kymax - kymin) / dk))
+        for i in range(0, int((kxmax - kxmin) / dk)):
+            a1 = kxmin + i * dk
+            kx = a1 / k
+            for j in range(0, int((kymax - kymin) / dk)):
+                a2 = kymin + j * dk
+                ky = a2 / k
+                kz = np.sqrt(1 - kx ** 2 - ky ** 2)
 
-                tlt = tilt*deg
-                az = np.arcsin((np.abs(kx)*kz*np.tan(tlt)-np.abs(ky)
-                                * np.sqrt(1-kz**2 / np.cos(tlt)**2))/(1-kz**2))
-                pol = np.arcsin(np.abs(ky)*np.sin(az)-np.abs(kx)*np.cos(az))
-                kSlice[i, j] = self._f((-pol*180/np.pi, E, -az*180/np.pi))
+                tlt = tilt * deg
+                az = np.arcsin(
+                    (
+                        np.abs(kx) * kz * np.tan(tlt)
+                        - np.abs(ky) * np.sqrt(1 - kz ** 2 / np.cos(tlt) ** 2)
+                    )
+                    / (1 - kz ** 2)
+                )
+                pol = np.arcsin(np.abs(ky) * np.sin(az) - np.abs(kx) * np.cos(az))
+                kSlice[i, j] = self._f((-pol * 180 / np.pi, E, -az * 180 / np.pi))
         kSlice = np.nan_to_num(kSlice)
         # kSlice[np.isneginf(kSlice)] = 0.
         # kSlice[np.isposinf(kSlice)] = 0.
@@ -374,7 +447,21 @@ class PointCloudHorizontalSlitAziScan(object):
         return kSlice
 
     def SliceAngle(self, E):
-        return np.array([[self._f((x, E, z))for x in np.linspace(-15+self.angle_offset, 15+self.angle_offset, 100)] for z in np.linspace(self._theta0, self._theta0+len(self.data._files)*self._dT, len(self.data._files))])
+        return np.array(
+            [
+                [
+                    self._f((x, E, z))
+                    for x in np.linspace(
+                        -15 + self.angle_offset, 15 + self.angle_offset, 100
+                    )
+                ]
+                for z in np.linspace(
+                    self._theta0,
+                    self._theta0 + len(self.data._files) * self._dT,
+                    len(self.data._files),
+                )
+            ]
+        )
 
 
 # # In[9]:

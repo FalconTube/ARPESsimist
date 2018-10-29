@@ -4,15 +4,14 @@ from PyQt5 import QtCore
 
 
 class Calc_K_space(QtCore.QThread):
-    ''' Runs k-space conversion in background '''
+    """ Runs k-space conversion in background """
 
     def __init__(self, data, ranges, parent=None):
         QtCore.QThread.__init__(self, parent)
         self.DataHandler = HandleNielsSpectra(data, ranges)
 
     def run(self):
-        self.data_stack_k, self.stack_range_k =\
-            self.DataHandler.convert_all_to_k()
+        self.data_stack_k, self.stack_range_k = self.DataHandler.convert_all_to_k()
         self.k_space_generated = True
 
     def get(self):
@@ -20,7 +19,7 @@ class Calc_K_space(QtCore.QThread):
 
 
 class HandleNielsSpectra(Spectra):
-    ''' Data handles that uses Niels Ehlens functions '''
+    """ Data handles that uses Niels Ehlens functions """
 
     def __init__(self, data_stack, data_ranges):
         self.data_stack = data_stack
