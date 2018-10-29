@@ -28,7 +28,7 @@ from PyQt5.QtWidgets import (
     QGridLayout,
 )
 
-from test_drag import DraggablePlotExample
+from dragpoints import DraggablePlotExample
 
 
 class LineProfiles(QWidget):
@@ -124,14 +124,6 @@ class LineProfiles(QWidget):
         self.plot = DraggablePlotExample(self.ax.figure, self.ax)
         # self.plotDraggablePoints([0.1, 0.1], [0.2, 0.2], [0.1, 0.1])
 
-    def plotDraggablePoints(self, xy1, xy2, size=None):
-        """Plot and define the 2 draggable points of the baseline"""
-
-        # del(self.list_points[:])
-        self.free_xy_list.append(DraggablePoint(self.xprof_ax, xy1[0], xy1[1], size))
-        self.free_xy_list.append(DraggablePoint(self.xprof_ax, xy2[0], xy2[1], size))
-        # self.axes.figure.canvas.update()
-        self.ax.figure.canvas.draw()
 
     def processing_data_interpolator(self, data, thisrange):
         """ Generates interpolator """
