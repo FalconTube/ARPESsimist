@@ -14,6 +14,8 @@ from PyQt5.QtWidgets import (
     QDialog,
 )
 from PyQt5.QtGui import QIcon
+# import qdarkstyle
+
 
 # import matplotlib
 # from matplotlib.backends.backend_qt5agg \
@@ -61,7 +63,8 @@ class ApplicationWindow(QMainWindow):
         self.resize(950, 950)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("ARPESsimist")
-        self.setWindowIcon(QIcon("logo_black.png"))
+        iconpath = os.path.relpath('logo_black.png')
+        self.setWindowIcon(QIcon(iconpath))
         # self.setWindowIcon(QtCore.Qt.QIcon('logo.png'))
 
         # Set up File Menu
@@ -242,20 +245,23 @@ class ApplicationWindow(QMainWindow):
 
     def gen_maps(self):
         if self.p_min:
-            parameters = MapParameterBox(pol_map=True)
+            parameters = MapParameterBox(pol_available=True)
         else:
-            parameters = MapParameterBox(pol_map=False)
+            parameters = MapParameterBox(pol_available=False)
         if parameters.exec_() == parameters.Accepted:
             outvalues = parameters.get_values()
             self.statusBar().showMessage(
                 "Generating Map. This will take a couple seconds...", 2000
             )
             if not self.p_min:
-                ksteps, esteps, pol_off, angle_off, tilt, azi, self.p_min, self.p_max = (
+                ksteps, esteps, pol_off, angle_off, tilt, azi, kxmin, kxmax, kymin, kymax, self.p_min, self.p_max = (
                     outvalues
                 )
             else:
-                ksteps, esteps, pol_off, angle_off, tilt, azi = outvalues
+                print(outvalues)
+                ksteps, esteps, pol_off, angle_off, tilt, azi, kxmin, kxmax, kymin, kymax = (
+                    outvalues
+                )
 
             # Check if data will overflow memory
             self.check_ram_usage()
@@ -266,8 +272,12 @@ class ApplicationWindow(QMainWindow):
                 self.p_min,
                 self.p_max,
                 angle_offset=angle_off,
+                kxmin=kxmin,
+                kxmax=kxmax,
+                kymin=kymin,
+                kymax=kymax,
             )
-
+            print(ksteps)
             ke_slice, ky_slice, kx_slice, kxmin, kxmax, kymin, kymax, kx_list, ky_list, E_list = All_maps.slice_K_fortran(
                 ksteps, esteps, azi, tilt, self.use_azi
             )
@@ -366,6 +376,8 @@ if __name__ == "__main__":
 
     # sys.exit()
     qApp = QApplication(sys.argv)
+    # qApp.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+
 
     aw = ApplicationWindow()
     # aw.setWindowTitle("%s" % progname)

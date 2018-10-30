@@ -71,7 +71,17 @@ class VerticalSlitPolarScan(object):
     """ Calculate K-Map with Vertical Slits """
 
     def __init__(
-        self, data_stack, ranges_stack, map_start, map_end, angle_offset=0, p_offset=0
+        self,
+        data_stack,
+        ranges_stack,
+        map_start,
+        map_end,
+        angle_offset=0,
+        p_offset=0,
+        kxmin=-1,
+        kxmax=1,
+        kymin=-1,
+        kymax=1,
     ):
         # self.data = np.swapaxes(data_stack, 0, 2)
         self.data = data_stack
@@ -82,6 +92,10 @@ class VerticalSlitPolarScan(object):
         self.pmax = map_end  # map_start + dmap * \
         self.angle_offset = angle_offset  # Offset in Angle
         self.p_offset = p_offset  # Offset in Polar or Azimuth
+        self.kxmin = kxmin
+        self.kxmax = kxmax
+        self.kymin = kymin
+        self.kymax = kymax
         self.kmap_out = 0
 
         # self._f = self.interpolatePointCloud(self.data)
@@ -231,13 +245,12 @@ class VerticalSlitPolarScan(object):
         # self.data = self.data[:, ::2, ::2]
         Ecutmin = self.Emin
         Ecutmax = self.Emax
-        kxmin = kymin = 0  # self.convertAngleToK(
-        # self.dmin + self.angle_offset, self.Emin)
-        kxmax = kymax = 2  # self.convertAngleToK(
-        # self.dmax + self.angle_offset, self.Emax)
-        print(kxmin, kxmax)
-        kx_range = np.arange(kxmin, kxmax, dk)
-        ky_range = np.arange(kymin, kymax, dk)
+        print(self.convertAngleToK(
+        self.dmin + self.angle_offset, self.Emin))
+        print(self.convertAngleToK(
+        self.dmax + self.angle_offset, self.Emax))
+        kx_range = np.arange(self.kxmin, self.kxmax, dk)
+        ky_range = np.arange(self.kymin, self.kymax, dk)
         Ecut_range = np.arange(Ecutmin, Ecutmax, dE)
 
         if useazi:
@@ -251,7 +264,6 @@ class VerticalSlitPolarScan(object):
                 + self.angle_offset
             )  # Angle
             indata_y = np.linspace(self.Emin, self.Emax, self.data.shape[1])  # Energy
-
             kSlice = kmaps.kslice_spline_horizontal(
                 indata_x,
                 indata_y,
@@ -261,8 +273,7 @@ class VerticalSlitPolarScan(object):
                 ky_range,
                 Ecut_range,
                 tilt,
-                azi,
-            )
+                azi)
         else:
             self.data = np.swapaxes(self.data, 0, 2)
             # Polar range
@@ -274,7 +285,6 @@ class VerticalSlitPolarScan(object):
                 + self.angle_offset
             )  # Angle
             indata_z = np.linspace(self.Emin, self.Emax, self.data.shape[2])  # Energy
-
             kSlice = kmaps.kslice_spline(
                 indata_x,
                 indata_y,
@@ -284,8 +294,7 @@ class VerticalSlitPolarScan(object):
                 ky_range,
                 Ecut_range,
                 tilt,
-                azi,
-            )
+                azi)
         outx = np.swapaxes(kSlice, 0, 1)
         outy = np.swapaxes(kSlice, 0, 2)
         outE = np.swapaxes(kSlice, 1, 2)
@@ -295,10 +304,10 @@ class VerticalSlitPolarScan(object):
             outx,
             outy,
             outE,
-            kxmin,
-            kxmax,
-            kymin,
-            kymax,
+            self.kxmin,
+            self.kxmax,
+            self.kymin,
+            self.kymax,
             kx_range,
             ky_range,
             Ecut_range,

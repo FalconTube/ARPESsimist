@@ -51,11 +51,13 @@ class TwoD_Plotter(MyMplCanvas):
         self.twoD_slider.valueChanged.connect(self.twoD_slider_changed)
 
         # Add LUT Slider
+        initial_lut_position = np.amax(self.processing_data)/2 
         self.vmax_slider = self.add_slider(0, np.amax(self.processing_data), "vert")
-        self.vmax_slider.setSliderPosition(np.amax(self.processing_data))
+        self.vmax_slider.setSliderPosition(initial_lut_position)
         self.vmax_label = QLabel("L\nU\nT", self)
         self.vmax_label.setAlignment(QtCore.Qt.AlignCenter)
         self.vmax_slider.valueChanged.connect(self.update_vmax)
+        self.twoD_ax.set_clim(0, initial_lut_position)
 
         # Add to Layout
         self.main_layout.addWidget(self.twoD_slider)
@@ -74,8 +76,8 @@ class TwoD_Plotter(MyMplCanvas):
         self.axes.set_ylabel(self.ylabel)
         self.xprof_ax.set_xlabel(self.xlabel)
         self.xprof_ax.set_ylabel("I [a.u.]")
-        self.yprof_ax.set_xlabel(self.ylabel)
-        self.yprof_ax.set_ylabel("I [a.u.]")
+        self.yprof_ax.set_ylabel(self.ylabel)
+        self.yprof_ax.set_xlabel("I [a.u.]")
         self.axes.figure.canvas.update()
         self.xprof_ax.figure.canvas.update()
         self.yprof_ax.figure.canvas.update()
@@ -114,11 +116,11 @@ class TwoD_Plotter(MyMplCanvas):
     def update_2d_data(self, data):
         self.twoD_data = data
 
-    def compute_initial_figure(self):
-        self.twoD_data = np.zeros((10, 10))
-        self.axes.imshow(self.twoD_data)
-        self.xprof_ax.plot(1, 1)
-        self.yprof_ax.plot(1, 1)
+    # def compute_initial_figure(self):
+    #     self.twoD_data = np.zeros((10, 10))
+    #     self.axes.imshow(self.twoD_data)
+    #     self.xprof_ax.plot(1, 1)
+    #     self.yprof_ax.plot(1, 1)
 
     def update_current_data(self):
         self.new_current_data = self.processing_data[:, :, self.slider_pos]

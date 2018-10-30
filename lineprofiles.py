@@ -1,4 +1,5 @@
 import numpy as np
+
 # import matplotlib.pyplot as plt
 # from scipy.constants import hbar, m_e
 from scipy.interpolate import interp2d
@@ -89,10 +90,9 @@ class LineProfiles(QWidget):
                     self.current_hline.remove()
                 self.current_hline = self.ax.axhline(event.ydata)
 
-                self.xpoints, self.ypoints = self.lineprofileX(
-                    self.data, self.ranges, event.ydata
-                )
-                self.xprof_ax.plot(self.xpoints, self.ypoints, zorder=-1)
+                x1, y1 = self.lineprofileX(self.data, self.ranges, event.ydata)
+                self.xprof_ax.plot(x1, y1, zorder=-1)
+                self.xprof_ax.set_xlim(min(x1), max(x1))
                 self.xprof_ax.figure.canvas.draw()
 
             if self.xy_chooser == "y":
@@ -100,10 +100,10 @@ class LineProfiles(QWidget):
                     self.current_vline.remove()
                 self.current_vline = self.ax.axvline(event.xdata)
 
-                self.xpoints, self.ypoints = self.lineprofileY(
-                    self.data, self.ranges, event.xdata
-                )
-                self.yprof_ax.plot(self.ypoints, self.xpoints, zorder=-1)
+                x2, y2 = self.lineprofileY(self.data, self.ranges, event.xdata)
+                # print(self.x2, self.y2)
+                self.yprof_ax.plot(y2, x2, zorder=-1)
+                self.yprof_ax.set_ylim(max(x2), min(x2))
                 self.yprof_ax.figure.canvas.draw()
 
             self.ax.figure.canvas.draw()  # redraw
@@ -117,17 +117,18 @@ class LineProfiles(QWidget):
         self.free_plot._update_plot()
         self.free_ax.cla()
         xy1, xy2 = self.free_plot.get_data()
-        outx, outprof = self.lineprofileFree(xy1, xy2, 100)
-        # print(outx, outprof)
-        self.free_line, = self.free_ax.plot(outx, outprof)
-        self.free_ax.figure.canvas.draw()
-        # self._update_plot()
+        try:
+            outx, outprof = self.lineprofileFree(xy1, xy2, 500)
+            self.free_line, = self.free_ax.plot(outx, outprof)
+            self.free_ax.figure.canvas.draw()
+        except ValueError:
+            pass
 
     def clear_all(self):
         """ Clear Lineprofiles and h,v lines """
         # Remove all lines
-        self.xprof_ax.cla()
-        self.yprof_ax.cla()
+        self.xprof_ax.clear()
+        self.yprof_ax.clear()
         if self.current_hline:
             self.current_hline.remove()
         if self.current_vline:
@@ -135,8 +136,8 @@ class LineProfiles(QWidget):
         self.current_hline = False
         self.current_vline = False
         try:
-            self.free_ax.cla()
-            self.free_ax.cla()
+            self.free_ax.clear()
+            # self.free_ax.cla()
         except:
             pass
 
@@ -146,6 +147,7 @@ class LineProfiles(QWidget):
         self.yprof_ax.figure.canvas.draw()
 
     def init_free_prof(self):
+        self.xy_chooser = 'free'
         self.free_plot = DraggablePlotExample(self.ax.figure, self.ax)
         self.free_fig = Figure(figsize=(5, 0.2 * 5), dpi=100, tight_layout=True)
         self.free_ax = self.free_fig.add_subplot(111)
@@ -187,35 +189,35 @@ class LineProfiles(QWidget):
     ):
         """ Returns Lineprofile along X"""
         breadth = self.breadth
-        self.idata, self.xvals, self.yvals = self.processing_data_interpolator(
-            data, current_range
-        )
-        self.profile = np.sum(
+        # self.idata, self.xvals, self.yvals = self.processing_data_interpolator(
+        #     data, current_range
+        # )
+        profile = np.sum(
             self.idata(
                 self.xvals,
                 [yval - 0.5 * breadth + breadth * float(i) / 20.0 for i in range(21)],
             ),
             axis=0,
         )
-        return self.xvals, self.profile
+        return self.xvals, profile
 
     def lineprofileY(
         self, data: np.array, current_range: list, xval: float, breadth=0.1
     ):
         """ Returns Lineprofile along Y"""
         breadth = self.breadth
-        print(breadth)
-        self.idata, self.xvals, self.yvals = self.processing_data_interpolator(
-            data, current_range
-        )
-        self.profile = np.sum(
+        # self.idata, self.xvals, self.yvals = self.processing_data_interpolator(
+        #     data, current_range
+        # )
+        profile = np.sum(
             self.idata(
                 [xval - 0.5 * breadth + breadth * float(i) / 20.0 for i in range(21)],
                 self.yvals,
             ),
             axis=1,
         )
-        return self.yvals[::-1], self.profile
+        # return self.yvals[::-1], self.profile
+        return self.yvals, profile
 
     def get_breadth(self):
         if not self.input_breadth.text() == "":
@@ -229,11 +231,18 @@ class LineProfiles(QWidget):
         # self.this_layout = QHBoxLayout()
         self.this_layout = QGridLayout()
 
+        # Create Radio Buttond
         self.selectbutton_x = QRadioButton("&X Lineprofile", self)
         self.selectbutton_y = QRadioButton("&Y Lineprofile", self)
         self.selectbutton_free = QRadioButton("&Free Lineprofile", self)
         self.discobutton = QRadioButton("&Stop Selection", self)
         self.discobutton.setChecked(True)
+
+        # Set Tooltips
+        self.selectbutton_x.setToolTip('Use Right-Click')
+        self.selectbutton_y.setToolTip('Use Right-Click')
+        self.selectbutton_free.setToolTip('Use Right-Click')
+        
         # self.selectbutton_x = QPushButton('&X Lineprofile', self)
         # self.selectbutton_y = QPushButton('&Y Lineprofile', self)
         self.clearbutton = QPushButton("&Clear", self)

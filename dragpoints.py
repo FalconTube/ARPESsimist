@@ -36,7 +36,6 @@ class DraggablePlotExample(object):
             self.xy2 = (x[1], y[1])
         except:
             pass
-        print(x, y)
         # Add new plot
         if not self.line:
             self.line, = self._axes.plot(x, y, "r", marker="o", markersize=5)
