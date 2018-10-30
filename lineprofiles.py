@@ -1,29 +1,26 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import sys
-from matplotlib.widgets import Button
-from scipy.optimize import curve_fit
-from scipy.constants import hbar, m_e
+# import matplotlib.pyplot as plt
+# from scipy.constants import hbar, m_e
 from scipy.interpolate import interp2d
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
-from PyQt5 import QtCore
 from PyQt5.QtWidgets import (
-    QMainWindow,
-    QApplication,
+    # QApplication,
     QWidget,
     QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QMenu,
-    QMessageBox,
-    QSizePolicy,
-    QFileDialog,
-    QSlider,
-    QLabel,
-    QScrollBar,
+    # QVBoxLayout,
+    # QHBoxLayout,
+    # QMenu,
+    # QMessageBox,
+    # QSizePolicy,
+    # QFileDialog,
+    # QSlider,
+    # QLabel,
+    # QScrollBar,
     QRadioButton,
     QGroupBox,
-    QInputDialog,
+    # QInputDialog,
     QLineEdit,
     QGridLayout,
 )
@@ -34,8 +31,10 @@ from dragpoints import DraggablePlotExample
 class LineProfiles(QWidget):
     """ Attaches stuff for lineprofile to current 2D Plot """
 
-    def __init__(self, twodfig, xprof_ax, yprof_ax, parent):
+    def __init__(self, twodfig, xprof_ax, yprof_ax, parent, parent_layout):
         # Set up default values
+        self.parent_layout = parent_layout
+        self.parent = parent
         self.current_hline = False
         self.current_vline = False
         self.cid = False
@@ -59,6 +58,12 @@ class LineProfiles(QWidget):
         """ Disconnect from figure """
         self.ax.figure.canvas.mpl_disconnect(self.cid)
         self.cid = False
+        try:
+            self.free_plot.disconnect()
+            self._figure.canvas.mpl_disconnect(self.click_cid)
+            self.ax.figure.mpl.disconnect(self.free_release_cid)
+        except ValueError:
+            pass
 
     def init_cursor_active_x(self):
         """ Choose x profile generator """
@@ -103,17 +108,37 @@ class LineProfiles(QWidget):
 
             self.ax.figure.canvas.draw()  # redraw
 
+    def free_on_release(self, event):
+        """ callback method for mouse release event
+        :type event: MouseEvent
+        """
+        # if event.button == 3 and event.inaxes in [self._axes] and self._dragging_point:
+
+        self.free_plot._update_plot()
+        self.free_ax.cla()
+        xy1, xy2 = self.free_plot.get_data()
+        outx, outprof = self.lineprofileFree(xy1, xy2, 100)
+        # print(outx, outprof)
+        self.free_line, = self.free_ax.plot(outx, outprof)
+        self.free_ax.figure.canvas.draw()
+        # self._update_plot()
+
     def clear_all(self):
         """ Clear Lineprofiles and h,v lines """
         # Remove all lines
-        self.xprof_ax.clear()
-        self.yprof_ax.clear()
+        self.xprof_ax.cla()
+        self.yprof_ax.cla()
         if self.current_hline:
             self.current_hline.remove()
         if self.current_vline:
             self.current_vline.remove()
         self.current_hline = False
         self.current_vline = False
+        try:
+            self.free_ax.cla()
+            self.free_ax.cla()
+        except:
+            pass
 
         # Redraw to show clearance
         self.twodfig.figure.canvas.draw()
@@ -121,9 +146,17 @@ class LineProfiles(QWidget):
         self.yprof_ax.figure.canvas.draw()
 
     def init_free_prof(self):
-        self.plot = DraggablePlotExample(self.ax.figure, self.ax)
-        # self.plotDraggablePoints([0.1, 0.1], [0.2, 0.2], [0.1, 0.1])
+        self.free_plot = DraggablePlotExample(self.ax.figure, self.ax)
+        self.free_fig = Figure(figsize=(5, 0.2 * 5), dpi=100, tight_layout=True)
+        self.free_ax = self.free_fig.add_subplot(111)
+        self.free_canvas = FigureCanvas(self.free_fig)
+        self.free_canvas.setMinimumHeight(200)
+        self.parent_layout.addWidget(self.free_canvas, 2, 0, 1, 2)
+        self.free_release_cid = self.ax.figure.canvas.mpl_connect(
+            "button_release_event", self.free_on_release
+        )
 
+        # self.plotDraggablePoints([0.1, 0.1], [0.2, 0.2], [0.1, 0.1])
 
     def processing_data_interpolator(self, data, thisrange):
         """ Generates interpolator """
@@ -132,6 +165,22 @@ class LineProfiles(QWidget):
         yvals = np.linspace(thisrange[3], thisrange[2], data_shape[0])
         idata = interp2d(xvals, yvals, data, fill_value=0.0)
         return idata, xvals, yvals
+
+    def lineprofileFree(self, strtpnt: np.array, endpnt: np.array, N: int):
+        """
+        Returns the line profile along an arbitrary line with N steps
+        :param strtpnt: 2-point array [x,y] for starting position
+        :param endpnt: 2-point array [x,y] for end position
+        :param N: integer on how many steps
+        :return: lineprofile as a 1d array
+        """
+        N = int(N)
+        dv = (np.array(endpnt) - np.array(strtpnt)) / N
+        profile = [
+            self.idata(strtpnt[0] + dv[0] * i, strtpnt[1] + dv[1] * i)[0]
+            for i in range(N)
+        ]
+        return np.linspace(0, 1, N), profile
 
     def lineprofileX(
         self, data: np.array, current_range: list, yval: float, breadth=0.1
@@ -171,7 +220,6 @@ class LineProfiles(QWidget):
     def get_breadth(self):
         if not self.input_breadth.text() == "":
             self.breadth = float(self.input_breadth.text())
-            print(self.breadth)
         else:
             self.breadth = 0.0
 
@@ -218,6 +266,9 @@ class LineProfiles(QWidget):
         """ Update current data and extent """
         self.data = data
         self.ranges = extent
+        self.idata, self.xvals, self.yvals = self.processing_data_interpolator(
+            data, extent
+        )
         # self.clear_all()
 
     def get_axes(self):

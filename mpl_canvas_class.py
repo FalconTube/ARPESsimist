@@ -36,12 +36,13 @@ class MyMplCanvas(QWidget):
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(2)
         self.x_canvas = FigureCanvas(self.fig_xax)
+        self.x_canvas.setMinimumHeight(200)
+        # xPolicy = QSizePolicy(QSizePolicy.Minimum())
         self.y_canvas = FigureCanvas(self.fig_yax)
         self.canvas.setSizePolicy(sizePolicy)
 
         self.setParent(self.parent)
 
-        self.fig.tight_layout()
         self.toolbar = NavigationToolbar(self.canvas, self)
 
         self.main_layout = QVBoxLayout(self)
@@ -68,16 +69,16 @@ class MyMplCanvas(QWidget):
 
     def lineprofile(self):
         self.LineProf = LineProfiles(
-            self.axes, self.xprof_ax, self.yprof_ax, self.parent
+            self.axes, self.xprof_ax, self.yprof_ax, self.parent, self.grid_layout,
         )
         self.LineProf.init_widget()
         self.lineprof_widget = self.LineProf.get_widget()
         self.grid_layout.addWidget(self.lineprof_widget, 1, 1)
 
-    def add_slider(self, lower: int, upper: int):
-        slider_bar = QSlider(QtCore.Qt.Horizontal, self)
-        slider_bar.setRange(lower, upper - 1)
-        slider_bar.setTickInterval(5)
-        slider_bar.setSingleStep(1)
-        slider_bar.setPageStep(10)
-        return slider_bar
+    # def add_slider(self, lower: int, upper: int):
+    #     slider_bar = QSlider(QtCore.Qt.Horizontal, self)
+    #     slider_bar.setRange(lower, upper - 1)
+    #     slider_bar.setTickInterval(5)
+    #     slider_bar.setSingleStep(1)
+    #     slider_bar.setPageStep(10)
+    #     return slider_bar

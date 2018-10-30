@@ -183,6 +183,13 @@ class TwoD_Plotter(MyMplCanvas):
             np.savetxt(yname, np.c_[xdat, ydat], header=y_header)
         except:
             print("y error")
+        # try:
+        #     last_line = yprof_ax.lines[-1]
+        #     xdat, ydat = last_line.get_data()
+        #     yname = location + "_Yprofile.txt"
+        #     y_header = "Y Profile\n{}   Intensity".format(self.ylabel)
+        #     np.savetxt(yname, np.c_[xdat, ydat], header=y_header)
+
         # 2D always available, so save them
         td_name = location + "_2d.txt"
         td_header = "Data shape: {}\n Data extent: {}".format(td_dat.shape, td_extent)
@@ -194,3 +201,7 @@ class TwoD_Plotter(MyMplCanvas):
         self.fig.savefig(location + "_2d.png")
         self.fig_xax.savefig(location + "_XProfile.png")
         self.fig_yax.savefig(location + "_YProfile.png")
+        try:
+            self.free_fig.savefig(location + '_freeProf.png')
+        except:
+            pass

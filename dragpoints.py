@@ -11,37 +11,42 @@ class DraggablePlotExample(object):
         self._figure, self._axes, self.line = figure, axes, None
         self._dragging_point = None
         self._points = {}
+        self.xy1 = ()
+        self.xy2 = ()
 
         self._init_plot()
 
     def _init_plot(self):
-        # self._figure = plt.figure("Example plot")
-        # axes = plt.subplot(1, 1, 1)
-        # axes.set_xlim(0, 100)
-        # axes.set_ylim(0, 100)
-        # axes.grid(which="both")
-        # self._axes = axes
-
-        self._figure.canvas.mpl_connect("button_press_event", self._on_click)
-        self._figure.canvas.mpl_connect("button_release_event", self._on_release)
-        self._figure.canvas.mpl_connect("motion_notify_event", self._on_motion)
-        # plt.show()
+        self.click_cid = self._figure.canvas.mpl_connect(
+            "button_press_event", self._on_click
+        )
+        self.release_cid = self._figure.canvas.mpl_connect(
+            "button_release_event", self._on_release
+        )
+        self.motion_cid = self._figure.canvas.mpl_connect(
+            "motion_notify_event", self._on_motion
+        )
 
     def _update_plot(self):
         if not self._points:
             return
         x, y = zip(*sorted(self._points.items()))
+        self.xy1 = (x[0], y[0])
+        try:
+            self.xy2 = (x[1], y[1])
+        except:
+            pass
         print(x, y)
         # Add new plot
         if not self.line:
-            self.line, = self._axes.plot(x, y, "r", marker="o", markersize=5, zorder=0)
+            self.line, = self._axes.plot(x, y, "r", marker="o", markersize=5)
             self._figure.canvas.draw()
         # Update current plot
         else:
             # self._axes.lines.remove
             self.line.set_data(x, y)
-            # self._figure.canvas.draw()
-            self._axes.draw_artist(self.line)
+            self._figure.canvas.draw()
+            # self._axes.draw_artist(self.line)
             # self._axes.draw_artist(self.twoD_ax)
             # self._axes.draw_artist(self.line)
             # self._figure.canvas.blit(self._axes.bbox)
@@ -52,10 +57,12 @@ class DraggablePlotExample(object):
             # self._axes.figure.canvas.update()
             # self._axes.draw_artist(self._axes.patch)
             # self._axes.draw_artist(self.line)
-            self._figure.canvas.update()
+            # self._figure.canvas.update()
             # self._figure.canvas.flush_events()
 
     def _add_point(self, x, y=None):
+        if len(self._points) >= 2:
+            return
         if isinstance(x, MouseEvent):
             x, y = float(x.xdata), float(x.ydata)
         self._points[x] = y
@@ -87,7 +94,7 @@ class DraggablePlotExample(object):
         """ callback method for mouse click event
         :type event: MouseEvent
         """
-        # left click
+        # right click
         if event.button == 3 and event.inaxes in [self._axes]:
             point = self._find_neighbor_point(event)
             if point:
@@ -121,6 +128,14 @@ class DraggablePlotExample(object):
         self._remove_point(*self._dragging_point)
         self._dragging_point = self._add_point(event)
         self._update_plot()
+
+    def disconnect(self):
+        self._figure.canvas.mpl_disconnect(self.click_cid)
+        self._figure.canvas.mpl_disconnect(self.release_cid)
+        self._figure.canvas.mpl_disconnect(self.motion_cid)
+    
+    def get_data(self):
+        return self.xy1, self.xy2
 
 
 # if __name__ == "__main__":
