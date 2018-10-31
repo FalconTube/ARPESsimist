@@ -38,26 +38,14 @@ class DraggablePlotExample(object):
             pass
         # Add new plot
         if not self.line:
-            self.line, = self._axes.plot(x, y, "r", marker="o", markersize=5)
+            self.line, = self._axes.plot(
+                x, y, marker="o", linestyle="-", color="#ff7f0e", markersize=5
+            )
             self._figure.canvas.draw()
         # Update current plot
         else:
-            # self._axes.lines.remove
             self.line.set_data(x, y)
             self._figure.canvas.draw()
-            # self._axes.draw_artist(self.line)
-            # self._axes.draw_artist(self.twoD_ax)
-            # self._axes.draw_artist(self.line)
-            # self._figure.canvas.blit(self._axes.bbox)
-
-            # self._figure.canvas.draw_idle()
-            # self._l.set_data(self.twoD_data)
-            # self._axes.draw_artist(self.line)
-            # self._axes.figure.canvas.update()
-            # self._axes.draw_artist(self._axes.patch)
-            # self._axes.draw_artist(self.line)
-            # self._figure.canvas.update()
-            # self._figure.canvas.flush_events()
 
     def _add_point(self, x, y=None):
         if len(self._points) >= 2:
@@ -76,10 +64,11 @@ class DraggablePlotExample(object):
         :rtype: ((int, int)|None)
         :return: (x, y) if there are any point around mouse else None
         """
+        #TODO: Do this dynamically
         distance_threshold = 3
         nearest_point = None
         # min_distance = math.sqrt(2 * (100 ** 2))
-        min_distance = 10
+        min_distance = 1
         for x, y in self._points.items():
             distance = math.hypot(abs(event.xdata - x), abs(event.ydata - y))
             if distance < min_distance:
@@ -102,12 +91,6 @@ class DraggablePlotExample(object):
             else:
                 self._add_point(event)
             self._update_plot()
-        # right click
-        # elif event.button == 3 and event.inaxes in [self._axes]:
-        #     point = self._find_neighbor_point(event)
-        #     if point:
-        #         self._remove_point(*point)
-        #         self._update_plot()
 
     def _on_release(self, event):
         """ callback method for mouse release event
@@ -132,9 +115,15 @@ class DraggablePlotExample(object):
         self._figure.canvas.mpl_disconnect(self.click_cid)
         self._figure.canvas.mpl_disconnect(self.release_cid)
         self._figure.canvas.mpl_disconnect(self.motion_cid)
-    
+
     def get_data(self):
         return self.xy1, self.xy2
+
+    def clear_line(self):
+        try:
+            self.line.remove()
+        except:
+            pass
 
 
 # if __name__ == "__main__":

@@ -61,14 +61,15 @@ class LineProfiles(QWidget):
         self.cid = False
         try:
             self.free_plot.disconnect()
-            self._figure.canvas.mpl_disconnect(self.click_cid)
+            # self.free_plot._figure.canvas.mpl_disconnect(self.click_cid)
             self.ax.figure.mpl.disconnect(self.free_release_cid)
-        except ValueError:
+        except:
             pass
 
     def init_cursor_active_x(self):
         """ Choose x profile generator """
         self.xy_chooser = "x"
+        self.disconnect()
         if not self.cid:
             self.cid = self.ax.figure.canvas.mpl_connect(
                 "button_press_event", self.on_press
@@ -77,6 +78,7 @@ class LineProfiles(QWidget):
     def init_cursor_active_y(self):
         """ Choose y profile generator """
         self.xy_chooser = "y"
+        self.disconnect()
         if not self.cid:
             self.cid = self.ax.figure.canvas.mpl_connect(
                 "button_press_event", self.on_press
@@ -87,25 +89,34 @@ class LineProfiles(QWidget):
         if event.button == 3:  # Use right click
             if self.xy_chooser == "x":
                 if self.current_hline:
-                    self.current_hline.remove()
-                self.current_hline = self.ax.axhline(event.ydata)
+                    try:
+                        self.current_hline.remove() 
+                    except:
+                        pass
+                self.current_hline = self.ax.axhline(event.ydata, color="#ff7f0e")
 
                 x1, y1 = self.lineprofileX(self.data, self.ranges, event.ydata)
+                self.xprof_ax.relim()
                 self.xprof_ax.plot(x1, y1, zorder=-1)
-                self.xprof_ax.set_xlim(min(x1), max(x1))
+                # self.xprof_ax.set_xlim(min(x1), max(x1))
                 self.xprof_ax.figure.canvas.draw()
 
             if self.xy_chooser == "y":
                 if self.current_vline:
-                    self.current_vline.remove()
-                self.current_vline = self.ax.axvline(event.xdata)
+                    try:
+                        self.current_vline.remove() 
+                    except:
+                        pass
+                self.current_vline = self.ax.axvline(event.xdata, color="#ff7f0e")
 
                 x2, y2 = self.lineprofileY(self.data, self.ranges, event.xdata)
                 # print(self.x2, self.y2)
+                self.yprof_ax.relim()
                 self.yprof_ax.plot(y2, x2, zorder=-1)
-                self.yprof_ax.set_ylim(max(x2), min(x2))
+                # self.yprof_ax.set_ylim(min(x2), max(x2))
                 self.yprof_ax.figure.canvas.draw()
-
+            
+            
             self.ax.figure.canvas.draw()  # redraw
 
     def free_on_release(self, event):
@@ -127,8 +138,9 @@ class LineProfiles(QWidget):
     def clear_all(self):
         """ Clear Lineprofiles and h,v lines """
         # Remove all lines
-        self.xprof_ax.clear()
-        self.yprof_ax.clear()
+        self.line_remover(self.xprof_ax)
+        self.line_remover(self.yprof_ax)
+
         if self.current_hline:
             self.current_hline.remove()
         if self.current_vline:
@@ -136,8 +148,11 @@ class LineProfiles(QWidget):
         self.current_hline = False
         self.current_vline = False
         try:
-            self.free_ax.clear()
-            # self.free_ax.cla()
+            self.free_plot.clear_line()
+        except:
+            pass
+        try:
+            self.free_ax.cla()
         except:
             pass
 
@@ -145,9 +160,17 @@ class LineProfiles(QWidget):
         self.twodfig.figure.canvas.draw()
         self.xprof_ax.figure.canvas.draw()
         self.yprof_ax.figure.canvas.draw()
+        self.free_ax.figure.canvas.draw()
+
+    def line_remover(self, axis):
+        """ Somehow cannot just iterate over all lines,
+        must do it with while loop. Stange but works... """
+        while len(axis.lines) > 0:
+            for line in axis.lines:
+                line.remove()
 
     def init_free_prof(self):
-        self.xy_chooser = 'free'
+        self.xy_chooser = "free"
         self.free_plot = DraggablePlotExample(self.ax.figure, self.ax)
         self.free_fig = Figure(figsize=(5, 0.2 * 5), dpi=100, tight_layout=True)
         self.free_ax = self.free_fig.add_subplot(111)
@@ -216,8 +239,8 @@ class LineProfiles(QWidget):
             ),
             axis=1,
         )
-        # return self.yvals[::-1], self.profile
-        return self.yvals, profile
+        return self.yvals[::-1], profile
+        # return self.yvals, profile
 
     def get_breadth(self):
         if not self.input_breadth.text() == "":
@@ -239,10 +262,10 @@ class LineProfiles(QWidget):
         self.discobutton.setChecked(True)
 
         # Set Tooltips
-        self.selectbutton_x.setToolTip('Use Right-Click')
-        self.selectbutton_y.setToolTip('Use Right-Click')
-        self.selectbutton_free.setToolTip('Use Right-Click')
-        
+        self.selectbutton_x.setToolTip("Use Right-Click")
+        self.selectbutton_y.setToolTip("Use Right-Click")
+        self.selectbutton_free.setToolTip("Use Right-Click")
+
         # self.selectbutton_x = QPushButton('&X Lineprofile', self)
         # self.selectbutton_y = QPushButton('&Y Lineprofile', self)
         self.clearbutton = QPushButton("&Clear", self)

@@ -27,8 +27,10 @@ class MyMplCanvas(QWidget):
         self.fig_yax = Figure(figsize=(0.2 * width, height), dpi=dpi, tight_layout=True)
 
         self.axes = self.fig.add_subplot(111)  # 2D Data
-        self.xprof_ax = self.fig_xax.add_subplot(111)  # LineProfile X
-        self.yprof_ax = self.fig_yax.add_subplot(111)  # LineProfile Y
+        # self.axes.invert_xaxis()
+        self.xprof_ax = self.fig_xax.add_subplot(111, sharex=self.axes)  # LineProfile X
+        self.yprof_ax = self.fig_yax.add_subplot(111, sharey=self.axes)  # LineProfile Y
+        
 
         self.compute_initial_figure()
 
@@ -57,6 +59,11 @@ class MyMplCanvas(QWidget):
         # self.fit_parabola()
         self.lineprofile()
         self.show()
+
+    # def set_message(self, s):
+    #     self.message.emit(s)
+    #     if self.coordinates:
+    #         self.locLabel.setText(s)
 
     def compute_initial_figure(self):
         pass

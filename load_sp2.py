@@ -7,7 +7,7 @@ from natsort import natsorted
 import multiprocessing
 import h5py as h5
 
-
+# from PyQt5.QtCore import QThread
 from PyQt5.QtWidgets import QProgressBar, QWidget, QApplication, QMessageBox
 from progbar import ProgressBar
 
@@ -98,30 +98,15 @@ class Sp2_loader:
                     out_arr = data
                 else:
                     out_arr = np.dstack((out_arr, data))
-        print(
-            "Loading {} took {:.1f} seconds".format(
-                len(filenames), time.time() - starttime
-            )
-        )
+        # print(
+        #     "Loading {} took {:.1f} seconds".format(
+        #         len(filenames), time.time() - starttime
+        #     )
+        # )
+        if not self.multi_file_mode:
+            thisshape = out_arr.shape
+            out_arr = out_arr.reshape(thisshape[0], thisshape[1], 1)
         return out_arr, ranges_dict
-
-    def single_thread_sp2(self, filenames, both_sets=False):
-        starttime = time.time()
-        pb = ProgressBar()
-        files_max_count = len(filenames)
-        for n, filename in enumerate(natsorted(filenames)):
-            data = self.read_sp2(filename, both_sets)
-            if n == 0:
-                out_arr = data
-            else:
-                out_arr = np.dstack((out_arr, data))
-            progress = round(n / files_max_count * 100, 0)
-            pb.setValue(progress)
-            QApplication.processEvents()
-
-        pb.close()
-        print("Time_elaped = {}".format(time.time() - starttime))
-        return out_arr
 
     def tidy_up_list(self, inlist):
         """ Remove all files that are not .sp2 """

@@ -13,7 +13,8 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QDialog,
 )
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QScreen, QPixmap
+
 # import qdarkstyle
 
 
@@ -59,12 +60,23 @@ class ApplicationWindow(QMainWindow):
         self._current_labelname = ""
         self.p_min = False
         QMainWindow.__init__(self)
-
-        self.resize(950, 950)
+        # screen = QScreen()
+        # geom = QScreen.availableGeometry
+        # print(geom)
+        # height = geom.height()
+        # width = geom.width()
+        # QScreen *screen = QGuiApplication::primaryScreen();
+        # QRect  screenGeometry = screen->geometry();
+        # int height = screenGeometry.height();
+        # int width = screenGeometry.width();
+        # print(self.screens.size)
+        self.resize(960, 1080)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("ARPESsimist")
-        iconpath = os.path.relpath('logo_black.png')
-        self.setWindowIcon(QIcon(iconpath))
+        iconname = "logo_black.png"
+        basedir = os.path.dirname(os.path.realpath(__file__))
+        pm = QPixmap(os.path.join(basedir, iconname))
+        self.setWindowIcon(QIcon(pm))
         # self.setWindowIcon(QtCore.Qt.QIcon('logo.png'))
 
         # Set up File Menu
@@ -118,7 +130,13 @@ class ApplicationWindow(QMainWindow):
 
     def about(self):
         """ Prints about """
-        QMessageBox.about(self, "About", """ARPyES""")
+        QMessageBox.about(
+            self,
+            "About",
+            "<center><b>ARPESsimist</b></center><br> Developed by "+\
+        "Yannic Falke. Please report any bugs or feature requests to:<br>"+\
+        "falke@ph2.uni-koeln.de",
+        )
 
     def angle_k_button_state(self):
         """ Switch to angle or k space data set """
@@ -144,6 +162,7 @@ class ApplicationWindow(QMainWindow):
             #                       'Please load some data')
 
     def choose_sp2(self):
+        old_pmin = self.p_min
         self.p_min = None
         many_files = QFileDialog.getOpenFileNames(
             self,
@@ -159,9 +178,11 @@ class ApplicationWindow(QMainWindow):
             )
             self.load_multiple_files()
         except:
+            self.p_min = old_pmin
             pass
 
     def choose_nxs(self):
+        old_pmin = self.p_min
         self.p_min = None
         try:
             location = QFileDialog.getOpenFileNames(
@@ -183,22 +204,24 @@ class ApplicationWindow(QMainWindow):
             self.loaded_filenames = range(self.angle_data.shape[0])
             self.load_multiple_files()
         except:
+            self.p_min = old_pmin
             pass
 
     def load_multiple_files(self):
         if self.new_twoD_widget:
             self.new_twoD_widget.deleteLater()
-        if not self.sp2.multi_file_mode:
-            self.processing_data = self.angle_data  # Start with angle data
-            self.processing_extent = self.angle_extent
-            self.new_current_data = self.processing_data
-            self.new_current_extent = self.processing_extent
+        # if not self.sp2.multi_file_mode:
+        #     self.processing_data = self.angle_data  # Start with angle data
+        #     self.processing_extent = self.angle_extent
+        #     self.new_current_data = self.processing_data
+        #     self.new_current_extent = self.processing_extent
 
-        else:
-            stack_size = self.angle_data.shape[-1]
-            self.processing_data = self.angle_data  # Start with angle data
-            self.processing_extent = self.angle_extent
-            self.update_current_data()
+        # else:
+        stack_size = self.angle_data.shape[-1]
+        self.processing_data = self.angle_data  # Start with angle data
+        self.processing_extent = self.angle_extent
+        print(self.processing_data.shape)
+        self.update_current_data()
 
         # self.update_widgets()
         if not self.hd5mode:
@@ -377,7 +400,6 @@ if __name__ == "__main__":
     # sys.exit()
     qApp = QApplication(sys.argv)
     # qApp.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-
 
     aw = ApplicationWindow()
     # aw.setWindowTitle("%s" % progname)
