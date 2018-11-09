@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (
     QFileDialog,
     QGridLayout,
     QDialog,
+    QInputDialog,
 )
 from PyQt5.QtGui import QIcon, QScreen, QPixmap
 
@@ -35,6 +36,7 @@ from lineprofiles import LineProfiles
 from generate_maps import VerticalSlitPolarScan, ThreadingKMaps
 from ask_map_parameters import MapParameterBox
 from new_k_window import K_Window
+from brillouin_plot import calc_brillouin
 
 
 class ApplicationWindow(QMainWindow):
@@ -86,7 +88,7 @@ class ApplicationWindow(QMainWindow):
         self.file_menu.addAction(
             "&Quit", self.fileQuit, QtCore.Qt.CTRL + QtCore.Qt.Key_Q
         )
-
+        
         self.menuBar().addMenu(self.file_menu)
 
         # Set up Mapping Menu
@@ -170,10 +172,10 @@ class ApplicationWindow(QMainWindow):
             "/home/yannic/Documents/PhD/ARPyES/zDisp/azimap/",
         )
         try:
-            self.sp2 = Sp2_loader()
-            self.loaded_filenames = self.sp2.tidy_up_list(many_files[0])
             self.statusBar().showMessage("Loading Data...", 2000)
-            self.angle_data, self.angle_extent = self.sp2.read_multiple_sp2(
+            sp2 = Sp2_loader()
+            self.loaded_filenames = sp2.tidy_up_list(many_files[0])
+            self.angle_data, self.angle_extent = sp2.read_multiple_sp2(
                 self.loaded_filenames
             )
             self.load_multiple_files()
@@ -185,6 +187,7 @@ class ApplicationWindow(QMainWindow):
         old_pmin = self.p_min
         self.p_min = None
         try:
+            self.statusBar().showMessage("Loading Data...", 2000)
             location = QFileDialog.getOpenFileNames(
                 self,
                 "Select one NXS file to open",
@@ -192,13 +195,12 @@ class ApplicationWindow(QMainWindow):
             )
 
             location = str(location[0][0])
-            self.statusBar().showMessage("Loading Data...", 2000)
             self.hd5mode = True
-            self.sp2 = Sp2_loader()
-            self.sp2.multi_file_mode = True
-            self.H5loader = LoadHDF5(location)
+            # sp2 = Sp2_loader()
+            # sp2.multi_file_mode = True
+            H5loader = LoadHDF5(location)
             self.angle_data, self.angle_extent, self.p_min, self.p_max = (
-                self.H5loader.return_data()
+                H5loader.return_data()
             )
 
             self.loaded_filenames = range(self.angle_data.shape[0])
@@ -220,7 +222,7 @@ class ApplicationWindow(QMainWindow):
         stack_size = self.angle_data.shape[-1]
         self.processing_data = self.angle_data  # Start with angle data
         self.processing_extent = self.angle_extent
-        print(self.processing_data.shape)
+
         self.update_current_data()
 
         # self.update_widgets()
@@ -281,7 +283,6 @@ class ApplicationWindow(QMainWindow):
                     outvalues
                 )
             else:
-                print(outvalues)
                 ksteps, esteps, pol_off, angle_off, tilt, azi, kxmin, kxmax, kymin, kymax = (
                     outvalues
                 )
@@ -300,7 +301,6 @@ class ApplicationWindow(QMainWindow):
                 kymin=kymin,
                 kymax=kymax,
             )
-            print(ksteps)
             ke_slice, ky_slice, kx_slice, kxmin, kxmax, kymin, kymax, kx_list, ky_list, E_list = All_maps.slice_K_fortran(
                 ksteps, esteps, azi, tilt, self.use_azi
             )
@@ -316,11 +316,12 @@ class ApplicationWindow(QMainWindow):
             self.KEWin = K_Window(
                 ke_slice,
                 extent_stack_E,
-                E_list,
+                E_list[::-1], # reverse because of reverse plotting
                 labelprefix="Energy [eV]",
                 xlabel=r"kx [$\mathrm{\AA^{-1}}$]",
                 ylabel=r"ky [$\mathrm{\AA^{-1}}$]",
             )
+            self.KEWin.eval_menu.addAction('&Plot Brillouin', self.brillouin_zone)
             self.KEWin.show()
 
             self.KyWin = K_Window(
@@ -341,6 +342,7 @@ class ApplicationWindow(QMainWindow):
                 xlabel=r"kx [$\mathrm{\AA^{-1}}$]",
                 ylabel="E [eV]",
             )
+            
             self.KxWin.show()
         self.p_min = None
 
@@ -388,20 +390,24 @@ class ApplicationWindow(QMainWindow):
                 ).exec()
             ):
                 self.processing_data = self.processing_data[::2, ::2, ::2]
+    
+    def brillouin_zone(self):
+        axis = self.KEWin.k_k_widget.axes
+        out = QInputDialog.getDouble(self, self.tr("QInputDialog().getDouble()"),
+                                     self.tr("Lattice constant <b> a </b>:"),
+                                     3.3, 0, 10, 3)
+        a = out[0]
+        xvals, yvals = calc_brillouin(a)
+        axis.plot(xvals, yvals, 'r-', zorder=1, lw=3)
+        axis.figure.canvas.draw()
+        
+        
 
 
 if __name__ == "__main__":
-    # test = Sp2_loader()
-    # stack, ranges = test.read_multiple_sp2(
-    #     ['mos2_2_003.sp2', 'mos2_2_015.sp2'])
-    # handler = HandleNielsSpectra(stack, ranges)
-    # out, extent = handler.convert_all_to_k()
-
-    # sys.exit()
     qApp = QApplication(sys.argv)
     # qApp.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
     aw = ApplicationWindow()
-    # aw.setWindowTitle("%s" % progname)
     aw.show()
     sys.exit(qApp.exec_())

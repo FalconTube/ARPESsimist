@@ -19,7 +19,11 @@ class K_Window(QMainWindow):
             "&Quit", self.fileQuit, QtCore.Qt.CTRL + QtCore.Qt.Key_Q
         )
 
+        # Set up Evaluation Menu
+        self.eval_menu = QMenu("&Evaluation", self)
+
         self.menuBar().addMenu(self.file_menu)
+        self.menuBar().addMenu(self.eval_menu)
         self.k_win_widget = QWidget(self)
         self.k_k_widget = TwoD_Plotter(
             k_stack,
