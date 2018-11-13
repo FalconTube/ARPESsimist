@@ -5,6 +5,11 @@ PythonNiels/
 zDisp/
 __pycache__/
 fortran_routines/a.out
+fortran_routines/*.mod
+fortran_routines/*.o
+fortran_routines/*.so
+fortran_routines/*.pyf
+testvirt/
 # !fortran_routines/kmaps.f90
 # !fortran_routines/test_kmaps.f90
 # !fortran_routines/compile.sh

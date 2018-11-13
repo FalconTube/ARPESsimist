@@ -16,17 +16,6 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QIcon, QScreen, QPixmap
 
-# import qdarkstyle
-
-
-# import matplotlib
-# from matplotlib.backends.backend_qt5agg \
-#     import FigureCanvasQTAgg as FigureCanvas,\
-#     NavigationToolbar2QT as NavigationToolbar
-# from matplotlib.figure import Figure
-# matplotlib.use("Qt5Agg")
-
-
 from load_sp2 import Sp2_loader, LoadHDF5
 from plot_2d import TwoD_Plotter
 from mpl_canvas_class import MyMplCanvas
@@ -212,23 +201,15 @@ class ApplicationWindow(QMainWindow):
     def load_multiple_files(self):
         if self.new_twoD_widget:
             self.new_twoD_widget.deleteLater()
-        # if not self.sp2.multi_file_mode:
-        #     self.processing_data = self.angle_data  # Start with angle data
-        #     self.processing_extent = self.angle_extent
-        #     self.new_current_data = self.processing_data
-        #     self.new_current_extent = self.processing_extent
-
-        # else:
         stack_size = self.angle_data.shape[-1]
         self.processing_data = self.angle_data  # Start with angle data
         self.processing_extent = self.angle_extent
 
         self.update_current_data()
 
-        # self.update_widgets()
         if not self.hd5mode:
             self._current_labelname = os.path.basename(self.loaded_filenames[0])
-            # self.twoD_label.setText(self._current_labelname)
+
         self.data_are_loaded = True
         self.new_twoD_widget = TwoD_Plotter(
             self.processing_data,
@@ -242,26 +223,26 @@ class ApplicationWindow(QMainWindow):
         )
         self.over_layout.addWidget(self.new_twoD_widget, 1, 0)
 
-    def thread_polar_maps(self):
-        xmin, xmax, ymin, ymax = -1.0, 1.6, -1.0, 1.6
-        self.kmap_thread = ThreadingKMaps(
-            self.processing_data,
-            self.processing_extent,
-            self.p_min,
-            self.p_max,
-            66.16,
-            67.84,
-            0.01,
-            0.0,
-            0,
-            kxmin=xmin,
-            kxmax=xmax,
-            kymin=ymin,
-            kymax=ymax,
-        )
+    # def thread_polar_maps(self):
+    #     xmin, xmax, ymin, ymax = -1.0, 1.6, -1.0, 1.6
+    #     self.kmap_thread = ThreadingKMaps(
+    #         self.processing_data,
+    #         self.processing_extent,
+    #         self.p_min,
+    #         self.p_max,
+    #         66.16,
+    #         67.84,
+    #         0.01,
+    #         0.0,
+    #         0,
+    #         kxmin=xmin,
+    #         kxmax=xmax,
+    #         kymin=ymin,
+    #         kymax=ymax,
+    #     )
 
-        self.kmap_thread.finished.connect(self.kmap_thread.get)
-        self.kmap_thread.start()
+    #     self.kmap_thread.finished.connect(self.kmap_thread.get)
+    #     self.kmap_thread.start()
         # extent_stack = list([[xmin, xmax, ymin, ymax]]) * \
         #     self.k_slice.shape[-1]
 
