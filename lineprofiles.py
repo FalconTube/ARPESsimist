@@ -5,6 +5,7 @@ import numpy as np
 from scipy.interpolate import interp2d
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.widgets import RectangleSelector
 
 from PyQt5.QtWidgets import (
     # QApplication,
@@ -26,7 +27,16 @@ from PyQt5.QtWidgets import (
     QGridLayout,
 )
 
+import matplotlib.pyplot as plt
+
 from dragpoints import DraggablePlotExample
+from edc_fitting import EDCfitter
+from lmfit.models import PseudoVoigtModel
+from lmfit.models import LorentzianModel
+from lmfit.models import LinearModel
+from lmfit.models import GaussianModel
+from scipy.signal import savgol_filter
+
 
 
 class LineProfiles(QWidget):
@@ -63,6 +73,7 @@ class LineProfiles(QWidget):
             self.free_plot.disconnect()
             # self.free_plot._figure.canvas.mpl_disconnect(self.click_cid)
             self.ax.figure.mpl.disconnect(self.free_release_cid)
+            self.ax.figure.mpl.disconnect(self.rect_cid)
         except:
             pass
 
@@ -90,7 +101,7 @@ class LineProfiles(QWidget):
             if self.xy_chooser == "x":
                 if self.current_hline:
                     try:
-                        self.current_hline.remove() 
+                        self.current_hline.remove()
                     except:
                         pass
                 self.current_hline = self.ax.axhline(event.ydata, color="#ff7f0e")
@@ -104,7 +115,7 @@ class LineProfiles(QWidget):
             if self.xy_chooser == "y":
                 if self.current_vline:
                     try:
-                        self.current_vline.remove() 
+                        self.current_vline.remove()
                     except:
                         pass
                 self.current_vline = self.ax.axvline(event.xdata, color="#ff7f0e")
@@ -115,8 +126,7 @@ class LineProfiles(QWidget):
                 self.yprof_ax.plot(y2, x2, zorder=-1)
                 # self.yprof_ax.set_ylim(min(x2), max(x2))
                 self.yprof_ax.figure.canvas.draw()
-            
-            
+
             self.ax.figure.canvas.draw()  # redraw
 
     def free_on_release(self, event):
@@ -164,7 +174,7 @@ class LineProfiles(QWidget):
 
     def line_remover(self, axis):
         """ Somehow cannot just iterate over all lines,
-        must do it with while loop. Stange but works... """
+        must do it with while loop. Strange but works... """
         while len(axis.lines) > 0:
             for line in axis.lines:
                 line.remove()
@@ -248,45 +258,151 @@ class LineProfiles(QWidget):
         else:
             self.breadth = 0.0
 
+    def init_rectangle(self):
+        def line_select_callback(eclick, erelease):
+            "eclick and erelease are the press and release events"
+            self.rect_x1, self.rect_y1 = eclick.xdata, eclick.ydata
+            self.rect_x2, self.rect_y2 = erelease.xdata, erelease.ydata
+
+        def toggle_selector(event):
+            print(" Key pressed.")
+            if event.key in ["Q", "q"] and toggle_selector.RS.active:
+                print(" RectangleSelector deactivated.")
+                toggle_selector.RS.set_active(False)
+            if event.key in ["A", "a"] and not toggle_selector.RS.active:
+                print(" RectangleSelector activated.")
+                toggle_selector.RS.set_active(True)
+
+        # drawtype is 'box' or 'line' or 'none'
+        toggle_selector.RS = RectangleSelector(
+            self.ax,
+            line_select_callback,
+            drawtype="box",
+            useblit=False,
+            button=[1, 3],  # don't use middle button
+            #    minspanx=5, minspany=5,
+            spancoords="data",
+            interactive=True,
+        )
+        self.rect_cid = self.ax.figure.canvas.mpl_connect(
+            "key_press_event", toggle_selector
+        )
+
+    def find_maxima(self):
+        max_x = []
+        max_y = []
+        x_pos = np.logical_and(self.rect_x1 < self.xvals, self.xvals < self.rect_x2)
+        y_pos = np.logical_and(self.rect_y1 < self.yvals, self.yvals < self.rect_y2)
+        x_range = self.xvals[x_pos]
+        y_range = self.yvals[y_pos]
+        # print(x_range, y_range)
+        fig = plt.figure()
+        for n, i in enumerate(y_range):
+            print(n/len(y_range)*100)
+            raw_lineprof = self.idata(x_range, i)
+            lineprof = savgol_filter(raw_lineprof, 51, 2)
+            plt.plot(x_range, raw_lineprof, marker='.', linestyle=None)
+            plt.plot(x_range, lineprof, marker=None, linestyle='-')
+            pos_max = np.argmax(lineprof)
+            max_x.append(x_range[pos_max])
+            max_y.append(i)
+            # self.fit_profile(x_range, lineprof)
+        lim_before = self.ax.get_ylim()
+        max_line = self.ax.scatter(
+            max_x, max_y, s=50, facecolor="none", color="b", zorder=3
+        )
+        # Have to reset the ylim, don't know why this happens
+        self.ax.set_ylim(lim_before)
+        self.ax.figure.canvas.draw()  # redraw
+        plt.show()
+    
+    def find_maxima_fit(self):
+        max_x = []
+        max_y = []
+        x_pos = np.logical_and(self.rect_x1 < self.xvals, self.xvals < self.rect_x2)
+        y_pos = np.logical_and(self.rect_y1 < self.yvals, self.yvals < self.rect_y2)
+        x_range = self.xvals[x_pos]
+        y_range = self.yvals[y_pos]
+        # print(x_range, y_range)
+        for n, i in enumerate(y_range):
+            print(n/len(y_range)*100)
+            lineprof = self.idata(x_range, i)
+            # pos_max = np.argmax(lineprof)
+            center = self.fit_profile(x_range, lineprof)
+            max_x.append(center)
+            max_y.append(i)
+            
+        lim_before = self.ax.get_ylim()
+        max_line = self.ax.scatter(
+            max_x, max_y, s=50, facecolor="none", color="r", zorder=3
+        )
+        # Have to reset the ylim, don't know why this happens
+        self.ax.set_ylim(lim_before)
+        self.ax.figure.canvas.draw()  # redraw
+
+        # finder = EDCfitter(self.idata)
+    
+    def fit_profile(self, x, y):
+        # pseudovoigt = PseudoVoigtModel()
+        fitmod = GaussianModel()
+        
+        background = LinearModel()
+        mod = fitmod + background
+        # mod = VoigtModel()
+        # mod = LorentzianModel()
+        pars = fitmod.guess(y, x=x)
+        linpars = background.guess(y, x=x)
+        allpars = pars + linpars
+        out = mod.fit(y, allpars, x=x)
+        center = out.values['center']
+        return center
+
+
     def init_widget(self):
         """ Creates widget and layout """
         self.box = QGroupBox("Line Profiles")
         # self.this_layout = QHBoxLayout()
         self.this_layout = QGridLayout()
 
-        # Create Radio Buttond
+        # Create Radio Buttons
         self.selectbutton_x = QRadioButton("&X Lineprofile", self)
         self.selectbutton_y = QRadioButton("&Y Lineprofile", self)
         self.selectbutton_free = QRadioButton("&Free Lineprofile", self)
+        self.selectbutton_rectangle = QRadioButton("&Select Rectangle", self)
         self.discobutton = QRadioButton("&Stop Selection", self)
         self.discobutton.setChecked(True)
+        self.clearbutton = QPushButton("&Clear", self)
+        self.maximabutton = QPushButton("&Find Maxima", self)
+        self.maximabutton_fit = QPushButton("&Find Maxima Fitting", self)
+
+        self.input_breadth = QLineEdit(self)
+        self.input_breadth.setPlaceholderText("Breadth")
 
         # Set Tooltips
         self.selectbutton_x.setToolTip("Use Right-Click")
         self.selectbutton_y.setToolTip("Use Right-Click")
         self.selectbutton_free.setToolTip("Use Right-Click")
 
-        # self.selectbutton_x = QPushButton('&X Lineprofile', self)
-        # self.selectbutton_y = QPushButton('&Y Lineprofile', self)
-        self.clearbutton = QPushButton("&Clear", self)
-
-        self.input_breadth = QLineEdit(self)
-        self.input_breadth.setPlaceholderText("Breadth")
-
         self.selectbutton_x.clicked.connect(self.init_cursor_active_x)
         self.selectbutton_y.clicked.connect(self.init_cursor_active_y)
         self.selectbutton_free.clicked.connect(self.init_free_prof)
+        self.selectbutton_rectangle.clicked.connect(self.init_rectangle)
         self.discobutton.clicked.connect(self.disconnect)
         self.clearbutton.released.connect(self.clear_all)
+        self.maximabutton.released.connect(self.find_maxima)
+        self.maximabutton_fit.released.connect(self.find_maxima_fit)
 
         self.input_breadth.returnPressed.connect(self.get_breadth)
 
         self.this_layout.addWidget(self.selectbutton_x, 0, 0)
         self.this_layout.addWidget(self.selectbutton_y, 1, 0)
         self.this_layout.addWidget(self.selectbutton_free, 2, 0)
+        self.this_layout.addWidget(self.selectbutton_rectangle, 3, 0)
         self.this_layout.addWidget(self.clearbutton, 0, 1)
         self.this_layout.addWidget(self.input_breadth, 1, 1)
         self.this_layout.addWidget(self.discobutton, 2, 1)
+        self.this_layout.addWidget(self.maximabutton, 3, 1)
+        self.this_layout.addWidget(self.maximabutton_fit, 4, 1)
 
         self.box.setLayout(self.this_layout)
 

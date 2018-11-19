@@ -158,7 +158,7 @@ class ApplicationWindow(QMainWindow):
         many_files = QFileDialog.getOpenFileNames(
             self,
             "Select one or more files to open",
-            "/home/yannic/Documents/PhD/ARPyES/zDisp/azimap/",
+            ".",
         )
         try:
             self.statusBar().showMessage("Loading Data...", 2000)
@@ -180,13 +180,11 @@ class ApplicationWindow(QMainWindow):
             location = QFileDialog.getOpenFileNames(
                 self,
                 "Select one NXS file to open",
-                "/home/yannic/Documents/PhD/ARPyES/zDisp/SnSe/",
+                ".",
             )
 
             location = str(location[0][0])
             self.hd5mode = True
-            # sp2 = Sp2_loader()
-            # sp2.multi_file_mode = True
             H5loader = LoadHDF5(location)
             self.angle_data, self.angle_extent, self.p_min, self.p_max = (
                 H5loader.return_data()

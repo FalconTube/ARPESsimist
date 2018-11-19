@@ -8,7 +8,9 @@ This program is an attempt to create a free and open-source way of evaluating AR
 
 ## Installation
 
-Clone this repository using `git` or download it directly and extract it anywhere.
+Clone this repository using `git` or download it directly and extract it anywhere, e.g.
+
+```git clone https://github.com/FalconTube/ARPESsimist.git```
 
 Required python packages:
 - Numpy

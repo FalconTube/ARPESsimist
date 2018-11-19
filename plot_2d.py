@@ -28,6 +28,7 @@ class TwoD_Plotter(MyMplCanvas):
         labelprefix="",
     ):
         super().__init__(parent, width, height, dpi)
+        self.colormap = 'terrain'
         self.xlabel = xlabel
         self.ylabel = ylabel
         self.labellist = labellist
@@ -51,13 +52,16 @@ class TwoD_Plotter(MyMplCanvas):
         self.twoD_slider.valueChanged.connect(self.twoD_slider_changed)
 
         # Add LUT Slider
-        initial_lut_position = np.amax(self.processing_data)/2 
+        initial_lut_position = np.amax(self.processing_data)*0.75 
         self.vmax_slider = self.add_slider(0, np.amax(self.processing_data), "vert")
         self.vmax_slider.setSliderPosition(initial_lut_position)
         self.vmax_label = QLabel("L\nU\nT", self)
         self.vmax_label.setAlignment(QtCore.Qt.AlignCenter)
         self.vmax_slider.valueChanged.connect(self.update_vmax)
         self.twoD_ax.set_clim(0, initial_lut_position)
+
+        # Add colormap chooser
+        self.cb.currentIndexChanged.connect(self.update_colormap)
 
         # Add to Layout
         self.main_layout.addWidget(self.twoD_slider)
@@ -70,6 +74,11 @@ class TwoD_Plotter(MyMplCanvas):
         appwindow.menuBar().addMenu(self.export_menu)
         self.export_menu.addAction("&Save txt", self.save_txt)
         self.export_menu.addAction("&Save Figures", self.save_figs)
+    
+    def update_colormap(self):
+        current_map = self.cb.currentText()
+        self.twoD_ax.set_cmap(current_map)
+        self.update_2dplot()
 
     def set_xylabels(self):
         self.axes.set_xlabel(self.xlabel)
@@ -98,7 +107,8 @@ class TwoD_Plotter(MyMplCanvas):
             self.instance_counter += 1
             self.axes.cla()
             self.twoD_ax = self.axes.imshow(
-                self.twoD_data, extent=extent, aspect=aspectratio, zorder=0
+                self.twoD_data, extent=extent, aspect=aspectratio, zorder=0,
+                cmap=self.colormap
             )
 
             self.fig.canvas.update()

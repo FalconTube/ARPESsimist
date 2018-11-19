@@ -3,7 +3,14 @@ import matplotlib
 
 # Make sure that we are using QT5
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QSizePolicy, QWidget, QVBoxLayout, QGridLayout, QSlider
+from PyQt5.QtWidgets import (
+    QSizePolicy,
+    QWidget,
+    QVBoxLayout,
+    QGridLayout,
+    QSlider,
+    QComboBox,
+)
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar,
@@ -13,6 +20,10 @@ from matplotlib.figure import Figure
 import matplotlib.gridspec as gridspec
 from set_parabola_fit import FitParabola
 from lineprofiles import LineProfiles
+import matplotlib.pyplot as plt
+
+# matplotlib.rcParams['toolbar'] = 'toolmanager'
+
 
 
 # class MyMplCanvas(FigureCanvas):
@@ -30,7 +41,6 @@ class MyMplCanvas(QWidget):
         # self.axes.invert_xaxis()
         self.xprof_ax = self.fig_xax.add_subplot(111, sharex=self.axes)  # LineProfile X
         self.yprof_ax = self.fig_yax.add_subplot(111, sharey=self.axes)  # LineProfile Y
-        
 
         self.compute_initial_figure()
 
@@ -46,6 +56,17 @@ class MyMplCanvas(QWidget):
         self.setParent(self.parent)
 
         self.toolbar = NavigationToolbar(self.canvas, self)
+        # self.toolbar = MyToolBar(self.canvas, self)
+        
+        self.cb = QComboBox()
+        self.cb.addItem("terrain")
+        self.cb.addItem("viridis")
+        self.cb.addItem("plasma")
+        self.cb.addItem("inferno")
+        self.cb.addItem("magma")
+        self.cb.addItem("Greys")
+        self.toolbar.addWidget(self.cb)
+        # thisslider = QSlider(QtCore.Qt.Horizontal, self)
 
         self.main_layout = QVBoxLayout(self)
         self.main_layout.addWidget(self.toolbar)
@@ -76,7 +97,7 @@ class MyMplCanvas(QWidget):
 
     def lineprofile(self):
         self.LineProf = LineProfiles(
-            self.axes, self.xprof_ax, self.yprof_ax, self.parent, self.grid_layout,
+            self.axes, self.xprof_ax, self.yprof_ax, self.parent, self.grid_layout
         )
         self.LineProf.init_widget()
         self.lineprof_widget = self.LineProf.get_widget()
@@ -89,3 +110,14 @@ class MyMplCanvas(QWidget):
     #     slider_bar.setSingleStep(1)
     #     slider_bar.setPageStep(10)
     #     return slider_bar
+
+    # class MyToolBar(NavigationToolbar):
+    #     def __init__(self):
+    #         super().__init__()
+    #         actions = self.findChildren(QtGui.QAction)
+    #         for a in actions:
+    #             if a.text() == 'Customize':
+    #                 self.removeAction(a)
+    #                 break
+
+
