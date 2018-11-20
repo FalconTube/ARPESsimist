@@ -28,6 +28,7 @@ class TwoD_Plotter(MyMplCanvas):
         labelprefix="",
     ):
         super().__init__(parent, width, height, dpi)
+        self.current_clim = None
         self.colormap = 'terrain'
         self.xlabel = xlabel
         self.ylabel = ylabel
@@ -41,6 +42,7 @@ class TwoD_Plotter(MyMplCanvas):
         stack_size = processing_data.shape[-1]
         self.instance_counter = 0
         self.slider_pos = 0
+        self.lut_slider_pos = 0
         self.update_current_data()
         self.update_widgets()
         self.initialize_2D_plot()
@@ -50,6 +52,7 @@ class TwoD_Plotter(MyMplCanvas):
         self.twoD_Label = QLabel(self)
         self.twoD_Label.setAlignment(QtCore.Qt.AlignCenter)
         self.twoD_slider.valueChanged.connect(self.twoD_slider_changed)
+        self.twoD_slider.sliderReleased.connect(self.update_widgets)
 
         # Add LUT Slider
         initial_lut_position = np.amax(self.processing_data)*0.75 
@@ -58,6 +61,7 @@ class TwoD_Plotter(MyMplCanvas):
         self.vmax_label = QLabel("L\nU\nT", self)
         self.vmax_label.setAlignment(QtCore.Qt.AlignCenter)
         self.vmax_slider.valueChanged.connect(self.update_vmax)
+        self.vmax_slider.sliderReleased.connect(self.full_update_2d)
         self.twoD_ax.set_clim(0, initial_lut_position)
 
         # Add colormap chooser
@@ -93,9 +97,16 @@ class TwoD_Plotter(MyMplCanvas):
 
     def update_vmax(self, value):
         changed_slider = self.sender()
-        self.slider_pos = changed_slider.value()
-        self.twoD_ax.set_clim(0, self.slider_pos)
+        self.lut_slider_pos = changed_slider.value()
+        self.current_clim = (0, self.lut_slider_pos)
+        self.twoD_ax.set_clim(self.current_clim)
         self.update_2dplot()
+    
+    def full_update_2d(self):
+        # self.toolbar.update()
+        self.canvas.draw()
+        # self.instance_counter = 0
+        # self.update_2dplot(self.new_current_extent)
 
     def update_2dplot(self, extent=None):
         if extent:
@@ -106,22 +117,30 @@ class TwoD_Plotter(MyMplCanvas):
         if self.instance_counter == 0:
             self.instance_counter += 1
             self.axes.cla()
-            self.twoD_ax = self.axes.imshow(
-                self.twoD_data, extent=extent, aspect=aspectratio, zorder=0,
-                cmap=self.colormap
-            )
+            if self.current_clim:
+                self.twoD_ax = self.axes.imshow(
+                    self.twoD_data, extent=extent, aspect=aspectratio, zorder=0,
+                    clim=self.current_clim, cmap=self.colormap
+                )
+            else:
+                self.twoD_ax = self.axes.imshow(
+                    self.twoD_data, extent=extent, aspect=aspectratio, zorder=0,
+                    cmap=self.colormap
+                )
+
 
             self.fig.canvas.update()
             self.fig_xax.canvas.update()
             self.fig_yax.canvas.update()
 
-            self.toolbar.update()
+            
             self.canvas.draw()
+            self.toolbar.update()
         else:
             self.twoD_ax.set_data(self.twoD_data)
             self.axes.draw_artist(self.twoD_ax)
             self.axes.figure.canvas.update()
-            self.toolbar.update()
+            
 
     def update_2d_data(self, data):
         self.twoD_data = data
@@ -135,7 +154,7 @@ class TwoD_Plotter(MyMplCanvas):
     def update_current_data(self):
         self.new_current_data = self.processing_data[:, :, self.slider_pos]
         self.new_current_extent = self.processing_extent[self.slider_pos]
-        self.update_widgets()
+        # self.update_widgets()
 
     def update_widgets(self):
         # pass

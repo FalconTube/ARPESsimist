@@ -35,8 +35,9 @@ from lmfit.models import PseudoVoigtModel
 from lmfit.models import LorentzianModel
 from lmfit.models import LinearModel
 from lmfit.models import GaussianModel
-from scipy.signal import savgol_filter
-
+from scipy.signal import savgol_filter, find_peaks
+import pywt
+from statsmodels.robust import mad
 
 
 class LineProfiles(QWidget):
@@ -289,33 +290,79 @@ class LineProfiles(QWidget):
         )
 
     def find_maxima(self):
+        def find_nearest(value, array):
+            array = np.asarray(array)
+            idx = (np.abs(array - value)).argmin()
+            # return array[idx]
+            return idx
+
         max_x = []
+        max_x_peak = []
         max_y = []
         x_pos = np.logical_and(self.rect_x1 < self.xvals, self.xvals < self.rect_x2)
         y_pos = np.logical_and(self.rect_y1 < self.yvals, self.yvals < self.rect_y2)
         x_range = self.xvals[x_pos]
         y_range = self.yvals[y_pos]
-        # print(x_range, y_range)
-        fig = plt.figure()
+
+        # Parameters for smoothing
+        level = 2
+        wavelet = pywt.Wavelet("sym7")
+
         for n, i in enumerate(y_range):
-            print(n/len(y_range)*100)
+            # print(n / len(y_range) * 100)
             raw_lineprof = self.idata(x_range, i)
-            lineprof = savgol_filter(raw_lineprof, 51, 2)
-            plt.plot(x_range, raw_lineprof, marker='.', linestyle=None)
-            plt.plot(x_range, lineprof, marker=None, linestyle='-')
-            pos_max = np.argmax(lineprof)
-            max_x.append(x_range[pos_max])
+            # pos_max = np.argmax(raw_lineprof)
+            # lineprof = savgol_filter(raw_lineprof, 51, 2)
+            # pos_max = np.argmax(lineprof)
+            # possible_index = find_nearest(0.0, np.diff(lineprof))
+            # peak_pos = x_range[possible_index]
+
+            # transformed = cwt(data, wavelet, widths)
+            coeff = pywt.wavedec(raw_lineprof, wavelet, mode="per")
+            sigma = mad(coeff[-level])
+            # changing this threshold also changes the behavior,
+            # but I have not played with this very much
+            uthresh = sigma * np.sqrt(2 * np.log(len(raw_lineprof)))
+            coeff[1:] = (
+                pywt.threshold(i, value=uthresh, mode="soft") for i in coeff[1:]
+            )
+            # reconstruct the signal using the thresholded coefficients
+            estimated = pywt.waverec(coeff, wavelet, mode="per")
+            minimal_next_distance = len(x_range)/100*30
+            peaks = find_peaks(estimated, distance=minimal_next_distance)[0]
+            # Big nesting incoming, perhaps one can do this more nicely but it works...
+            peak_pos = x_range[peaks[np.argmax(estimated[peaks])]] 
+            
+            if n % 15 == 0:
+                if len(estimated) > len(x_range):
+                    estimated = estimated[:-1]
+                plt.plot(x_range, raw_lineprof, "k-")
+                plt.plot(x_range, estimated, "r-")
+                plt.plot(x_range[peaks], estimated[peaks], 'bo')
+                # print('All peaks: ', peaks)
+                # print('All peak Y: ', estimated[peaks])
+                # print('Max peak Y: ', np.max(estimated[peaks]))
+                # print('Corresp X: ', x_range[peaks[np.argmax(estimated[peaks])]])
+
+
+            # max_x.append(x_range[pos_max])
+            max_x_peak.append(peak_pos)
             max_y.append(i)
-            # self.fit_profile(x_range, lineprof)
+            
         lim_before = self.ax.get_ylim()
+        # max_line = self.ax.scatter(
+        #     max_x, max_y, s=50, facecolor="none", color="b", zorder=3
+        # )
+        # print(max_x_peak)
+        # print(max_y)
         max_line = self.ax.scatter(
-            max_x, max_y, s=50, facecolor="none", color="b", zorder=3
+            max_x_peak, max_y, s=50, facecolor="none", color="orange", zorder=3
         )
         # Have to reset the ylim, don't know why this happens
         self.ax.set_ylim(lim_before)
         self.ax.figure.canvas.draw()  # redraw
         plt.show()
-    
+
     def find_maxima_fit(self):
         max_x = []
         max_y = []
@@ -325,13 +372,13 @@ class LineProfiles(QWidget):
         y_range = self.yvals[y_pos]
         # print(x_range, y_range)
         for n, i in enumerate(y_range):
-            print(n/len(y_range)*100)
+            print(n / len(y_range) * 100)
             lineprof = self.idata(x_range, i)
             # pos_max = np.argmax(lineprof)
             center = self.fit_profile(x_range, lineprof)
             max_x.append(center)
             max_y.append(i)
-            
+
         lim_before = self.ax.get_ylim()
         max_line = self.ax.scatter(
             max_x, max_y, s=50, facecolor="none", color="r", zorder=3
@@ -341,11 +388,11 @@ class LineProfiles(QWidget):
         self.ax.figure.canvas.draw()  # redraw
 
         # finder = EDCfitter(self.idata)
-    
+
     def fit_profile(self, x, y):
         # pseudovoigt = PseudoVoigtModel()
         fitmod = GaussianModel()
-        
+
         background = LinearModel()
         mod = fitmod + background
         # mod = VoigtModel()
@@ -354,9 +401,8 @@ class LineProfiles(QWidget):
         linpars = background.guess(y, x=x)
         allpars = pars + linpars
         out = mod.fit(y, allpars, x=x)
-        center = out.values['center']
+        center = out.values["center"]
         return center
-
 
     def init_widget(self):
         """ Creates widget and layout """
