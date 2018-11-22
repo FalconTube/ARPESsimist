@@ -29,7 +29,7 @@ class TwoD_Plotter(MyMplCanvas):
     ):
         super().__init__(parent, width, height, dpi)
         self.current_clim = None
-        self.colormap = 'terrain'
+        self.colormap = "terrain"
         self.xlabel = xlabel
         self.ylabel = ylabel
         self.labellist = labellist
@@ -55,7 +55,7 @@ class TwoD_Plotter(MyMplCanvas):
         self.twoD_slider.sliderReleased.connect(self.update_widgets)
 
         # Add LUT Slider
-        initial_lut_position = np.amax(self.processing_data)*0.75 
+        initial_lut_position = np.amax(self.processing_data) * 0.75
         self.vmax_slider = self.add_slider(0, np.amax(self.processing_data), "vert")
         self.vmax_slider.setSliderPosition(initial_lut_position)
         self.vmax_label = QLabel("L\nU\nT", self)
@@ -78,7 +78,7 @@ class TwoD_Plotter(MyMplCanvas):
         appwindow.menuBar().addMenu(self.export_menu)
         self.export_menu.addAction("&Save txt", self.save_txt)
         self.export_menu.addAction("&Save Figures", self.save_figs)
-    
+
     def update_colormap(self):
         current_map = self.cb.currentText()
         self.twoD_ax.set_cmap(current_map)
@@ -101,12 +101,9 @@ class TwoD_Plotter(MyMplCanvas):
         self.current_clim = (0, self.lut_slider_pos)
         self.twoD_ax.set_clim(self.current_clim)
         self.update_2dplot()
-    
+
     def full_update_2d(self):
-        # self.toolbar.update()
         self.canvas.draw()
-        # self.instance_counter = 0
-        # self.update_2dplot(self.new_current_extent)
 
     def update_2dplot(self, extent=None):
         if extent:
@@ -119,37 +116,35 @@ class TwoD_Plotter(MyMplCanvas):
             self.axes.cla()
             if self.current_clim:
                 self.twoD_ax = self.axes.imshow(
-                    self.twoD_data, extent=extent, aspect=aspectratio, zorder=0,
-                    clim=self.current_clim, cmap=self.colormap
+                    self.twoD_data,
+                    extent=extent,
+                    aspect=aspectratio,
+                    zorder=0,
+                    clim=self.current_clim,
+                    cmap=self.colormap,
                 )
             else:
                 self.twoD_ax = self.axes.imshow(
-                    self.twoD_data, extent=extent, aspect=aspectratio, zorder=0,
-                    cmap=self.colormap
+                    self.twoD_data,
+                    extent=extent,
+                    aspect=aspectratio,
+                    zorder=0,
+                    cmap=self.colormap,
                 )
-
 
             self.fig.canvas.update()
             self.fig_xax.canvas.update()
             self.fig_yax.canvas.update()
 
-            
             self.canvas.draw()
             self.toolbar.update()
         else:
             self.twoD_ax.set_data(self.twoD_data)
             self.axes.draw_artist(self.twoD_ax)
             self.axes.figure.canvas.update()
-            
 
     def update_2d_data(self, data):
         self.twoD_data = data
-
-    # def compute_initial_figure(self):
-    #     self.twoD_data = np.zeros((10, 10))
-    #     self.axes.imshow(self.twoD_data)
-    #     self.xprof_ax.plot(1, 1)
-    #     self.yprof_ax.plot(1, 1)
 
     def update_current_data(self):
         self.new_current_data = self.processing_data[:, :, self.slider_pos]
@@ -233,6 +228,6 @@ class TwoD_Plotter(MyMplCanvas):
         self.fig_xax.savefig(location + "_XProfile.png")
         self.fig_yax.savefig(location + "_YProfile.png")
         try:
-            self.free_fig.savefig(location + '_freeProf.png')
+            self.free_fig.savefig(location + "_freeProf.png")
         except:
             pass

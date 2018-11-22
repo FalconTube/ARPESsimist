@@ -51,6 +51,14 @@ class ApplicationWindow(QMainWindow):
         self._current_labelname = ""
         self.p_min = False
         QMainWindow.__init__(self)
+        # Restoring old position if available
+        self.settings = QtCore.QSettings("ARPESsimist", "MainWin")
+        if not self.settings.value("geometry") == None:
+            self.restoreGeometry(self.settings.value("geometry"))
+        if not self.settings.value("windowState") == None:
+            self.restoreState(self.settings.value("windowState"))
+        # self.restoreGeometry(self.settings.value("geometry", ""))
+        # self.restoreState(self.settings.value("windowState", ""))
         # screen = QScreen()
         # geom = QScreen.availableGeometry
         # print(geom)
@@ -117,6 +125,9 @@ class ApplicationWindow(QMainWindow):
 
     def closeEvent(self, ce):
         """ Closes current event """
+        self.settings.setValue("geometry", self.saveGeometry())
+        self.settings.setValue("windowState", self.saveState())
+        # QMainWindow.closeEvent(self, event)
         self.fileQuit()
 
     def about(self):
@@ -155,11 +166,18 @@ class ApplicationWindow(QMainWindow):
     def choose_sp2(self):
         old_pmin = self.p_min
         self.p_min = None
+        LastDir = '.'
+        if not self.settings.value("LastDir") == None:
+            LastDir = self.settings.value("LastDir")
+
         many_files = QFileDialog.getOpenFileNames(
             self,
             "Select one or more files to open",
-            ".",
+            LastDir,
         )
+        LastDir = os.path.dirname(many_files[0][0])
+        self.settings.setValue("LastDir", LastDir)
+
         try:
             self.statusBar().showMessage("Loading Data...", 2000)
             sp2 = Sp2_loader()
@@ -171,17 +189,24 @@ class ApplicationWindow(QMainWindow):
         except:
             self.p_min = old_pmin
             pass
+        
 
     def choose_nxs(self):
         old_pmin = self.p_min
         self.p_min = None
         try:
+            LastDir = '.'
+            if not self.settings.value("LastDir") == None:
+                LastDir = self.settings.value("LastDir")
             self.statusBar().showMessage("Loading Data...", 2000)
             location = QFileDialog.getOpenFileNames(
                 self,
                 "Select one NXS file to open",
-                ".",
+                LastDir,
             )
+            
+            LastDir = os.path.dirname(location[0][0])
+            self.settings.setValue("LastDir", LastDir)
 
             location = str(location[0][0])
             self.hd5mode = True

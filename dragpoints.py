@@ -126,5 +126,8 @@ class DraggablePlotExample(object):
             pass
 
 
-# if __name__ == "__main__":
-#     plot = DraggablePlotExample()
+if __name__ == "__main__":
+    
+    fig, ax = plt.subplots()
+    plot = DraggablePlotExample(fig, ax)
+    plt.show()

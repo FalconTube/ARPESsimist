@@ -8,18 +8,8 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.widgets import RectangleSelector
 
 from PyQt5.QtWidgets import (
-    # QApplication,
     QWidget,
     QPushButton,
-    # QVBoxLayout,
-    # QHBoxLayout,
-    # QMenu,
-    # QMessageBox,
-    # QSizePolicy,
-    # QFileDialog,
-    # QSlider,
-    # QLabel,
-    # QScrollBar,
     QRadioButton,
     QGroupBox,
     # QInputDialog,
@@ -38,6 +28,7 @@ from lmfit.models import GaussianModel
 from scipy.signal import savgol_filter, find_peaks
 import pywt
 from statsmodels.robust import mad
+from point_eraser import PointEraser
 
 
 class LineProfiles(QWidget):
@@ -54,6 +45,8 @@ class LineProfiles(QWidget):
         self.xy_chooser = "x"
         self.breadth = 0.0
         self.free_xy_list = []
+        self.eraser = None
+        self._max_x = None
         # MyMplCanvas.__init__(self)
         super().__init__()
         # self.setParent(parent)
@@ -66,16 +59,29 @@ class LineProfiles(QWidget):
         self.xprof_ax = xprof_ax
         self.yprof_ax = yprof_ax
 
+    def update_data_extent(self, data, extent):
+        """ Update current data and extent """
+        self.data = data
+        self.ranges = extent
+        self.idata, self.xvals, self.yvals = self.processing_data_interpolator(
+            data, extent
+        )
+
     def disconnect(self):
         """ Disconnect from figure """
         self.ax.figure.canvas.mpl_disconnect(self.cid)
         self.cid = False
         try:
-            self.free_plot.disconnect()
-            # self.free_plot._figure.canvas.mpl_disconnect(self.click_cid)
-            self.ax.figure.mpl.disconnect(self.free_release_cid)
-            self.ax.figure.mpl.disconnect(self.rect_cid)
+            self.rect_sel.set_active(False)
         except:
+            pass
+        try:
+            self.ax.figure.mpl.disconnect(self.free_release_cid)
+        except:
+            pass
+        try:
+            self.free_plot.disconnect()
+        except ValueError:
             pass
 
     def init_cursor_active_x(self):
@@ -151,11 +157,19 @@ class LineProfiles(QWidget):
         # Remove all lines
         self.line_remover(self.xprof_ax)
         self.line_remover(self.yprof_ax)
-
-        if self.current_hline:
+        self.rect_sel.update()
+        try:
+            self.max_line.remove()
+        except:
+            pass
+        try:
             self.current_hline.remove()
-        if self.current_vline:
+        except:
+            pass
+        try:
             self.current_vline.remove()
+        except:
+            pass
         self.current_hline = False
         self.current_vline = False
         try:
@@ -192,8 +206,6 @@ class LineProfiles(QWidget):
             "button_release_event", self.free_on_release
         )
 
-        # self.plotDraggablePoints([0.1, 0.1], [0.2, 0.2], [0.1, 0.1])
-
     def processing_data_interpolator(self, data, thisrange):
         """ Generates interpolator """
         data_shape = data.shape
@@ -223,9 +235,6 @@ class LineProfiles(QWidget):
     ):
         """ Returns Lineprofile along X"""
         breadth = self.breadth
-        # self.idata, self.xvals, self.yvals = self.processing_data_interpolator(
-        #     data, current_range
-        # )
         profile = np.sum(
             self.idata(
                 self.xvals,
@@ -240,9 +249,6 @@ class LineProfiles(QWidget):
     ):
         """ Returns Lineprofile along Y"""
         breadth = self.breadth
-        # self.idata, self.xvals, self.yvals = self.processing_data_interpolator(
-        #     data, current_range
-        # )
         profile = np.sum(
             self.idata(
                 [xval - 0.5 * breadth + breadth * float(i) / 20.0 for i in range(21)],
@@ -251,7 +257,6 @@ class LineProfiles(QWidget):
             axis=1,
         )
         return self.yvals[::-1], profile
-        # return self.yvals, profile
 
     def get_breadth(self):
         if not self.input_breadth.text() == "":
@@ -265,59 +270,55 @@ class LineProfiles(QWidget):
             self.rect_x1, self.rect_y1 = eclick.xdata, eclick.ydata
             self.rect_x2, self.rect_y2 = erelease.xdata, erelease.ydata
 
-        def toggle_selector(event):
-            print(" Key pressed.")
-            if event.key in ["Q", "q"] and toggle_selector.RS.active:
-                print(" RectangleSelector deactivated.")
-                toggle_selector.RS.set_active(False)
-            if event.key in ["A", "a"] and not toggle_selector.RS.active:
-                print(" RectangleSelector activated.")
-                toggle_selector.RS.set_active(True)
-
-        # drawtype is 'box' or 'line' or 'none'
-        toggle_selector.RS = RectangleSelector(
+        self.rect_sel = RectangleSelector(
             self.ax,
             line_select_callback,
             drawtype="box",
             useblit=False,
             button=[1, 3],  # don't use middle button
-            #    minspanx=5, minspany=5,
             spancoords="data",
             interactive=True,
         )
-        self.rect_cid = self.ax.figure.canvas.mpl_connect(
-            "key_press_event", toggle_selector
-        )
 
     def find_maxima(self):
-        def find_nearest(value, array):
-            array = np.asarray(array)
-            idx = (np.abs(array - value)).argmin()
-            # return array[idx]
-            return idx
+        if not self._max_x:
+            self._max_x = []
+            self._max_y = []
 
-        max_x = []
-        max_x_peak = []
-        max_y = []
         x_pos = np.logical_and(self.rect_x1 < self.xvals, self.xvals < self.rect_x2)
         y_pos = np.logical_and(self.rect_y1 < self.yvals, self.yvals < self.rect_y2)
         x_range = self.xvals[x_pos]
-        y_range = self.yvals[y_pos]
+        y_range = self.yvals[y_pos][::-1]
+        # print(x_range)
+        # print(y_range)
 
         # Parameters for smoothing
-        level = 2
+        level = 1
         wavelet = pywt.Wavelet("sym7")
 
-        for n, i in enumerate(y_range):
-            # print(n / len(y_range) * 100)
-            raw_lineprof = self.idata(x_range, i)
-            # pos_max = np.argmax(raw_lineprof)
-            # lineprof = savgol_filter(raw_lineprof, 51, 2)
-            # pos_max = np.argmax(lineprof)
-            # possible_index = find_nearest(0.0, np.diff(lineprof))
-            # peak_pos = x_range[possible_index]
+        # Check if EDC or MDC was clicked
+        clicked_btn = self.sender()
+        btn_name = clicked_btn.text()
+        if 'EDC' in btn_name:
+            edc = True
+            iterator_range = y_range
+            line_range = x_range
+        else:
+            edc = False
+            iterator_range = x_range
+            line_range = y_range
 
-            # transformed = cwt(data, wavelet, widths)
+        for n, i in enumerate(iterator_range):
+            # print(i)
+            if edc == True:
+                raw_lineprof = self.idata(line_range, i)
+            else:
+                level = 2
+                raw_lineprof = self.idata(i, line_range)
+                raw_lineprof = np.ravel(raw_lineprof)
+            
+            # plt.plot(line_range, raw_lineprof)
+            # plt.show()
             coeff = pywt.wavedec(raw_lineprof, wavelet, mode="per")
             sigma = mad(coeff[-level])
             # changing this threshold also changes the behavior,
@@ -328,40 +329,42 @@ class LineProfiles(QWidget):
             )
             # reconstruct the signal using the thresholded coefficients
             estimated = pywt.waverec(coeff, wavelet, mode="per")
-            minimal_next_distance = len(x_range)/100*30
+            minimal_next_distance = len(line_range) / 100 * 30
+            
             peaks = find_peaks(estimated, distance=minimal_next_distance)[0]
             # Big nesting incoming, perhaps one can do this more nicely but it works...
-            peak_pos = x_range[peaks[np.argmax(estimated[peaks])]] 
-            
+            peak_pos = line_range[peaks[np.argmax(estimated[peaks])]]
+
+            # Plotting a number of lines, for test purposes
             if n % 15 == 0:
-                if len(estimated) > len(x_range):
-                    estimated = estimated[:-1]
-                plt.plot(x_range, raw_lineprof, "k-")
-                plt.plot(x_range, estimated, "r-")
-                plt.plot(x_range[peaks], estimated[peaks], 'bo')
-                # print('All peaks: ', peaks)
-                # print('All peak Y: ', estimated[peaks])
-                # print('Max peak Y: ', np.max(estimated[peaks]))
-                # print('Corresp X: ', x_range[peaks[np.argmax(estimated[peaks])]])
+                pass
+                # print(len(estimated))
+                # print(len(x_range))
+                # if len(estimated) > len(x_range):
+                #     estimated = estimated[:-1]
+                # plt.plot(x_range, raw_lineprof, "k-")
+                # plt.plot(x_range, estimated, "r-")
+                # plt.plot(x_range[peaks], estimated[peaks], "bo")
 
+            if edc:
+                self._max_x.append(peak_pos)
+                self._max_y.append(i)
+            else:
+                self._max_x.append(i)
+                self._max_y.append(peak_pos)
 
-            # max_x.append(x_range[pos_max])
-            max_x_peak.append(peak_pos)
-            max_y.append(i)
-            
         lim_before = self.ax.get_ylim()
-        # max_line = self.ax.scatter(
-        #     max_x, max_y, s=50, facecolor="none", color="b", zorder=3
-        # )
-        # print(max_x_peak)
-        # print(max_y)
-        max_line = self.ax.scatter(
-            max_x_peak, max_y, s=50, facecolor="none", color="orange", zorder=3
+        self.max_line = self.ax.scatter(
+            self._max_x, self._max_y, s=50, facecolor="none", color="orange", zorder=3
         )
-        # Have to reset the ylim, don't know why this happens
+        self.maxima_peaks_x = self._max_x
+        self.maxima_peaks_y = self._max_y
+        if self.eraser:
+            self.eraser.update_dataset(self.maxima_peaks_x, self.maxima_peaks_y)
+        # Have to reset the limits, don't know why this happens
         self.ax.set_ylim(lim_before)
         self.ax.figure.canvas.draw()  # redraw
-        plt.show()
+        # plt.show()
 
     def find_maxima_fit(self):
         max_x = []
@@ -404,22 +407,37 @@ class LineProfiles(QWidget):
         center = out.values["center"]
         return center
 
+    def remove_maxima_points(self):
+        if not self.max_line:
+            return
+        self.eraser = PointEraser(
+            self.ax.figure,
+            self.ax,
+            self.max_line,
+            self.maxima_peaks_x,
+            self.maxima_peaks_y,
+        )
+
     def init_widget(self):
         """ Creates widget and layout """
         self.box = QGroupBox("Line Profiles")
+        # self.evalbox = QGroupBox("Evaluation Tools")
         # self.this_layout = QHBoxLayout()
         self.this_layout = QGridLayout()
+        # self.eval_layout = QGridLayout()
 
         # Create Radio Buttons
         self.selectbutton_x = QRadioButton("&X Lineprofile", self)
         self.selectbutton_y = QRadioButton("&Y Lineprofile", self)
         self.selectbutton_free = QRadioButton("&Free Lineprofile", self)
         self.selectbutton_rectangle = QRadioButton("&Select Rectangle", self)
+        self.remove_point_radio = QRadioButton("&Remove Points", self)
         self.discobutton = QRadioButton("&Stop Selection", self)
         self.discobutton.setChecked(True)
+        # Create Push Buttons
         self.clearbutton = QPushButton("&Clear", self)
-        self.maximabutton = QPushButton("&Find Maxima", self)
-        self.maximabutton_fit = QPushButton("&Find Maxima Fitting", self)
+        self.maximabutton = QPushButton("&Maxima EDC", self)
+        self.maximabutton_mdc = QPushButton("&Maxima MDC", self)
 
         self.input_breadth = QLineEdit(self)
         self.input_breadth.setPlaceholderText("Breadth")
@@ -429,41 +447,39 @@ class LineProfiles(QWidget):
         self.selectbutton_y.setToolTip("Use Right-Click")
         self.selectbutton_free.setToolTip("Use Right-Click")
 
+        # Connect Radios
         self.selectbutton_x.clicked.connect(self.init_cursor_active_x)
         self.selectbutton_y.clicked.connect(self.init_cursor_active_y)
         self.selectbutton_free.clicked.connect(self.init_free_prof)
         self.selectbutton_rectangle.clicked.connect(self.init_rectangle)
+        self.remove_point_radio.clicked.connect(self.remove_maxima_points)
         self.discobutton.clicked.connect(self.disconnect)
+
+        # Connect Buttons
         self.clearbutton.released.connect(self.clear_all)
         self.maximabutton.released.connect(self.find_maxima)
-        self.maximabutton_fit.released.connect(self.find_maxima_fit)
-
+        self.maximabutton_mdc.released.connect(self.find_maxima)
+        
         self.input_breadth.returnPressed.connect(self.get_breadth)
-
+        
+        # Add to widget&layout
         self.this_layout.addWidget(self.selectbutton_x, 0, 0)
         self.this_layout.addWidget(self.selectbutton_y, 1, 0)
         self.this_layout.addWidget(self.selectbutton_free, 2, 0)
         self.this_layout.addWidget(self.selectbutton_rectangle, 3, 0)
+        self.this_layout.addWidget(self.remove_point_radio, 4, 0)
         self.this_layout.addWidget(self.clearbutton, 0, 1)
         self.this_layout.addWidget(self.input_breadth, 1, 1)
         self.this_layout.addWidget(self.discobutton, 2, 1)
         self.this_layout.addWidget(self.maximabutton, 3, 1)
-        self.this_layout.addWidget(self.maximabutton_fit, 4, 1)
+        self.this_layout.addWidget(self.maximabutton_mdc, 4, 1)
+        
 
         self.box.setLayout(self.this_layout)
 
     def get_widget(self):
         """ Returns this widget """
         return self.box
-
-    def update_data_extent(self, data, extent):
-        """ Update current data and extent """
-        self.data = data
-        self.ranges = extent
-        self.idata, self.xvals, self.yvals = self.processing_data_interpolator(
-            data, extent
-        )
-        # self.clear_all()
 
     def get_axes(self):
         return self.xprof_ax, self.yprof_ax
