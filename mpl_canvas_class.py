@@ -102,22 +102,3 @@ class MyMplCanvas(QWidget):
         self.LineProf.init_widget()
         self.lineprof_widget = self.LineProf.get_widget()
         self.grid_layout.addWidget(self.lineprof_widget, 1, 1)
-
-    # def add_slider(self, lower: int, upper: int):
-    #     slider_bar = QSlider(QtCore.Qt.Horizontal, self)
-    #     slider_bar.setRange(lower, upper - 1)
-    #     slider_bar.setTickInterval(5)
-    #     slider_bar.setSingleStep(1)
-    #     slider_bar.setPageStep(10)
-    #     return slider_bar
-
-    # class MyToolBar(NavigationToolbar):
-    #     def __init__(self):
-    #         super().__init__()
-    #         actions = self.findChildren(QtGui.QAction)
-    #         for a in actions:
-    #             if a.text() == 'Customize':
-    #                 self.removeAction(a)
-    #                 break
-
-

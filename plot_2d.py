@@ -78,6 +78,7 @@ class TwoD_Plotter(MyMplCanvas):
         appwindow.menuBar().addMenu(self.export_menu)
         self.export_menu.addAction("&Save txt", self.save_txt)
         self.export_menu.addAction("&Save Figures", self.save_figs)
+        self.export_menu.addAction("&Save Maxima", self.save_maxima)
 
     def update_colormap(self):
         current_map = self.cb.currentText()
@@ -184,6 +185,16 @@ class TwoD_Plotter(MyMplCanvas):
         self.update_current_data()
         self.initialize_2D_plot()
 
+    def save_maxima(self):
+        try:
+            x, y = self.LineProf.get_maxima()
+            location = QFileDialog.getSaveFileName(self, "Choose savename", ".")
+            location = str(location[0])
+            header = "Extracted local maxima\n x\ty"
+            np.savetxt(location, np.c_[x, y], header=header)
+        except:
+            pass
+
     def save_txt(self):
         td_dat = self.new_current_data
         td_extent = self.new_current_extent
@@ -209,14 +220,6 @@ class TwoD_Plotter(MyMplCanvas):
             np.savetxt(yname, np.c_[xdat, ydat], header=y_header)
         except:
             print("y error")
-        # try:
-        #     last_line = yprof_ax.lines[-1]
-        #     xdat, ydat = last_line.get_data()
-        #     yname = location + "_Yprofile.txt"
-        #     y_header = "Y Profile\n{}   Intensity".format(self.ylabel)
-        #     np.savetxt(yname, np.c_[xdat, ydat], header=y_header)
-
-        # 2D always available, so save them
         td_name = location + "_2d.txt"
         td_header = "Data shape: {}\n Data extent: {}".format(td_dat.shape, td_extent)
         np.savetxt(td_name, td_dat, header=td_header)

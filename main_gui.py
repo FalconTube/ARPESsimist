@@ -85,7 +85,7 @@ class ApplicationWindow(QMainWindow):
         self.file_menu.addAction(
             "&Quit", self.fileQuit, QtCore.Qt.CTRL + QtCore.Qt.Key_Q
         )
-        
+
         self.menuBar().addMenu(self.file_menu)
 
         # Set up Mapping Menu
@@ -135,9 +135,9 @@ class ApplicationWindow(QMainWindow):
         QMessageBox.about(
             self,
             "About",
-            "<center><b>ARPESsimist</b></center><br> Developed by "+\
-        "Yannic Falke. Please report any bugs or feature requests to:<br>"+\
-        "falke@ph2.uni-koeln.de",
+            "<center><b>ARPESsimist</b></center><br> Developed by "
+            + "Yannic Falke. Please report any bugs or feature requests to:<br>"
+            + "falke@ph2.uni-koeln.de",
         )
 
     def angle_k_button_state(self):
@@ -166,15 +166,15 @@ class ApplicationWindow(QMainWindow):
     def choose_sp2(self):
         old_pmin = self.p_min
         self.p_min = None
-        LastDir = '.'
+        LastDir = "."
         if not self.settings.value("LastDir") == None:
             LastDir = self.settings.value("LastDir")
 
         many_files = QFileDialog.getOpenFileNames(
-            self,
-            "Select one or more files to open",
-            LastDir,
+            self, "Select one or more files to open", LastDir
         )
+
+        QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         LastDir = os.path.dirname(many_files[0][0])
         self.settings.setValue("LastDir", LastDir)
 
@@ -189,22 +189,19 @@ class ApplicationWindow(QMainWindow):
         except:
             self.p_min = old_pmin
             pass
-        
 
     def choose_nxs(self):
         old_pmin = self.p_min
         self.p_min = None
         try:
-            LastDir = '.'
+            LastDir = "."
             if not self.settings.value("LastDir") == None:
                 LastDir = self.settings.value("LastDir")
             self.statusBar().showMessage("Loading Data...", 2000)
             location = QFileDialog.getOpenFileNames(
-                self,
-                "Select one NXS file to open",
-                LastDir,
+                self, "Select one NXS file to open", LastDir
             )
-            
+            QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
             LastDir = os.path.dirname(location[0][0])
             self.settings.setValue("LastDir", LastDir)
 
@@ -246,6 +243,9 @@ class ApplicationWindow(QMainWindow):
         )
         self.over_layout.addWidget(self.new_twoD_widget, 1, 0)
 
+        QApplication.restoreOverrideCursor()
+
+
     # def thread_polar_maps(self):
     #     xmin, xmax, ymin, ymax = -1.0, 1.6, -1.0, 1.6
     #     self.kmap_thread = ThreadingKMaps(
@@ -266,11 +266,11 @@ class ApplicationWindow(QMainWindow):
 
     #     self.kmap_thread.finished.connect(self.kmap_thread.get)
     #     self.kmap_thread.start()
-        # extent_stack = list([[xmin, xmax, ymin, ymax]]) * \
-        #     self.k_slice.shape[-1]
+    # extent_stack = list([[xmin, xmax, ymin, ymax]]) * \
+    #     self.k_slice.shape[-1]
 
-        # self.KWin = K_Window(self.k_slice, extent_stack)
-        # self.KWin.show()
+    # self.KWin = K_Window(self.k_slice, extent_stack)
+    # self.KWin.show()
 
     def gen_maps(self):
         if self.p_min:
@@ -293,6 +293,8 @@ class ApplicationWindow(QMainWindow):
 
             # Check if data will overflow memory
             self.check_ram_usage()
+            QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+
 
             All_maps = VerticalSlitPolarScan(
                 self.processing_data,
@@ -320,12 +322,12 @@ class ApplicationWindow(QMainWindow):
             self.KEWin = K_Window(
                 ke_slice,
                 extent_stack_E,
-                E_list[::-1], # reverse because of reverse plotting
+                E_list[::-1],  # reverse because of reverse plotting
                 labelprefix="Energy [eV]",
                 xlabel=r"kx [$\mathrm{\AA^{-1}}$]",
                 ylabel=r"ky [$\mathrm{\AA^{-1}}$]",
             )
-            self.KEWin.eval_menu.addAction('&Plot Brillouin', self.brillouin_zone)
+            self.KEWin.eval_menu.addAction("&Plot Brillouin", self.brillouin_zone)
             self.KEWin.show()
 
             self.KyWin = K_Window(
@@ -346,9 +348,11 @@ class ApplicationWindow(QMainWindow):
                 xlabel=r"kx [$\mathrm{\AA^{-1}}$]",
                 ylabel="E [eV]",
             )
-            
+
             self.KxWin.show()
         self.p_min = None
+        QApplication.restoreOverrideCursor()
+
 
     def polar_maps(self):
         self.use_azi = False
@@ -394,18 +398,22 @@ class ApplicationWindow(QMainWindow):
                 ).exec()
             ):
                 self.processing_data = self.processing_data[::2, ::2, ::2]
-    
+
     def brillouin_zone(self):
         axis = self.KEWin.k_k_widget.axes
-        out = QInputDialog.getDouble(self, self.tr("QInputDialog().getDouble()"),
-                                     self.tr("Lattice constant <b> a </b>:"),
-                                     3.3, 0, 10, 3)
+        out = QInputDialog.getDouble(
+            self,
+            self.tr("QInputDialog().getDouble()"),
+            self.tr("Lattice constant <b> a </b>:"),
+            3.3,
+            0,
+            10,
+            3,
+        )
         a = out[0]
         xvals, yvals = calc_brillouin(a)
-        axis.plot(xvals, yvals, 'r-', zorder=1, lw=3)
+        axis.plot(xvals, yvals, "r-", zorder=1, lw=3)
         axis.figure.canvas.draw()
-        
-        
 
 
 if __name__ == "__main__":

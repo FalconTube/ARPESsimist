@@ -81,7 +81,7 @@ class LineProfiles(QWidget):
             pass
         try:
             self.free_plot.disconnect()
-        except ValueError:
+        except:
             pass
 
     def init_cursor_active_x(self):
@@ -185,7 +185,10 @@ class LineProfiles(QWidget):
         self.twodfig.figure.canvas.draw()
         self.xprof_ax.figure.canvas.draw()
         self.yprof_ax.figure.canvas.draw()
-        self.free_ax.figure.canvas.draw()
+        try:
+            self.free_ax.figure.canvas.draw()
+        except:
+            pass
 
     def line_remover(self, axis):
         """ Somehow cannot just iterate over all lines,
@@ -299,7 +302,7 @@ class LineProfiles(QWidget):
         # Check if EDC or MDC was clicked
         clicked_btn = self.sender()
         btn_name = clicked_btn.text()
-        if 'EDC' in btn_name:
+        if "EDC" in btn_name:
             edc = True
             iterator_range = y_range
             line_range = x_range
@@ -316,7 +319,7 @@ class LineProfiles(QWidget):
                 level = 2
                 raw_lineprof = self.idata(i, line_range)
                 raw_lineprof = np.ravel(raw_lineprof)
-            
+
             # plt.plot(line_range, raw_lineprof)
             # plt.show()
             coeff = pywt.wavedec(raw_lineprof, wavelet, mode="per")
@@ -330,7 +333,7 @@ class LineProfiles(QWidget):
             # reconstruct the signal using the thresholded coefficients
             estimated = pywt.waverec(coeff, wavelet, mode="per")
             minimal_next_distance = len(line_range) / 100 * 30
-            
+
             peaks = find_peaks(estimated, distance=minimal_next_distance)[0]
             # Big nesting incoming, perhaps one can do this more nicely but it works...
             peak_pos = line_range[peaks[np.argmax(estimated[peaks])]]
@@ -355,7 +358,7 @@ class LineProfiles(QWidget):
 
         lim_before = self.ax.get_ylim()
         self.max_line = self.ax.scatter(
-            self._max_x, self._max_y, s=50, facecolor="none", color="orange", zorder=3
+            self._max_x, self._max_y, s=50, facecolor="none", color="#ff7f0e", zorder=3
         )
         self.maxima_peaks_x = self._max_x
         self.maxima_peaks_y = self._max_y
@@ -459,9 +462,9 @@ class LineProfiles(QWidget):
         self.clearbutton.released.connect(self.clear_all)
         self.maximabutton.released.connect(self.find_maxima)
         self.maximabutton_mdc.released.connect(self.find_maxima)
-        
+
         self.input_breadth.returnPressed.connect(self.get_breadth)
-        
+
         # Add to widget&layout
         self.this_layout.addWidget(self.selectbutton_x, 0, 0)
         self.this_layout.addWidget(self.selectbutton_y, 1, 0)
@@ -473,7 +476,6 @@ class LineProfiles(QWidget):
         self.this_layout.addWidget(self.discobutton, 2, 1)
         self.this_layout.addWidget(self.maximabutton, 3, 1)
         self.this_layout.addWidget(self.maximabutton_mdc, 4, 1)
-        
 
         self.box.setLayout(self.this_layout)
 
@@ -483,3 +485,10 @@ class LineProfiles(QWidget):
 
     def get_axes(self):
         return self.xprof_ax, self.yprof_ax
+
+    def get_maxima(self):
+        x, y = self.maxima_peaks_x, self.maxima_peaks_y
+        if self.eraser:
+            x, y = self.eraser.get_data()
+        return x, y
+
