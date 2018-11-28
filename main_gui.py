@@ -174,8 +174,11 @@ class ApplicationWindow(QMainWindow):
         )
 
         QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-        LastDir = os.path.dirname(many_files[0][0])
-        self.settings.setValue("LastDir", LastDir)
+        try:
+            LastDir = os.path.dirname(many_files[0][0])
+            self.settings.setValue("LastDir", LastDir)
+        except:
+            pass
 
         try:
             self.statusBar().showMessage("Loading Data...", 2000)
@@ -184,39 +187,40 @@ class ApplicationWindow(QMainWindow):
             self.angle_data, self.angle_extent = sp2.read_multiple_sp2(
                 self.loaded_filenames
             )
-            print('loaded sp')
             self.load_multiple_files()
         except:
             self.p_min = old_pmin
-            pass
+            QApplication.restoreOverrideCursor()
+        
 
     def choose_nxs(self):
         old_pmin = self.p_min
         self.p_min = None
-        # try:
-        LastDir = "."
-        if not self.settings.value("LastDir") == None:
-            LastDir = self.settings.value("LastDir")
-        self.statusBar().showMessage("Loading Data...", 2000)
-        location = QFileDialog.getOpenFileNames(
-            self, "Select one NXS file to open", LastDir
-        )
-        QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-        LastDir = os.path.dirname(location[0][0])
-        self.settings.setValue("LastDir", LastDir)
+        try:
+            LastDir = "."
+            if not self.settings.value("LastDir") == None:
+                LastDir = self.settings.value("LastDir")
+            self.statusBar().showMessage("Loading Data...", 2000)
+            location = QFileDialog.getOpenFileNames(
+                self, "Select one NXS file to open", LastDir
+            )
+            QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+            LastDir = os.path.dirname(location[0][0])
+            self.settings.setValue("LastDir", LastDir)
 
-        location = str(location[0][0])
-        self.hd5mode = True
-        H5loader = LoadHDF5(location)
-        self.angle_data, self.angle_extent, self.p_min, self.p_max = (
-            H5loader.return_data()
-        )
+            location = str(location[0][0])
+            self.hd5mode = True
+            H5loader = LoadHDF5(location)
+            self.angle_data, self.angle_extent, self.p_min, self.p_max = (
+                H5loader.return_data()
+            )
 
-        self.loaded_filenames = range(self.angle_data.shape[0])
-        self.load_multiple_files()
-        # except:
-        #     self.p_min = old_pmin
-        #     pass
+            self.loaded_filenames = range(self.angle_data.shape[0])
+            self.load_multiple_files()
+        except:
+            self.p_min = old_pmin
+            QApplication.restoreOverrideCursor()
+        
 
     def load_multiple_files(self):
         if self.new_twoD_widget:
@@ -231,7 +235,6 @@ class ApplicationWindow(QMainWindow):
             self._current_labelname = os.path.basename(self.loaded_filenames[0])
 
         self.data_are_loaded = True
-        print('before 2d')
         self.new_twoD_widget = TwoD_Plotter(
             self.processing_data,
             self.processing_extent,
@@ -242,9 +245,7 @@ class ApplicationWindow(QMainWindow):
             appwindow=self,
             labelprefix="Dataset",
         )
-        print('after 2d')
         self.over_layout.addWidget(self.new_twoD_widget, 1, 0)
-        print('loaded')
         QApplication.restoreOverrideCursor()
 
 

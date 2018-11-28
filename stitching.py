@@ -58,19 +58,15 @@ class StitchWindow(QMainWindow):
 
         # File Menu
         self.file_menu = QMenu("&File", self)
-        self.file_menu.addAction("&Get Figures", self.get_figdat)
+        self.file_menu.addAction("&Load Data", self.get_figdat)
         self.file_menu.addAction(
             "&Quit", self.fileQuit, QtCore.Qt.CTRL + QtCore.Qt.Key_Q
         )
         
-
         self.menuBar().addMenu(self.file_menu)
         
-
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("ARPESsimist - Stitching")
-
-        # self.get_figdat(fignum)
 
     def get_figdat(self):
         # Choose Data
