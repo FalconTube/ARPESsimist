@@ -84,4 +84,8 @@ If you want to contribute to this project, feel free to contact Yannic Falke at 
 
 ## Authors
 
-Yannic Falke 
+Yannic Falke, II. Institute of Physics, University of Cologne
+
+## Contributors
+
+Niels Ehlen, II. Institute of Physics, University of Cologne

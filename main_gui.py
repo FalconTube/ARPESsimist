@@ -26,6 +26,7 @@ from generate_maps import VerticalSlitPolarScan, ThreadingKMaps
 from ask_map_parameters import MapParameterBox
 from new_k_window import K_Window
 from brillouin_plot import calc_brillouin
+from stitching import StitchWindow
 
 
 class ApplicationWindow(QMainWindow):
@@ -55,21 +56,11 @@ class ApplicationWindow(QMainWindow):
         self.settings = QtCore.QSettings("ARPESsimist", "MainWin")
         if not self.settings.value("geometry") == None:
             self.restoreGeometry(self.settings.value("geometry"))
+        else:
+            self.resize(960, 1080)
         if not self.settings.value("windowState") == None:
             self.restoreState(self.settings.value("windowState"))
-        # self.restoreGeometry(self.settings.value("geometry", ""))
-        # self.restoreState(self.settings.value("windowState", ""))
-        # screen = QScreen()
-        # geom = QScreen.availableGeometry
-        # print(geom)
-        # height = geom.height()
-        # width = geom.width()
-        # QScreen *screen = QGuiApplication::primaryScreen();
-        # QRect  screenGeometry = screen->geometry();
-        # int height = screenGeometry.height();
-        # int width = screenGeometry.width();
-        # print(self.screens.size)
-        self.resize(960, 1080)
+        
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("ARPESsimist")
         iconname = "logo_black.png"
@@ -96,6 +87,14 @@ class ApplicationWindow(QMainWindow):
         self.map_menu.addAction("&3D-Map Polar", self.polar_maps)
         self.map_menu.addAction("&3D-Map Azimuth", self.azi_maps)
 
+        # Set up Stitch Menu
+        self.stitch_menu = QMenu("&Stitching", self)
+        self.menuBar().addSeparator()
+        self.menuBar().addMenu(self.stitch_menu)
+
+        self.stitch_menu.addAction("&Initialize Stitching", self.init_stitch)
+        
+
         # Set up Interaction Menu
         # self.interact_menu = QMenu('&2D', self)
         # self.menuBar().addSeparator()
@@ -117,7 +116,7 @@ class ApplicationWindow(QMainWindow):
         self.main_widget.setFocus()
         self.setCentralWidget(self.main_widget)
 
-        self.statusBar().showMessage("Welcome to ARPyES", 2000)
+        self.statusBar().showMessage("Welcome to ARPESsimist", 2000)
 
     def fileQuit(self):
         """ Closes current instance """
@@ -185,6 +184,7 @@ class ApplicationWindow(QMainWindow):
             self.angle_data, self.angle_extent = sp2.read_multiple_sp2(
                 self.loaded_filenames
             )
+            print('loaded sp')
             self.load_multiple_files()
         except:
             self.p_min = old_pmin
@@ -193,30 +193,30 @@ class ApplicationWindow(QMainWindow):
     def choose_nxs(self):
         old_pmin = self.p_min
         self.p_min = None
-        try:
-            LastDir = "."
-            if not self.settings.value("LastDir") == None:
-                LastDir = self.settings.value("LastDir")
-            self.statusBar().showMessage("Loading Data...", 2000)
-            location = QFileDialog.getOpenFileNames(
-                self, "Select one NXS file to open", LastDir
-            )
-            QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-            LastDir = os.path.dirname(location[0][0])
-            self.settings.setValue("LastDir", LastDir)
+        # try:
+        LastDir = "."
+        if not self.settings.value("LastDir") == None:
+            LastDir = self.settings.value("LastDir")
+        self.statusBar().showMessage("Loading Data...", 2000)
+        location = QFileDialog.getOpenFileNames(
+            self, "Select one NXS file to open", LastDir
+        )
+        QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+        LastDir = os.path.dirname(location[0][0])
+        self.settings.setValue("LastDir", LastDir)
 
-            location = str(location[0][0])
-            self.hd5mode = True
-            H5loader = LoadHDF5(location)
-            self.angle_data, self.angle_extent, self.p_min, self.p_max = (
-                H5loader.return_data()
-            )
+        location = str(location[0][0])
+        self.hd5mode = True
+        H5loader = LoadHDF5(location)
+        self.angle_data, self.angle_extent, self.p_min, self.p_max = (
+            H5loader.return_data()
+        )
 
-            self.loaded_filenames = range(self.angle_data.shape[0])
-            self.load_multiple_files()
-        except:
-            self.p_min = old_pmin
-            pass
+        self.loaded_filenames = range(self.angle_data.shape[0])
+        self.load_multiple_files()
+        # except:
+        #     self.p_min = old_pmin
+        #     pass
 
     def load_multiple_files(self):
         if self.new_twoD_widget:
@@ -231,6 +231,7 @@ class ApplicationWindow(QMainWindow):
             self._current_labelname = os.path.basename(self.loaded_filenames[0])
 
         self.data_are_loaded = True
+        print('before 2d')
         self.new_twoD_widget = TwoD_Plotter(
             self.processing_data,
             self.processing_extent,
@@ -241,8 +242,9 @@ class ApplicationWindow(QMainWindow):
             appwindow=self,
             labelprefix="Dataset",
         )
+        print('after 2d')
         self.over_layout.addWidget(self.new_twoD_widget, 1, 0)
-
+        print('loaded')
         QApplication.restoreOverrideCursor()
 
 
@@ -414,6 +416,11 @@ class ApplicationWindow(QMainWindow):
         xvals, yvals = calc_brillouin(a)
         axis.plot(xvals, yvals, "r-", zorder=1, lw=3)
         axis.figure.canvas.draw()
+    
+    def init_stitch(self):
+        print('start stitching')
+        self.stitcher = StitchWindow()
+        self.stitcher.show()
 
 
 if __name__ == "__main__":

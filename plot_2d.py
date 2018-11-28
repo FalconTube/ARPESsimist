@@ -153,9 +153,7 @@ class TwoD_Plotter(MyMplCanvas):
         # self.update_widgets()
 
     def update_widgets(self):
-        # pass
         self.LineProf.update_data_extent(self.new_current_data, self.new_current_extent)
-        # self.FitParGui.update_parabola()
 
     def initialize_2D_plot(self):
         self.update_2d_data(self.new_current_data)

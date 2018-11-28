@@ -42,8 +42,6 @@ class MyMplCanvas(QWidget):
         self.xprof_ax = self.fig_xax.add_subplot(111, sharex=self.axes)  # LineProfile X
         self.yprof_ax = self.fig_yax.add_subplot(111, sharey=self.axes)  # LineProfile Y
 
-        self.compute_initial_figure()
-
         self.canvas = FigureCanvas(self.fig)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(2)
@@ -81,13 +79,6 @@ class MyMplCanvas(QWidget):
         self.lineprofile()
         self.show()
 
-    # def set_message(self, s):
-    #     self.message.emit(s)
-    #     if self.coordinates:
-    #         self.locLabel.setText(s)
-
-    def compute_initial_figure(self):
-        pass
 
     def fit_parabola(self):
         self.FitParGui = FitParabola(self.axes, self)

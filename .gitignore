@@ -1,5 +1,7 @@
 # Ignore all sp2 files, because they are for testing purposes
 *.sp2
+*.txt
+*.json
 logo/
 PythonNiels/
 zDisp/
@@ -10,6 +12,7 @@ fortran_routines/*.o
 fortran_routines/*.so
 fortran_routines/*.pyf
 testvirt/
+test_qtgraph.py
 # !fortran_routines/kmaps.f90
 # !fortran_routines/test_kmaps.f90
 # !fortran_routines/compile.sh
