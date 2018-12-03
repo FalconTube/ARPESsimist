@@ -13,16 +13,19 @@ Clone this repository using `git` or download it directly and extract it anywher
 ```git clone https://github.com/FalconTube/ARPESsimist.git```
 
 Required python packages:
-- Numpy
-- Matplotlib
-- Scipy
-- PyQt5
-- Natsort
+- matplotlib
+- pyqtgraph
+- scipy
+- numpy
+- natsort
+- PyWavelets
 - h5py
-  
+- PyQt5
+- pywt
+
 All of these are installable via pip:
 
-```pip3 install --user numpy matplotlib scipy PyQt5 natsort h5py```
+```pip3 install -r requirements.txt```
 
 In addition, a fortran compiler (e. g. gfortran) is required to compile the
 f90 routines for your respective system. This compiler can be installed in the

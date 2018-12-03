@@ -419,7 +419,6 @@ class ApplicationWindow(QMainWindow):
         axis.figure.canvas.draw()
     
     def init_stitch(self):
-        print('start stitching')
         self.stitcher = StitchWindow()
         self.stitcher.show()
 

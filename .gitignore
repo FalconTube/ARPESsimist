@@ -1,6 +1,7 @@
 # Ignore all sp2 files, because they are for testing purposes
 *.sp2
 *.txt
+!requirements.txt
 *.json
 logo/
 PythonNiels/

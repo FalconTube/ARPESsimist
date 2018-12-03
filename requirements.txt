@@ -1,0 +1,9 @@
+matplotlib==3.0.1
+pyqtgraph==0.10.0
+scipy==1.1.0
+numpy==1.13.3
+natsort==5.4.1
+PyWavelets==1.0.1
+h5py==2.8.0
+PyQt5==5.11.3
+pywt==1.0.6

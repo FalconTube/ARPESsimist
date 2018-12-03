@@ -3,6 +3,7 @@ import numpy as np
 # import matplotlib.pyplot as plt
 # from scipy.constants import hbar, m_e
 from scipy.interpolate import interp2d
+from scipy.stats import norm as Gaussian
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.widgets import RectangleSelector
@@ -21,13 +22,13 @@ import matplotlib.pyplot as plt
 
 from dragpoints import DraggablePlotExample
 from edc_fitting import EDCfitter
-from lmfit.models import PseudoVoigtModel
-from lmfit.models import LorentzianModel
-from lmfit.models import LinearModel
-from lmfit.models import GaussianModel
+# from lmfit.models import PseudoVoigtModel
+# from lmfit.models import LorentzianModel
+# from lmfit.models import LinearModel
+# from lmfit.models import GaussianModel
 from scipy.signal import savgol_filter, find_peaks
 import pywt
-from statsmodels.robust import mad
+# from statsmodels.robust import mad
 from point_eraser import PointEraser
 
 
@@ -45,6 +46,7 @@ class LineProfiles(QWidget):
         self.xy_chooser = "x"
         self.breadth = 0.0
         self.free_xy_list = []
+        self.scatter_storage = []
         self.eraser = None
         self._max_x = None
         # MyMplCanvas.__init__(self)
@@ -67,10 +69,14 @@ class LineProfiles(QWidget):
             data, extent
         )
 
-    def disconnect(self):
+    def disconnect(self, discostate=True):
         """ Disconnect from figure """
         self.ax.figure.canvas.mpl_disconnect(self.cid)
         self.cid = False
+        try:
+            self.eraser.disconnect()
+        except:
+            pass
         try:
             self.rect_sel.set_active(False)
         except:
@@ -83,11 +89,12 @@ class LineProfiles(QWidget):
             self.free_plot.disconnect()
         except:
             pass
+        self.discobutton.setChecked(discostate)
 
     def init_cursor_active_x(self):
         """ Choose x profile generator """
+        self.disconnect(False)
         self.xy_chooser = "x"
-        self.disconnect()
         if not self.cid:
             self.cid = self.ax.figure.canvas.mpl_connect(
                 "button_press_event", self.on_press
@@ -95,8 +102,8 @@ class LineProfiles(QWidget):
 
     def init_cursor_active_y(self):
         """ Choose y profile generator """
+        self.disconnect(False)
         self.xy_chooser = "y"
-        self.disconnect()
         if not self.cid:
             self.cid = self.ax.figure.canvas.mpl_connect(
                 "button_press_event", self.on_press
@@ -157,9 +164,18 @@ class LineProfiles(QWidget):
         # Remove all lines
         self.line_remover(self.xprof_ax)
         self.line_remover(self.yprof_ax)
-        self.rect_sel.update()
+        self._max_x = []
+        self._max_y = []
+
         try:
-            self.max_line.remove()
+            self.rect_sel.set_visible(False)
+            self.rect_sel.update()
+        except:
+            pass
+        try:
+            for i in self.scatter_storage:
+                i.remove()
+            self.scatter_storage = []
         except:
             pass
         try:
@@ -170,9 +186,9 @@ class LineProfiles(QWidget):
             self.current_vline.remove()
         except:
             pass
-        self.current_hline = False
-        self.current_vline = False
+
         try:
+            self.line_remover(self.free_ax)
             self.free_plot.clear_line()
         except:
             pass
@@ -180,7 +196,9 @@ class LineProfiles(QWidget):
             self.free_ax.cla()
         except:
             pass
-
+        
+        self.current_hline = False
+        self.current_vline = False
         # Redraw to show clearance
         self.twodfig.figure.canvas.draw()
         self.xprof_ax.figure.canvas.draw()
@@ -189,6 +207,9 @@ class LineProfiles(QWidget):
             self.free_ax.figure.canvas.draw()
         except:
             pass
+        self.disconnect()
+        
+    
 
     def line_remover(self, axis):
         """ Somehow cannot just iterate over all lines,
@@ -282,8 +303,18 @@ class LineProfiles(QWidget):
             spancoords="data",
             interactive=True,
         )
-
+    
     def find_maxima(self):
+        def mad(a, c=Gaussian.ppf(3/4.), axis=0, center=np.median):
+            """
+            The Median Absolute Deviation along given axis of an array.
+            Taken from the 'statsmodels.robust' python package.
+            """
+            a = np.asarray(a)
+            if hasattr(center, '__call__'):
+                center = np.apply_over_axes(center, a, axis)
+            return np.median((np.fabs(a-center))/c, axis=axis)
+
         if not self._max_x:
             self._max_x = []
             self._max_y = []
@@ -324,6 +355,7 @@ class LineProfiles(QWidget):
             # plt.show()
             coeff = pywt.wavedec(raw_lineprof, wavelet, mode="per")
             sigma = mad(coeff[-level])
+            # sigma = mad(coeff[-level])
             # changing this threshold also changes the behavior,
             # but I have not played with this very much
             uthresh = sigma * np.sqrt(2 * np.log(len(raw_lineprof)))
@@ -338,17 +370,6 @@ class LineProfiles(QWidget):
             # Big nesting incoming, perhaps one can do this more nicely but it works...
             peak_pos = line_range[peaks[np.argmax(estimated[peaks])]]
 
-            # Plotting a number of lines, for test purposes
-            if n % 15 == 0:
-                pass
-                # print(len(estimated))
-                # print(len(x_range))
-                # if len(estimated) > len(x_range):
-                #     estimated = estimated[:-1]
-                # plt.plot(x_range, raw_lineprof, "k-")
-                # plt.plot(x_range, estimated, "r-")
-                # plt.plot(x_range[peaks], estimated[peaks], "bo")
-
             if edc:
                 self._max_x.append(peak_pos)
                 self._max_y.append(i)
@@ -360,6 +381,7 @@ class LineProfiles(QWidget):
         self.max_line = self.ax.scatter(
             self._max_x, self._max_y, s=50, facecolor="none", color="#ff7f0e", zorder=3
         )
+        self.scatter_storage.append(self.max_line)
         self.maxima_peaks_x = self._max_x
         self.maxima_peaks_y = self._max_y
         if self.eraser:
@@ -368,47 +390,50 @@ class LineProfiles(QWidget):
         self.ax.set_ylim(lim_before)
         self.ax.figure.canvas.draw()  # redraw
         # plt.show()
+    
 
-    def find_maxima_fit(self):
-        max_x = []
-        max_y = []
-        x_pos = np.logical_and(self.rect_x1 < self.xvals, self.xvals < self.rect_x2)
-        y_pos = np.logical_and(self.rect_y1 < self.yvals, self.yvals < self.rect_y2)
-        x_range = self.xvals[x_pos]
-        y_range = self.yvals[y_pos]
-        # print(x_range, y_range)
-        for n, i in enumerate(y_range):
-            print(n / len(y_range) * 100)
-            lineprof = self.idata(x_range, i)
-            # pos_max = np.argmax(lineprof)
-            center = self.fit_profile(x_range, lineprof)
-            max_x.append(center)
-            max_y.append(i)
+    
 
-        lim_before = self.ax.get_ylim()
-        max_line = self.ax.scatter(
-            max_x, max_y, s=50, facecolor="none", color="r", zorder=3
-        )
-        # Have to reset the ylim, don't know why this happens
-        self.ax.set_ylim(lim_before)
-        self.ax.figure.canvas.draw()  # redraw
+    # def find_maxima_fit(self):
+    #     max_x = []
+    #     max_y = []
+    #     x_pos = np.logical_and(self.rect_x1 < self.xvals, self.xvals < self.rect_x2)
+    #     y_pos = np.logical_and(self.rect_y1 < self.yvals, self.yvals < self.rect_y2)
+    #     x_range = self.xvals[x_pos]
+    #     y_range = self.yvals[y_pos]
+    #     # print(x_range, y_range)
+    #     for n, i in enumerate(y_range):
+    #         print(n / len(y_range) * 100)
+    #         lineprof = self.idata(x_range, i)
+    #         # pos_max = np.argmax(lineprof)
+    #         center = self.fit_profile(x_range, lineprof)
+    #         max_x.append(center)
+    #         max_y.append(i)
 
-        # finder = EDCfitter(self.idata)
+    #     lim_before = self.ax.get_ylim()
+    #     max_line = self.ax.scatter(
+    #         max_x, max_y, s=50, facecolor="none", color="r", zorder=3
+    #     )
+    #     # Have to reset the ylim, don't know why this happens
+    #     self.ax.set_ylim(lim_before)
+    #     self.ax.figure.canvas.draw()  # redraw
 
-    def fit_profile(self, x, y):
-        # pseudovoigt = PseudoVoigtModel()
-        fitmod = GaussianModel()
+    #     # finder = EDCfitter(self.idata)
 
-        background = LinearModel()
-        mod = fitmod + background
-        # mod = VoigtModel()
-        # mod = LorentzianModel()
-        pars = fitmod.guess(y, x=x)
-        linpars = background.guess(y, x=x)
-        allpars = pars + linpars
-        out = mod.fit(y, allpars, x=x)
-        center = out.values["center"]
-        return center
+    # def fit_profile(self, x, y):
+    #     # pseudovoigt = PseudoVoigtModel()
+    #     fitmod = GaussianModel()
+
+    #     background = LinearModel()
+    #     mod = fitmod + background
+    #     # mod = VoigtModel()
+    #     # mod = LorentzianModel()
+    #     pars = fitmod.guess(y, x=x)
+    #     linpars = background.guess(y, x=x)
+    #     allpars = pars + linpars
+    #     out = mod.fit(y, allpars, x=x)
+    #     center = out.values["center"]
+    #     return center
 
     def remove_maxima_points(self):
         if not self.max_line:
@@ -439,8 +464,8 @@ class LineProfiles(QWidget):
         self.discobutton.setChecked(True)
         # Create Push Buttons
         self.clearbutton = QPushButton("&Clear", self)
-        self.maximabutton = QPushButton("&Maxima EDC", self)
-        self.maximabutton_mdc = QPushButton("&Maxima MDC", self)
+        self.maximabutton = QPushButton("&Maxima EDC (x)", self)
+        self.maximabutton_mdc = QPushButton("&Maxima MDC (y)", self)
 
         self.input_breadth = QLineEdit(self)
         self.input_breadth.setPlaceholderText("Breadth")
