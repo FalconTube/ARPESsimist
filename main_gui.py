@@ -13,6 +13,9 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QDialog,
     QInputDialog,
+    QListView,
+    QAbstractItemView,
+    QTreeView
 )
 from PyQt5.QtGui import QIcon, QScreen, QPixmap
 
@@ -94,6 +97,13 @@ class ApplicationWindow(QMainWindow):
 
         self.stitch_menu.addAction("&Initialize Stitching", self.init_stitch)
         
+        # Set up Summation Menu
+        self.summation_menu = QMenu("&Summation", self)
+        self.menuBar().addSeparator()
+        self.menuBar().addMenu(self.summation_menu)
+
+        self.summation_menu.addAction("&Initialize Summation", self.sum_images)
+        
 
         # Set up Interaction Menu
         # self.interact_menu = QMenu('&2D', self)
@@ -117,6 +127,7 @@ class ApplicationWindow(QMainWindow):
         self.setCentralWidget(self.main_widget)
 
         self.statusBar().showMessage("Welcome to ARPESsimist", 2000)
+    
 
     def fileQuit(self):
         """ Closes current instance """
@@ -421,6 +432,74 @@ class ApplicationWindow(QMainWindow):
     def init_stitch(self):
         self.stitcher = StitchWindow()
         self.stitcher.show()
+    
+    def get_multiple_batches(self):
+        chooser = 1
+        files = []
+        LastDir = '.'
+        while chooser > 0:
+            if chooser > 1: # Dont ask for first time
+                if not self.settings.value("SummationDir") == None:
+                    LastDir = self.settings.value("SummationDir")
+
+                if (QMessageBox.Yes
+                    == QMessageBox(
+                        QMessageBox.Information,
+                        "Summation",
+                        'Do you want to add another batch of files?',
+                        QMessageBox.Yes | QMessageBox.No,
+                    ).exec()):
+                    many_files = QFileDialog.getOpenFileNames(
+                        self, "Select one or more files to open", LastDir
+                    )
+                    many_files = many_files[0]
+                    files.append(many_files)
+                    LastDir = os.path.dirname(many_files[0])
+                    print('LastDir', LastDir)
+                    self.settings.setValue("SummationDir", LastDir)
+                else:
+                    chooser = 0
+            else:
+                if not self.settings.value("SummationDir") == None:
+                    LastDir = self.settings.value("SummationDir")
+
+                many_files = QFileDialog.getOpenFileNames(
+                        self, "Select one or more files to open", LastDir
+                    )
+                many_files = many_files[0]
+                files.append(many_files)
+                LastDir = os.path.dirname(many_files[0])
+                self.settings.setValue("SummationDir", LastDir)
+                chooser += 1
+        if len(files) > 0:
+            return files
+        return None
+    
+    def sum_images(self):
+        folders = self.get_multiple_batches()
+        if folders is not None:
+            reader = Sp2_loader()
+            out = None
+            for files in folders:
+                data, extents = reader.read_multiple_sp2(files)
+                if out is None:
+                    out = data
+                else:
+                    np.sum((out, data), axis=-1)
+        self.save_to_sp2(out)
+
+    def save_to_sp2(self, data_stack):
+        location = QFileDialog.getExistingDirectory(self, "Choose directory for saving", '.')
+        os.chdir(location)
+        savebase = 'sum'
+        for n, data in enumerate(data_stack.T):
+            shape = data.shape
+            plain = np.ravel(data)
+            intens = np.sum(plain)
+            savename = savebase + '_{}.sp2'.format(str(n).zfill(3))
+            print(savename)
+            # np.savetxt
+
 
 
 if __name__ == "__main__":
