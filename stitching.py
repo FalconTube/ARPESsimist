@@ -88,18 +88,25 @@ class StitchWindow(QMainWindow):
         self.settings.setValue("LastDir", LastDir)
         # Start loading Data
         sp2 = Sp2_loader()
-        loaded_filenames = sp2.tidy_up_list(many_files[0])
+        # loaded_filenames = sp2.tidy_up_list(many_files[0])
+        loaded_filenames = many_files[0]
         fignum = len(loaded_filenames)
-        figs_data, figs_extents = sp2.read_multiple_sp2(loaded_filenames)
+        figs_data, figs_extents = sp2.read_multiple_sp2(loaded_filenames, natsort=False)
         QApplication.restoreOverrideCursor()
         # Hand over to Stitcher
         self.Stitcher = Stitch(
-            fignum, figs_data, figs_extents, self.over_layout,
-            self.figs_layout, self.main_widget, vertical=self.vertical
+            fignum,
+            figs_data,
+            figs_extents,
+            self.over_layout,
+            self.figs_layout,
+            self.main_widget,
+            vertical=self.vertical,
         )
         # Export Menu
         self.export_menu = QMenu("&Export", self)
         self.export_menu.addAction("&Save stitched txt", self.Stitcher.export_data)
+        self.export_menu.addAction("&Save stitched sp2", self.Stitcher.export_sp2)
         self.menuBar().addMenu(self.export_menu)
 
     def fileQuit(self):
@@ -116,7 +123,14 @@ class StitchWindow(QMainWindow):
 
 class Stitch(QWidget):
     def __init__(
-        self, fignum, figs_data, figs_extents, layout, fig_layout, parent=None, vertical=False
+        self,
+        fignum,
+        figs_data,
+        figs_extents,
+        layout,
+        fig_layout,
+        parent=None,
+        vertical=False,
     ):
         super().__init__()
         self.parent = parent
@@ -135,6 +149,7 @@ class Stitch(QWidget):
         self.figs_data_initial = self.figs_data
         self.colormap = "terrain"
         self.need_redraw_upper = True
+        self.lut_avail = False
 
         # Call plots
         self.plot_separate()
@@ -157,10 +172,20 @@ class Stitch(QWidget):
         self.layout.addWidget(self.toolbar)
 
         # Add sliders
+        # Add LUT Slider
+        self.lut_slider_pos = np.amax(self.stichted_data)
+        self.vmax_slider = self.add_slider(0, np.amax(self.stichted_data))
+        self.vmax_slider.setSliderPosition(self.lut_slider_pos)
+        self.vmax_label = QLabel(self)
+        self.vmax_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.vmax_label.setText("LUT")
+        self.vmax_slider.valueChanged.connect(self.update_vmax)
+        self.lut_avail = True
+
         if self.vertical:
             self.slider_range = int((self.figs_data[:, :, 0].shape[0]) / 2)
         else:
-            self.slider_range = int((self.figs_data[:, :, 0].shape[1]) / 2)
+            self.slider_range = int((self.figs_data[:, :, 0].shape[1]) / 1)
         self.slider = self.add_slider(0, self.slider_range)
         self.slider.setSliderPosition(0)
         self.Label = QLabel(self)
@@ -183,15 +208,17 @@ class Stitch(QWidget):
         self.layout.addWidget(self.Label)
         self.layout.addWidget(self.trimmmer_slider)
         self.layout.addWidget(self.trim_label)
+        self.layout.addWidget(self.vmax_slider)
+        self.layout.addWidget(self.vmax_label)
 
-    def compute_aspect(self, extent, orient='s'):
+    def compute_aspect(self, extent, orient="s"):
         x_range = abs(extent[1] - extent[0])
         e_range = abs(extent[3] - extent[2])
-        if orient == 's':
+        if orient == "s":
             aspectratio = x_range / e_range
-        if orient == 'h':
+        if orient == "h":
             aspectratio = 0.3 * x_range / e_range
-        if orient == 'v':
+        if orient == "v":
             aspectratio = x_range / (0.3 * e_range)
         return aspectratio
 
@@ -206,14 +233,15 @@ class Stitch(QWidget):
             aspectratio = self.compute_aspect(extent)
 
             if self.vertical:
-                subplot_pos = "{}1{}".format(self.fignum, n+1)
+                subplot_pos = "{}1{}".format(self.fignum, n + 1)
             else:
                 subplot_pos = "1{}{}".format(self.fignum, n + 1)
             ax = self.upper_fig.add_subplot(subplot_pos)
             img = ax.imshow(data, extent=extent, aspect=aspectratio, cmap=self.colormap)
             self.upper_images.append(img)
         canvas = FigureCanvas(self.upper_fig)
-        self.fig_layout.addWidget(canvas)
+        # self.fig_layout.addWidget(canvas)
+        self.layout.addWidget(canvas)
         canvas.draw_idle()
 
     def plot_together(self):
@@ -222,11 +250,11 @@ class Stitch(QWidget):
         self.canvas = FigureCanvas(self.fig)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.canvas.setSizePolicy(sizePolicy)
-        self.fig_layout.addWidget(self.canvas)
+        # self.fig_layout.addWidget(self.canvas)
+        self.layout.addWidget(self.canvas)
+        self.stichted_data = self.stitch_init()
 
-        stichted = self.stitch_init()
-
-        self.stitched_image = self.ax.imshow(stichted, cmap=self.colormap)
+        self.stitched_image = self.ax.imshow(self.stichted_data, cmap=self.colormap)
         self.canvas.update()
         self.canvas.draw_idle()
         self.show()
@@ -243,6 +271,24 @@ class Stitch(QWidget):
                     out = np.hstack((out, data))
         return out
 
+    def update_vmax(self, value):
+        if value is not None:
+            self.lut_slider_pos = value
+        else:
+            changed_slider = self.sender()
+            self.lut_slider_pos = changed_slider.value()
+        self.current_clim = (0, self.lut_slider_pos)
+        for n, img in enumerate(self.upper_images):
+            img.set_clim(self.current_clim)
+            ax = self.upper_fig.axes[n]
+            ax.draw_artist(img)
+
+        self.stitched_image.set_clim(self.current_clim)
+        self.ax.draw_artist(self.stitched_image)
+
+        self.upper_fig.canvas.update()
+        self.canvas.update()
+
     def update_extents(self):
         QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
 
@@ -250,7 +296,6 @@ class Stitch(QWidget):
             init_width = self.figs_data_initial.shape[1]
             current_width = self.figs_data.shape[1]
             ratio = current_width / init_width
-            # new_extents = []
             # Upper axes
             for n, i in enumerate(self.figs_extents):
                 left = i[0] * ratio
@@ -295,9 +340,9 @@ class Stitch(QWidget):
             self.figs_extents[0] = self.figs_extents[0][::-1]
             self.lower_extent = self.lower_extent[::-1]
         if self.vertical:
-            aspectratio = self.compute_aspect(self.lower_extent, orient='v')
+            aspectratio = self.compute_aspect(self.lower_extent, orient="v")
         else:
-            aspectratio = self.compute_aspect(self.lower_extent, orient='h')
+            aspectratio = self.compute_aspect(self.lower_extent, orient="h")
         out = self.stitched_image.get_array()
 
         self.stitched_image = self.ax.imshow(
@@ -306,6 +351,8 @@ class Stitch(QWidget):
         self.ax.set_xlabel(r"Angle [$^\circ{}$]")
         self.ax.set_ylabel(r"Energy [eV]")
         self.canvas.draw_idle()
+        if self.lut_avail:
+            self.update_vmax(self.lut_slider_pos)
         QApplication.restoreOverrideCursor()
 
     def stitch(self, overlap):
@@ -317,7 +364,6 @@ class Stitch(QWidget):
                 current_data = self.figs_data[:, :, n]
                 if self.vertical:
                     current_data = current_data.T
-                
 
                 l_over = current_data[:, :overlap]
                 if n == 0:  # Ensure that we start with a left side
@@ -334,7 +380,7 @@ class Stitch(QWidget):
                     r_tmp = self.linear_profile(prev_data, "r")
                     l_over = l_tmp + r_tmp
                     if self.vertical:
-                        print('VERTICAL')
+                        print("VERTICAL")
                         # print('lover')
                         # print(out.shape)
                         # print(l_over.shape)
@@ -403,7 +449,9 @@ class Stitch(QWidget):
         slider_bar = QSlider(QtCore.Qt.Horizontal, self)
         slider_bar.setRange(lower, upper - 1)
         slider_bar.setTickInterval(5)
-        slider_bar.setSingleStep(1)
+        # slider_bar.setSingleStep(1)
+        stepsize = ((upper-1) - lower)/1000
+        slider_bar.setSingleStep(stepsize)
         slider_bar.setPageStep(10)
         slider_bar.setToolTip("0")
         return slider_bar
@@ -428,7 +476,7 @@ class Stitch(QWidget):
         if self.vertical:
             self.slider_range = int((self.figs_data[:, :, 0].shape[0]) / 2)
         else:
-            self.slider_range = int((self.figs_data[:, :, 0].shape[1]) / 2)
+            self.slider_range = int((self.figs_data[:, :, 0].shape[1]) / 1)
         self.slider.setRange(0, self.slider_range)
         self.slider.setSliderPosition(0)
         self.slider.update()
@@ -450,25 +498,41 @@ class Stitch(QWidget):
         self.trim_label.setText("Trim: {:.1f} %".format(labelpos))
         self.trimmer(self.trimmer_pos)
 
-    def update_vmax(self, value):
-        changed_slider = self.sender()
-        self.lut_slider_pos = changed_slider.value()
-        self.current_clim = (0, self.lut_slider_pos)
-        self.twoD_ax.set_clim(self.current_clim)
-        self.update_2dplot()
-
     def export_data(self):
         location = QFileDialog.getSaveFileName(self, "Choose savename", ".")
         QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         location = str(location[0])
         data = self.stitched_image.get_array()
         shape = data.shape
-        data = np.ravel(data)
+        data = np.ravel(data[::-1].T)
         extent = self.lower_extent
 
         header = "Stitched image\nShape: {}\nExtent {}".format(shape, extent)
         np.savetxt(location, data, header=header)
         QApplication.restoreOverrideCursor()
+
+    def export_sp2(self):
+        location = QFileDialog.getSaveFileName(self, "Choose savename", ".")
+        QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+        location = str(location[0])
+        data = self.stitched_image.get_array()
+        shape = data.shape
+        data = np.ravel(data[::-1].T)
+        intens = np.sum(data)
+        extent = self.lower_extent
+        header = (
+            "P2\n# ERange\t = {} {} # [eV]\n".format(extent[2], extent[3])
+            + "# aRange\t = {} {} # [deg]\n".format(extent[0], extent[1])
+            + "{} {} {}".format(shape[0], shape[1], int(intens))
+        )
+        np.savetxt(
+            location,
+            data.astype(int),
+            fmt="%i",
+            header=header,
+            footer="P2",
+            comments="",
+        )
 
 
 if __name__ == "__main__":

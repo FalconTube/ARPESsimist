@@ -202,7 +202,7 @@ class ApplicationWindow(QMainWindow):
             self.load_multiple_files()
         except:
             self.p_min = old_pmin
-            QApplication.restoreOverrideCursor()
+        QApplication.restoreOverrideCursor()
         
 
     def choose_nxs(self):

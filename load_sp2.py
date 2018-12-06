@@ -6,6 +6,9 @@ import time
 from natsort import natsorted
 import multiprocessing
 import h5py as h5
+# import scipy.interpolate as itpt
+from scipy.interpolate import interp2d
+
 
 # from PyQt5.QtCore import QThread
 from PyQt5.QtWidgets import QProgressBar, QWidget, QApplication, QMessageBox
@@ -79,13 +82,16 @@ class Sp2_loader:
 
         return np.array(data), extent
 
-    def read_multiple_sp2(self, filenames, both_sets=False):
+    def read_multiple_sp2(self, filenames, both_sets=False, natsort=True):
         """ Only reads defined sp2 files """
         if len(filenames) == 1:
             self.multi_file_mode = False
 
         starttime = time.time()
-        iterate_list = natsorted(filenames)
+        if natsort:
+            iterate_list = natsorted(filenames)
+        else:
+            iterate_list = filenames
         with multiprocessing.Pool() as p:
             out = p.map(self.read_sp2, iterate_list)
 
@@ -97,6 +103,14 @@ class Sp2_loader:
                 if n == 0:
                     out_arr = data
                 else:
+                    interpolated, is_data = self.interpolate_data(out_arr, data, this_dict)
+                    if is_data:
+                        data = interpolated
+                    else:
+                        if len(out_arr.shape) == 3:
+                            out_arr[:, :, -1] = interpolated
+                        else:
+                            out_arr = interpolated
                     out_arr = np.dstack((out_arr, data))
         # print(
         #     "Loading {} took {:.1f} seconds".format(
@@ -123,7 +137,33 @@ class Sp2_loader:
         indata = np.reshape(indata, (ydim, -1))
         data = np.swapaxes(indata, 0, 1)[::-1]
         return data
-
+    
+    def interpolate_data(self, out_arr, data, extent):
+        out_data = True
+        if len(out_arr.shape) == 3:
+            last_set = out_arr[:, :, -1]
+        else:
+            last_set = out_arr
+        if last_set.shape == data.shape:
+            return data, out_data
+        if last_set.shape < data.shape:
+            smaller = last_set
+            larger = data
+            out_data = False
+        else:
+            smaller = data
+            larger = last_set
+         
+        x = np.linspace(extent[0], extent[1], smaller.shape[1])
+        y = np.linspace(extent[2], extent[3], smaller.shape[0])
+        
+        f = interp2d(x, y, smaller)
+        xl = np.linspace(extent[0], extent[1], larger.shape[1])
+        yl = np.linspace(extent[2], extent[3], larger.shape[0])
+        
+        enlarged = f(xl, yl)
+        return enlarged, out_data
+        
 
 class LoadHDF5(object):
     def __init__(self, location):

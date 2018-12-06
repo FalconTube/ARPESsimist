@@ -96,7 +96,7 @@ class TwoD_Plotter(MyMplCanvas):
         self.xprof_ax.figure.canvas.update()
         self.yprof_ax.figure.canvas.update()
 
-    def update_vmax(self, value):
+    def update_vmax(self):
         changed_slider = self.sender()
         self.lut_slider_pos = changed_slider.value()
         self.current_clim = (0, self.lut_slider_pos)
