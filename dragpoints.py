@@ -64,7 +64,7 @@ class DraggablePlotExample(object):
         :rtype: ((int, int)|None)
         :return: (x, y) if there are any point around mouse else None
         """
-        #TODO: Do this dynamically
+        # TODO: Do this dynamically
         distance_threshold = 3
         nearest_point = None
         # min_distance = math.sqrt(2 * (100 ** 2))
@@ -127,7 +127,7 @@ class DraggablePlotExample(object):
 
 
 if __name__ == "__main__":
-    
+
     fig, ax = plt.subplots()
     plot = DraggablePlotExample(fig, ax)
     plt.show()

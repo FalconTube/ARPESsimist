@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import (
     QInputDialog,
     QListView,
     QAbstractItemView,
-    QTreeView
+    QTreeView,
 )
 from PyQt5.QtGui import QIcon, QScreen, QPixmap
 
@@ -64,7 +64,7 @@ class ApplicationWindow(QMainWindow):
             self.resize(960, 1080)
         if not self.settings.value("windowState") == None:
             self.restoreState(self.settings.value("windowState"))
-        
+
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("ARPESsimist")
         iconname = "logo_black.png"
@@ -97,14 +97,13 @@ class ApplicationWindow(QMainWindow):
         self.menuBar().addMenu(self.stitch_menu)
 
         self.stitch_menu.addAction("&Initialize Stitching", self.init_stitch)
-        
+
         # Set up Summation Menu
         self.summation_menu = QMenu("&Summation", self)
         self.menuBar().addSeparator()
         self.menuBar().addMenu(self.summation_menu)
 
         self.summation_menu.addAction("&Initialize Summation", self.start_summation)
-        
 
         # Set up Interaction Menu
         # self.interact_menu = QMenu('&2D', self)
@@ -128,7 +127,6 @@ class ApplicationWindow(QMainWindow):
         self.setCentralWidget(self.main_widget)
 
         self.statusBar().showMessage("Welcome to ARPESsimist", 2000)
-    
 
     def fileQuit(self):
         """ Closes current instance """
@@ -203,7 +201,6 @@ class ApplicationWindow(QMainWindow):
         except:
             self.p_min = old_pmin
         QApplication.restoreOverrideCursor()
-        
 
     def choose_nxs(self):
         old_pmin = self.p_min
@@ -232,7 +229,6 @@ class ApplicationWindow(QMainWindow):
         except:
             self.p_min = old_pmin
             QApplication.restoreOverrideCursor()
-        
 
     def load_multiple_files(self):
         if self.new_twoD_widget:
@@ -261,32 +257,6 @@ class ApplicationWindow(QMainWindow):
         QApplication.restoreOverrideCursor()
 
 
-    # def thread_polar_maps(self):
-    #     xmin, xmax, ymin, ymax = -1.0, 1.6, -1.0, 1.6
-    #     self.kmap_thread = ThreadingKMaps(
-    #         self.processing_data,
-    #         self.processing_extent,
-    #         self.p_min,
-    #         self.p_max,
-    #         66.16,
-    #         67.84,
-    #         0.01,
-    #         0.0,
-    #         0,
-    #         kxmin=xmin,
-    #         kxmax=xmax,
-    #         kymin=ymin,
-    #         kymax=ymax,
-    #     )
-
-    #     self.kmap_thread.finished.connect(self.kmap_thread.get)
-    #     self.kmap_thread.start()
-    # extent_stack = list([[xmin, xmax, ymin, ymax]]) * \
-    #     self.k_slice.shape[-1]
-
-    # self.KWin = K_Window(self.k_slice, extent_stack)
-    # self.KWin.show()
-
     def gen_maps(self):
         if self.p_min:
             parameters = MapParameterBox(pol_available=True)
@@ -309,7 +279,6 @@ class ApplicationWindow(QMainWindow):
             # Check if data will overflow memory
             self.check_ram_usage()
             QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-
 
             All_maps = VerticalSlitPolarScan(
                 self.processing_data,
@@ -367,7 +336,6 @@ class ApplicationWindow(QMainWindow):
             self.KxWin.show()
         self.p_min = None
         QApplication.restoreOverrideCursor()
-
 
     def polar_maps(self):
         self.use_azi = False
@@ -429,14 +397,13 @@ class ApplicationWindow(QMainWindow):
         xvals, yvals = calc_brillouin(a)
         axis.plot(xvals, yvals, "r-", zorder=1, lw=3)
         axis.figure.canvas.draw()
-    
+
     def init_stitch(self):
         self.stitcher = StitchWindow()
         self.stitcher.show()
-        
+
     def start_summation(self):
         SI = SumImages(self.settings, self)
-
 
 
 if __name__ == "__main__":

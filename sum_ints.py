@@ -6,12 +6,13 @@ from PyQt5 import QtCore
 
 from load_sp2 import Sp2_loader
 
+
 class SumImages(QWidget):
     def __init__(self, settings, appwin):
         super().__init__()
         self.settings = settings
         self.appwin = appwin
-        self.appwin.statusBar().showMessage('Initialized Summation tool')
+        self.appwin.statusBar().showMessage("Initialized Summation tool")
         self.sum_images()
 
     def get_multiple_batches(self):

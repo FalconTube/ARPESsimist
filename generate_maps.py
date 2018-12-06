@@ -17,56 +17,6 @@ deg = np.pi / 180
 rad = 180 / np.pi
 
 
-class ThreadingKMaps(QThread):
-    def __init__(
-        self,
-        processing_data,
-        processing_extent,
-        p_min,
-        p_max,
-        Ecutmin,
-        Ecutmax,
-        dk,
-        azi,
-        tilt,
-        kxmax=0.5,
-        kxmin=-0.5,
-        kymax=0.5,
-        kymin=-0.5,
-    ):
-        pass
-        # QThread.__init__(self, parent=None)
-        # self.Ecutmin = Ecutmin
-        # self.Ecutmax = Ecutmax
-        # self.dk = dk
-        # self.azi = azi
-        # self.tilt = tilt
-        # self.kxmin = kxmin
-        # self.kxmax = kxmax
-        # self.kymin = kymin
-        # self.kymax = kymax
-        # self.All_maps = VerticalSlitPolarScan(
-        #     processing_data, processing_extent,
-        #     p_min, p_max)
-
-    # def run(self):
-    #     print('running')
-    #     time.sleep(10)
-    #     self.kmap_out = self.All_maps.slice_K_fortran(
-    #         self.Ecutmin, self.Ecutmax, self.dk, self.azi, self.tilt,
-    #         self.kxmax, self.kxmin, self.kymax, self.kymin)
-
-    # def get(self):
-    #     print('calling get')
-    #     self.k_slice = self.kmap_out
-    #     xmin, xmax, ymin, ymax = -1., 1.6, -1., 1.6
-    #     extent_stack = list([[xmin, xmax, ymin, ymax]]) * \
-    #         self.k_slice.shape[-1]
-
-    #     self.KWin = K_Window(self.k_slice, extent_stack)
-    #     self.KWin.show()
-
-
 class VerticalSlitPolarScan(object):
     """ Calculate K-Map with Vertical Slits """
 
@@ -245,10 +195,8 @@ class VerticalSlitPolarScan(object):
         # self.data = self.data[:, ::2, ::2]
         Ecutmin = self.Emin
         Ecutmax = self.Emax
-        print(self.convertAngleToK(
-        self.dmin + self.angle_offset, self.Emin))
-        print(self.convertAngleToK(
-        self.dmax + self.angle_offset, self.Emax))
+        print(self.convertAngleToK(self.dmin + self.angle_offset, self.Emin))
+        print(self.convertAngleToK(self.dmax + self.angle_offset, self.Emax))
         kx_range = np.arange(self.kxmin, self.kxmax, dk)
         ky_range = np.arange(self.kymin, self.kymax, dk)
         Ecut_range = np.arange(Ecutmin, Ecutmax, dE)
@@ -273,7 +221,8 @@ class VerticalSlitPolarScan(object):
                 ky_range,
                 Ecut_range,
                 tilt,
-                azi)
+                azi,
+            )
         else:
             self.data = np.swapaxes(self.data, 0, 2)
             # Polar range
@@ -294,7 +243,8 @@ class VerticalSlitPolarScan(object):
                 ky_range,
                 Ecut_range,
                 tilt,
-                azi)
+                azi,
+            )
         outx = np.swapaxes(kSlice, 0, 1)
         outy = np.swapaxes(kSlice, 0, 2)
         outE = np.swapaxes(kSlice, 1, 2)

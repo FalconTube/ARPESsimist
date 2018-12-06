@@ -6,6 +6,7 @@ import time
 from natsort import natsorted
 import multiprocessing
 import h5py as h5
+
 # import scipy.interpolate as itpt
 from scipy.interpolate import interp2d
 
@@ -103,7 +104,9 @@ class Sp2_loader:
                 if n == 0:
                     out_arr = data
                 else:
-                    interpolated, is_data = self.interpolate_data(out_arr, data, this_dict)
+                    interpolated, is_data = self.interpolate_data(
+                        out_arr, data, this_dict
+                    )
                     if is_data:
                         data = interpolated
                     else:
@@ -137,7 +140,7 @@ class Sp2_loader:
         indata = np.reshape(indata, (ydim, -1))
         data = np.swapaxes(indata, 0, 1)[::-1]
         return data
-    
+
     def interpolate_data(self, out_arr, data, extent):
         out_data = True
         if len(out_arr.shape) == 3:
@@ -153,17 +156,17 @@ class Sp2_loader:
         else:
             smaller = data
             larger = last_set
-         
+
         x = np.linspace(extent[0], extent[1], smaller.shape[1])
         y = np.linspace(extent[2], extent[3], smaller.shape[0])
-        
+
         f = interp2d(x, y, smaller)
         xl = np.linspace(extent[0], extent[1], larger.shape[1])
         yl = np.linspace(extent[2], extent[3], larger.shape[0])
-        
+
         enlarged = f(xl, yl)
         return enlarged, out_data
-        
+
 
 class LoadHDF5(object):
     def __init__(self, location):

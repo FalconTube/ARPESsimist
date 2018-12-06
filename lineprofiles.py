@@ -22,12 +22,14 @@ import matplotlib.pyplot as plt
 
 from dragpoints import DraggablePlotExample
 from edc_fitting import EDCfitter
+
 # from lmfit.models import PseudoVoigtModel
 # from lmfit.models import LorentzianModel
 # from lmfit.models import LinearModel
 # from lmfit.models import GaussianModel
 from scipy.signal import savgol_filter, find_peaks
 import pywt
+
 # from statsmodels.robust import mad
 from point_eraser import PointEraser
 
@@ -196,7 +198,7 @@ class LineProfiles(QWidget):
             self.free_ax.cla()
         except:
             pass
-        
+
         self.current_hline = False
         self.current_vline = False
         # Redraw to show clearance
@@ -208,8 +210,6 @@ class LineProfiles(QWidget):
         except:
             pass
         self.disconnect()
-        
-    
 
     def line_remover(self, axis):
         """ Somehow cannot just iterate over all lines,
@@ -303,17 +303,17 @@ class LineProfiles(QWidget):
             spancoords="data",
             interactive=True,
         )
-    
+
     def find_maxima(self):
-        def mad(a, c=Gaussian.ppf(3/4.), axis=0, center=np.median):
+        def mad(a, c=Gaussian.ppf(3 / 4.0), axis=0, center=np.median):
             """
             The Median Absolute Deviation along given axis of an array.
             Taken from the 'statsmodels.robust' python package.
             """
             a = np.asarray(a)
-            if hasattr(center, '__call__'):
+            if hasattr(center, "__call__"):
                 center = np.apply_over_axes(center, a, axis)
-            return np.median((np.fabs(a-center))/c, axis=axis)
+            return np.median((np.fabs(a - center)) / c, axis=axis)
 
         if not self._max_x:
             self._max_x = []
@@ -390,9 +390,6 @@ class LineProfiles(QWidget):
         self.ax.set_ylim(lim_before)
         self.ax.figure.canvas.draw()  # redraw
         # plt.show()
-    
-
-    
 
     # def find_maxima_fit(self):
     #     max_x = []
@@ -516,4 +513,3 @@ class LineProfiles(QWidget):
         if self.eraser:
             x, y = self.eraser.get_data()
         return x, y
-

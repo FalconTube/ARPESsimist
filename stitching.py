@@ -376,6 +376,7 @@ class Stitch(QWidget):
                 if n > 0:
                     l_tmp = self.linear_profile(l_over, "l")
                     # prev_data = self.figs_data[:, -overlap:, n-1]
+                    prev_data = self.figs_data[:, :, n - 1]
                     prev_data = prev_data[:, -overlap:]
                     r_tmp = self.linear_profile(prev_data, "r")
                     l_over = l_tmp + r_tmp
@@ -450,7 +451,7 @@ class Stitch(QWidget):
         slider_bar.setRange(lower, upper - 1)
         slider_bar.setTickInterval(5)
         # slider_bar.setSingleStep(1)
-        stepsize = ((upper-1) - lower)/1000
+        stepsize = ((upper - 1) - lower) / 1000
         slider_bar.setSingleStep(stepsize)
         slider_bar.setPageStep(10)
         slider_bar.setToolTip("0")

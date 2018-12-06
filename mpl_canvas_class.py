@@ -25,7 +25,6 @@ import matplotlib.pyplot as plt
 # matplotlib.rcParams['toolbar'] = 'toolmanager'
 
 
-
 # class MyMplCanvas(FigureCanvas):
 class MyMplCanvas(QWidget):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
@@ -55,7 +54,7 @@ class MyMplCanvas(QWidget):
 
         self.toolbar = NavigationToolbar(self.canvas, self)
         # self.toolbar = MyToolBar(self.canvas, self)
-        
+
         self.cb = QComboBox()
         self.cb.addItem("terrain")
         self.cb.addItem("viridis")
@@ -78,7 +77,6 @@ class MyMplCanvas(QWidget):
         # self.fit_parabola()
         self.lineprofile()
         self.show()
-
 
     def fit_parabola(self):
         self.FitParGui = FitParabola(self.axes, self)

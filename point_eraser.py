@@ -75,4 +75,3 @@ class PointEraser(object):
 
     def get_data(self):
         return self.x, self.y
-
