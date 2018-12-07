@@ -448,7 +448,7 @@ class LineProfiles(QWidget):
         self.box = QGroupBox("Line Profiles")
         # self.evalbox = QGroupBox("Evaluation Tools")
         # self.this_layout = QHBoxLayout()
-        self.this_layout = QGridLayout()
+        self.this_layout = QGridLayout(self.box)
         # self.eval_layout = QGridLayout()
 
         # Create Radio Buttons
@@ -499,7 +499,7 @@ class LineProfiles(QWidget):
         self.this_layout.addWidget(self.maximabutton, 3, 1)
         self.this_layout.addWidget(self.maximabutton_mdc, 4, 1)
 
-        self.box.setLayout(self.this_layout)
+        # self.box.setLayout(self.this_layout)
 
     def get_widget(self):
         """ Returns this widget """

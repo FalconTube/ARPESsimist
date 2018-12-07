@@ -1,7 +1,6 @@
 import glob
 import os
-import numpy as np
-import matplotlib.pyplot as plt
+import numpy as npplt
 import time
 from natsort import natsorted
 import multiprocessing
@@ -195,10 +194,3 @@ class LoadHDF5(object):
 
     def return_data(self):
         return self.data_stack, self.extent_stack, self._pmin, self._pmax
-
-
-if __name__ == "__main__":
-    sp2 = Sp2_loader()
-    out_data = sp2.read_sp2("mos2_2_015.sp2")
-    plt.imshow(out_data)
-    plt.show()

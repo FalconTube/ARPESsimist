@@ -25,7 +25,7 @@ from mpl_canvas_class import MyMplCanvas
 from data_treatment import Calc_K_space
 from set_parabola_fit import FitParabola
 from lineprofiles import LineProfiles
-from generate_maps import VerticalSlitPolarScan, ThreadingKMaps
+from generate_maps import VerticalSlitPolarScan
 from ask_map_parameters import MapParameterBox
 from new_k_window import K_Window
 from brillouin_plot import calc_brillouin

@@ -12,7 +12,6 @@ from PyQt5.QtWidgets import QSlider, QFileDialog, QMenu, QLabel
 class TwoD_Plotter(MyMplCanvas):
     """ Plots 2D images """
 
-    # def __init__(self, *args, **kwargs):
     def __init__(
         self,
         processing_data,

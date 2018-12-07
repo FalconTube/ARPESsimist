@@ -1,6 +1,5 @@
 import sys
 import numpy as np
-import time
 import os
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import (
@@ -8,11 +7,7 @@ from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
     QMenu,
-    QMessageBox,
     QFileDialog,
-    QGridLayout,
-    QDialog,
-    QInputDialog,
     QVBoxLayout,
     QHBoxLayout,
     QSizePolicy,
@@ -21,17 +16,13 @@ from PyQt5.QtWidgets import (
     QComboBox,
 )
 
-# from PyQt5.QtGui import QIcon, QScreen, QPixmap
-
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar,
 )
 
 from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
 
-# from mpl_canvas_class import MyMplCanvas
 from load_sp2 import Sp2_loader
 
 
@@ -374,11 +365,16 @@ class Stitch(QWidget):
                 else:
                     data = current_data[:, overlap:-overlap]
                 if n > 0:
-                    l_tmp = self.linear_profile(l_over, "l")
-                    # prev_data = self.figs_data[:, -overlap:, n-1]
                     prev_data = self.figs_data[:, :, n - 1]
-                    prev_data = prev_data[:, -overlap:]
-                    r_tmp = self.linear_profile(prev_data, "r")
+                    prev_overlap = prev_data[:, -overlap:]
+                    # Renormalize Data
+                    sum_prev = np.sum(prev_overlap)
+                    sum_curr = np.sum(l_over)
+                    ratio = sum_prev / sum_curr
+                    self.figs_data[:, :, n - 1] = self.figs_data[:, :, n - 1] / ratio
+                    # Linear overlap
+                    r_tmp = self.linear_profile(prev_overlap, "r")
+                    l_tmp = self.linear_profile(l_over, "l")
                     l_over = l_tmp + r_tmp
                     if self.vertical:
                         print("VERTICAL")
@@ -388,7 +384,6 @@ class Stitch(QWidget):
                         out = np.vstack((out, l_over))
                     else:
                         out = np.hstack((out, l_over))
-                prev_data = current_data
                 # print('###########')
                 # print(out.shape)
                 # print(data.shape)
@@ -396,6 +391,8 @@ class Stitch(QWidget):
                     out = np.vstack((out, data))
                 else:
                     out = np.hstack((out, data))
+                prev_data = current_data
+
         else:
             out = self.stitch_init()
         self.stitched_image.set_data(out)
@@ -538,6 +535,6 @@ class Stitch(QWidget):
 
 if __name__ == "__main__":
     qApp = QApplication(sys.argv)
-    gw = StitchWindow(True)
+    gw = StitchWindow()
     gw.show()
     sys.exit(qApp.exec_())
