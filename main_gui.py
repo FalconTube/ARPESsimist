@@ -22,7 +22,7 @@ from PyQt5.QtGui import QIcon, QScreen, QPixmap
 from load_sp2 import Sp2_loader, LoadHDF5
 from plot_2d import TwoD_Plotter
 from mpl_canvas_class import MyMplCanvas
-from data_treatment import Calc_K_space
+from data_treatment import Calc_K_space, HandleNielsSpectra
 from set_parabola_fit import FitParabola
 from lineprofiles import LineProfiles
 from generate_maps import VerticalSlitPolarScan
@@ -71,7 +71,6 @@ class ApplicationWindow(QMainWindow):
         basedir = os.path.dirname(os.path.realpath(__file__))
         pm = QPixmap(os.path.join(basedir, iconname))
         self.setWindowIcon(QIcon(pm))
-        # self.setWindowIcon(QtCore.Qt.QIcon('logo.png'))
 
         # Set up File Menu
         self.file_menu = QMenu("&File", self)
@@ -82,6 +81,15 @@ class ApplicationWindow(QMainWindow):
         )
 
         self.menuBar().addMenu(self.file_menu)
+
+        # Set up Data Menu
+        self.data_menu = QMenu("&Data", self)
+        self.menuBar().addSeparator()
+        self.menuBar().addMenu(self.data_menu)
+
+        self.data_menu.addAction("&Convert to k-space", self.convert_to_k)
+        self.data_menu.addAction("&Shift x", self.shiftx)
+        self.data_menu.addAction("&Shift y", self.shifty)
 
         # Set up Mapping Menu
         self.map_menu = QMenu("&Map", self)
@@ -256,7 +264,6 @@ class ApplicationWindow(QMainWindow):
         self.over_layout.addWidget(self.new_twoD_widget, 1, 0)
         QApplication.restoreOverrideCursor()
 
-
     def gen_maps(self):
         if self.p_min:
             parameters = MapParameterBox(pol_available=True)
@@ -404,6 +411,36 @@ class ApplicationWindow(QMainWindow):
 
     def start_summation(self):
         SI = SumImages(self.settings, self)
+
+    def convert_to_k(self):
+        Handler = HandleNielsSpectra()
+        data_k, extent_k = Handler.convert_single_to_k(
+            self.new_current_data, self.new_current_extent
+        )
+        self.new_twoD_widget.update_data_external(data_k, extent_k)
+        self.new_twoD_widget.update_2d_data(data_k)
+        self.new_twoD_widget.update_2dplot(extent_k)
+        self.new_twoD_widget.update_widgets()
+        self.new_twoD_widget.reshape_limits(extent_k)
+    
+    def convert_to_angle(self):
+        self.new_twoD_widget.update_data_external(self.new_current_data, self.new_current_extent)
+        self.new_twoD_widget.update_2d_data(self.new_current_data)
+        self.new_twoD_widget.update_2dplot(self.new_current_extent)
+        self.new_twoD_widget.update_widgets()
+        self.new_twoD_widget.reshape_limits(self.new_current_extent)
+    
+    def shiftx(self):
+        self.new_twoD_widget.shift_x()
+    
+    def shifty(self):
+        self.new_twoD_widget.shift_y()
+    
+
+
+        # self.new_current_data = data_k
+        # self.new_current_extent = extent_k
+        # self.
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ from mpl_canvas_class import MyMplCanvas
 from set_parabola_fit import FitParabola
 from lineprofiles import LineProfiles
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QSlider, QFileDialog, QMenu, QLabel
+from PyQt5.QtWidgets import QSlider, QFileDialog, QMenu, QLabel, QInputDialog
 
 
 class TwoD_Plotter(MyMplCanvas):
@@ -110,6 +110,7 @@ class TwoD_Plotter(MyMplCanvas):
             x_range = abs(extent[1] - extent[0])
             e_range = abs(extent[3] - extent[2])
             aspectratio = x_range / e_range
+            self.instance_counter = 0
         # print('instance_counter {}'.format(self.instance_counter))
         if self.instance_counter == 0:
             self.instance_counter += 1
@@ -153,6 +154,13 @@ class TwoD_Plotter(MyMplCanvas):
 
     def update_widgets(self):
         self.LineProf.update_data_extent(self.new_current_data, self.new_current_extent)
+    
+    def reshape_limits(self, extent):
+        self.LineProf.reshape_limits(extent)
+    
+    def update_data_external(self, data, extent):
+        self.new_current_data = data
+        self.new_current_extent = extent
 
     def initialize_2D_plot(self):
         self.update_2d_data(self.new_current_data)
@@ -180,6 +188,40 @@ class TwoD_Plotter(MyMplCanvas):
         except:
             self.twoD_Label.setText("{}: {}".format(self.labelprefix, labelpos))
         self.update_current_data()
+        self.initialize_2D_plot()
+    
+    def shift_x(self):
+        val = QInputDialog.getDouble(
+            self,
+            self.tr("QInputDialog().getDouble()"),
+            self.tr("Shift x:"),
+            0,
+            -50,
+            50,
+            3,
+        )[0]
+        tmp_extent = self.new_current_extent
+        tmp_extent[0] += val
+        tmp_extent[1] += val
+        self.new_current_extent = tmp_extent
+        self.update_widgets()
+        self.initialize_2D_plot()
+
+    def shift_y(self):
+        val = QInputDialog.getDouble(
+            self,
+            self.tr("QInputDialog().getDouble()"),
+            self.tr("Shift y:"),
+            0,
+            -50,
+            50,
+            3,
+        )[0]
+        tmp_extent = self.new_current_extent
+        tmp_extent[2] += val
+        tmp_extent[3] += val
+        self.new_current_extent = tmp_extent
+        self.update_widgets()
         self.initialize_2D_plot()
 
     def save_maxima(self):

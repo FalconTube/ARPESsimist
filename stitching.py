@@ -24,6 +24,7 @@ from matplotlib.backends.backend_qt5agg import (
 from matplotlib.figure import Figure
 
 from load_sp2 import Sp2_loader
+from sum_ints import SumImages
 
 
 class StitchWindow(QMainWindow):
@@ -60,7 +61,16 @@ class StitchWindow(QMainWindow):
             "&Quit", self.fileQuit, QtCore.Qt.CTRL + QtCore.Qt.Key_Q
         )
 
+        # Set up Summation Menu
+        self.summation_menu = QMenu("&Summation", self)
+        self.menuBar().addSeparator()
+        self.menuBar().addMenu(self.summation_menu)
+
+        self.summation_menu.addAction("&Initialize Summation", self.start_summation)
+
+
         self.menuBar().addMenu(self.file_menu)
+        self.menuBar().addMenu(self.summation_menu)
 
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("ARPESsimist - Stitching")
@@ -70,7 +80,6 @@ class StitchWindow(QMainWindow):
         LastDir = "."
         if not self.settings.value("LastDir") == None:
             LastDir = self.settings.value("LastDir")
-
         try:
             many_files = QFileDialog.getOpenFileNames(
                 self, "Select one or more files to open", LastDir
@@ -117,6 +126,9 @@ class StitchWindow(QMainWindow):
                     widget.deleteLater() 
                 else: 
                     self.clear_layout(item.layout()) 
+    
+    def start_summation(self):
+        SI = SumImages(self.settings, self)
 
     def fileQuit(self):
         """ Closes current instance """
@@ -517,40 +529,48 @@ class Stitch(QWidget):
         self.trimmer(self.trimmer_pos)
 
     def export_data(self):
-        location = QFileDialog.getSaveFileName(self, "Choose savename", ".")
-        QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-        location = str(location[0])
-        data = self.stitched_image.get_array()
-        shape = data.shape
-        data = np.ravel(data[::-1].T)
-        extent = self.lower_extent
+        try:
+            location = QFileDialog.getSaveFileName(self, "Choose savename", ".")
+            QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+            location = str(location[0])
+            data = self.stitched_image.get_array()
+            shape = data.shape
+            data = np.ravel(data[::-1].T)
+            extent = self.lower_extent
 
-        header = "Stitched image\nShape: {}\nExtent {}".format(shape, extent)
-        np.savetxt(location, data, header=header)
+            header = "Stitched image\nShape: {}\nExtent {}".format(shape, extent)
+            np.savetxt(location, data, header=header)
+        except:
+            pass
         QApplication.restoreOverrideCursor()
 
     def export_sp2(self):
-        location = QFileDialog.getSaveFileName(self, "Choose savename", ".")
-        QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-        location = str(location[0])
-        data = self.stitched_image.get_array()
-        shape = data.shape
-        data = np.ravel(data[::-1].T)
-        intens = np.sum(data)
-        extent = self.lower_extent
-        header = (
-            "P2\n# ERange\t = {} {} # [eV]\n".format(extent[2], extent[3])
-            + "# aRange\t = {} {} # [deg]\n".format(extent[0], extent[1])
-            + "{} {} {}".format(shape[0], shape[1], int(intens))
-        )
-        np.savetxt(
-            location,
-            data.astype(int),
-            fmt="%i",
-            header=header,
-            footer="P2",
-            comments="",
-        )
+        try:
+            location = QFileDialog.getSaveFileName(self, "Choose savename", ".")
+            QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+            location = str(location[0])
+            data = self.stitched_image.get_array()
+            shape = data.shape
+            data = np.ravel(data[::-1].T)
+            intens = np.sum(data)
+            extent = self.lower_extent
+            header = (
+                "P2\n# ERange\t = {} {} # [eV]\n".format(extent[2], extent[3])
+                + "# aRange\t = {} {} # [deg]\n".format(extent[0], extent[1])
+                + "{} {} {}".format(shape[0], shape[1], int(intens))
+            )
+            np.savetxt(
+                location,
+                data.astype(int),
+                fmt="%i",
+                header=header,
+                footer="P2",
+                comments="",
+            )
+        except:
+            QApplication.restoreOverrideCursor()
+
+
 
 
 if __name__ == "__main__":

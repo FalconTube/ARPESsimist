@@ -67,9 +67,17 @@ class LineProfiles(QWidget):
         """ Update current data and extent """
         self.data = data
         self.ranges = extent
+        print(extent)
         self.idata, self.xvals, self.yvals = self.processing_data_interpolator(
             data, extent
         )
+    
+    def reshape_limits(self, extent):
+        self.xprof_ax.set_xlim(extent[0], extent[1])
+        self.yprof_ax.set_ylim(extent[2], extent[3])
+        self.xprof_ax.figure.canvas.draw()
+        self.yprof_ax.figure.canvas.draw()
+
 
     def disconnect(self, discostate=True):
         """ Disconnect from figure """
