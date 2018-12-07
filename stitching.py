@@ -32,6 +32,7 @@ class StitchWindow(QMainWindow):
     def __init__(self, vertical=False):
         QMainWindow.__init__(self)
         self.vertical = vertical
+        self.instance_counter = 0
         self.settings = QtCore.QSettings("Stitching", "StitchWin")
         if not self.settings.value("geometry") == None:
             self.restoreGeometry(self.settings.value("geometry"))
@@ -70,35 +71,52 @@ class StitchWindow(QMainWindow):
         if not self.settings.value("LastDir") == None:
             LastDir = self.settings.value("LastDir")
 
-        many_files = QFileDialog.getOpenFileNames(
-            self, "Select one or more files to open", LastDir
-        )
-        QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+        try:
+            many_files = QFileDialog.getOpenFileNames(
+                self, "Select one or more files to open", LastDir
+            )
+            QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
 
-        LastDir = os.path.dirname(many_files[0][0])
-        self.settings.setValue("LastDir", LastDir)
-        # Start loading Data
-        sp2 = Sp2_loader()
-        # loaded_filenames = sp2.tidy_up_list(many_files[0])
-        loaded_filenames = many_files[0]
-        fignum = len(loaded_filenames)
-        figs_data, figs_extents = sp2.read_multiple_sp2(loaded_filenames, natsort=False)
+            LastDir = os.path.dirname(many_files[0][0])
+            self.settings.setValue("LastDir", LastDir)
+            # Start loading Data
+            sp2 = Sp2_loader()
+            # loaded_filenames = sp2.tidy_up_list(many_files[0])
+            loaded_filenames = many_files[0]
+            fignum = len(loaded_filenames)
+            figs_data, figs_extents = sp2.read_multiple_sp2(loaded_filenames, natsort=False)
+            
+            self.clear_layout(self.over_layout)
+            # Hand over to Stitcher
+            self.Stitcher = Stitch(
+                fignum,
+                figs_data,
+                figs_extents,
+                self.over_layout,
+                self.figs_layout,
+                self.main_widget,
+                vertical=self.vertical,
+            )
+            if self.instance_counter == 0:
+                # Export Menu
+                self.export_menu = QMenu("&Export", self)
+                self.export_menu.addAction("&Save stitched txt", self.Stitcher.export_data)
+                self.export_menu.addAction("&Save stitched sp2", self.Stitcher.export_sp2)
+                self.menuBar().addMenu(self.export_menu)
+            self.instance_counter += 1
+        except:
+            pass
         QApplication.restoreOverrideCursor()
-        # Hand over to Stitcher
-        self.Stitcher = Stitch(
-            fignum,
-            figs_data,
-            figs_extents,
-            self.over_layout,
-            self.figs_layout,
-            self.main_widget,
-            vertical=self.vertical,
-        )
-        # Export Menu
-        self.export_menu = QMenu("&Export", self)
-        self.export_menu.addAction("&Save stitched txt", self.Stitcher.export_data)
-        self.export_menu.addAction("&Save stitched sp2", self.Stitcher.export_sp2)
-        self.menuBar().addMenu(self.export_menu)
+    
+    def clear_layout(self, layout): 
+        if layout is not None: 
+            while layout.count(): 
+                item = layout.takeAt(0) 
+                widget = item.widget() 
+                if widget is not None: 
+                    widget.deleteLater() 
+                else: 
+                    self.clear_layout(item.layout()) 
 
     def fileQuit(self):
         """ Closes current instance """
@@ -174,7 +192,7 @@ class Stitch(QWidget):
         self.lut_avail = True
 
         if self.vertical:
-            self.slider_range = int((self.figs_data[:, :, 0].shape[0]) / 2)
+            self.slider_range = int((self.figs_data[:, :, 0].shape[0]) / 1)
         else:
             self.slider_range = int((self.figs_data[:, :, 0].shape[1]) / 1)
         self.slider = self.add_slider(0, self.slider_range)
@@ -400,6 +418,8 @@ class Stitch(QWidget):
         self.ax.figure.canvas.update()
 
     def trimmer(self, trimvalue):
+        if trimvalue == 0:
+            return
         for n, ax in enumerate(self.upper_fig.axes):
             trimmed_data_range = self.figs_data_initial[:, :, n]
             trimmed_data = trimmed_data_range[:, trimvalue:-trimvalue]
@@ -472,7 +492,7 @@ class Stitch(QWidget):
     def update_lower(self):
         QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         if self.vertical:
-            self.slider_range = int((self.figs_data[:, :, 0].shape[0]) / 2)
+            self.slider_range = int((self.figs_data[:, :, 0].shape[0]) / 1)
         else:
             self.slider_range = int((self.figs_data[:, :, 0].shape[1]) / 1)
         self.slider.setRange(0, self.slider_range)
@@ -484,7 +504,7 @@ class Stitch(QWidget):
     def slider_changed(self, value):
         changed_slider = self.sender()
         self.slider_pos = changed_slider.value()
-        self.overlap_percentage = self.slider_pos / self.slider_range * 50
+        self.overlap_percentage = self.slider_pos / self.slider_range * 100
         self.Label.setText("Overlap: {:.1f} %".format(self.overlap_percentage))
         self.stitch(self.slider_pos)
 
