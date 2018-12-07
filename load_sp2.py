@@ -1,6 +1,6 @@
 import glob
 import os
-import numpy as npplt
+import numpy as np
 import time
 from natsort import natsorted
 import multiprocessing
