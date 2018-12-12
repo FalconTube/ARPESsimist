@@ -19,6 +19,6 @@ init:
 install:
 - echo Starting to compile
 - cd fortran_routines
-- cmd: sh compile.sh
+- cmd: sh compile_windows.sh
 - sh: ./compile.sh
 - echo Compilation finished!
