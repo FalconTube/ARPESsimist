@@ -19,7 +19,7 @@ init:
 install:
 - pip install -U numpy
 - pip install -U wheel
-- pip install -r -U requirements.txt
+- pip install -r requirements.txt
 - echo Starting to compile
 - cd fortran_routines
 - cmd: sh compile_windows.sh
