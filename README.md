@@ -14,7 +14,6 @@ Clone this repository using `git` or download it directly and extract it anywher
 
 Required python packages:
 - matplotlib
-- pyqtgraph
 - scipy
 - numpy
 - natsort

@@ -1,0 +1,133 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module kmaps ! in 
+    interface  ! in :kmaps
+        module kmaps ! in :kmaps:kmaps.f90
+            use bspline_sub_module
+            subroutine kslice_spline(xgrid,ygrid,zgrid,nx,ny,nz,indata,xevalgrid,yevalgrid,zevalgrid,outx,outy,outz,tilt,azimuth,outarray) ! in :kmaps:kmaps.f90:kmaps
+                double precision dimension(nx),intent(in) :: xgrid
+                double precision dimension(ny),intent(in) :: ygrid
+                double precision dimension(nz),intent(in) :: zgrid
+                integer, optional,intent(in),check(len(xgrid)>=nx),depend(xgrid) :: nx=len(xgrid)
+                integer, optional,intent(in),check(len(ygrid)>=ny),depend(ygrid) :: ny=len(ygrid)
+                integer, optional,intent(in),check(len(zgrid)>=nz),depend(zgrid) :: nz=len(zgrid)
+                double precision dimension(nx,ny,nz),intent(in),depend(nx,ny,nz) :: indata
+                double precision dimension(outx),intent(in) :: xevalgrid
+                double precision dimension(outy),intent(in) :: yevalgrid
+                double precision dimension(outz),intent(in) :: zevalgrid
+                integer, optional,intent(in),check(len(xevalgrid)>=outx),depend(xevalgrid) :: outx=len(xevalgrid)
+                integer, optional,intent(in),check(len(yevalgrid)>=outy),depend(yevalgrid) :: outy=len(yevalgrid)
+                integer, optional,intent(in),check(len(zevalgrid)>=outz),depend(zevalgrid) :: outz=len(zevalgrid)
+                double precision intent(in) :: tilt
+                double precision intent(in) :: azimuth
+                double precision dimension(outx,outy,outz),intent(out),depend(outx,outy,outz) :: outarray
+            end subroutine kslice_spline
+            subroutine kslice_spline_horizontal(xgrid,ygrid,zgrid,nx,ny,nz,indata,xevalgrid,yevalgrid,zevalgrid,outx,outy,outz,tilt,azimuth,outarray) ! in :kmaps:kmaps.f90:kmaps
+                double precision dimension(nx),intent(in) :: xgrid
+                double precision dimension(ny),intent(in) :: ygrid
+                double precision dimension(nz),intent(in) :: zgrid
+                integer, optional,intent(in),check(len(xgrid)>=nx),depend(xgrid) :: nx=len(xgrid)
+                integer, optional,intent(in),check(len(ygrid)>=ny),depend(ygrid) :: ny=len(ygrid)
+                integer, optional,intent(in),check(len(zgrid)>=nz),depend(zgrid) :: nz=len(zgrid)
+                double precision dimension(nx,ny,nz),intent(in),depend(nx,ny,nz) :: indata
+                double precision dimension(outx),intent(in) :: xevalgrid
+                double precision dimension(outy),intent(in) :: yevalgrid
+                double precision dimension(outz),intent(in) :: zevalgrid
+                integer, optional,intent(in),check(len(xevalgrid)>=outx),depend(xevalgrid) :: outx=len(xevalgrid)
+                integer, optional,intent(in),check(len(yevalgrid)>=outy),depend(yevalgrid) :: outy=len(yevalgrid)
+                integer, optional,intent(in),check(len(zevalgrid)>=outz),depend(zevalgrid) :: outz=len(zevalgrid)
+                double precision intent(in) :: tilt
+                double precision intent(in) :: azimuth
+                double precision dimension(outx,outy,outz),intent(out),depend(outx,outy,outz) :: outarray
+            end subroutine kslice_spline_horizontal
+            subroutine kslice_trilin(xgrid,ygrid,zgrid,nx,ny,nz,indata,xevalgrid,yevalgrid,zevalgrid,outx,outy,outz,tilt,azimuth,outarray) ! in :kmaps:kmaps.f90:kmaps
+                double precision dimension(nx),intent(in) :: xgrid
+                double precision dimension(ny),intent(in) :: ygrid
+                double precision dimension(nz),intent(in) :: zgrid
+                integer, optional,intent(in),check(len(xgrid)>=nx),depend(xgrid) :: nx=len(xgrid)
+                integer, optional,intent(in),check(len(ygrid)>=ny),depend(ygrid) :: ny=len(ygrid)
+                integer, optional,intent(in),check(len(zgrid)>=nz),depend(zgrid) :: nz=len(zgrid)
+                double precision dimension(nx,ny,nz),intent(in),depend(nx,ny,nz) :: indata
+                double precision dimension(outx),intent(in) :: xevalgrid
+                double precision dimension(outy),intent(in) :: yevalgrid
+                double precision dimension(outz),intent(in) :: zevalgrid
+                integer, optional,intent(in),check(len(xevalgrid)>=outx),depend(xevalgrid) :: outx=len(xevalgrid)
+                integer, optional,intent(in),check(len(yevalgrid)>=outy),depend(yevalgrid) :: outy=len(yevalgrid)
+                integer, optional,intent(in),check(len(zevalgrid)>=outz),depend(zevalgrid) :: outz=len(zevalgrid)
+                double precision intent(in) :: tilt
+                double precision intent(in) :: azimuth
+                double precision dimension(outx,outy,outz),intent(out),depend(outx,outy,outz) :: outarray
+            end subroutine kslice_trilin
+            subroutine calc_k(e,k1,k2,inner_sqrt_term,k) ! in :kmaps:kmaps.f90:kmaps
+                double precision intent(in) :: e
+                double precision intent(in) :: k1
+                double precision intent(in) :: k2
+                double precision intent(out) :: inner_sqrt_term
+                double precision intent(out) :: k
+            end subroutine calc_k
+            subroutine c_a_tilt(kx,ky,kz,az,tlt,atilt) ! in :kmaps:kmaps.f90:kmaps
+                double precision intent(in) :: kx
+                double precision intent(in) :: ky
+                double precision intent(in) :: kz
+                double precision intent(in) :: az
+                double precision intent(in) :: tlt
+                double precision intent(out) :: atilt
+            end subroutine c_a_tilt
+            subroutine c_cos_pol(kz,tlt,atilt,cospol) ! in :kmaps:kmaps.f90:kmaps
+                double precision intent(in) :: kz
+                double precision intent(in) :: tlt
+                double precision intent(in) :: atilt
+                double precision intent(out) :: cospol
+            end subroutine c_cos_pol
+            subroutine c_pol(atilt,az,tlt,kx,cospol,pol_angle) ! in :kmaps:kmaps.f90:kmaps
+                double precision intent(in) :: atilt
+                double precision intent(in) :: az
+                double precision intent(in) :: tlt
+                double precision intent(in) :: kx
+                double precision intent(in) :: cospol
+                double precision intent(out) :: pol_angle
+            end subroutine c_pol
+            subroutine az_horiz(kx,ky,kz,tlt,az) ! in :kmaps:kmaps.f90:kmaps
+                double precision intent(in) :: kx
+                double precision intent(in) :: ky
+                double precision intent(in) :: kz
+                double precision intent(in) :: tlt
+                double precision intent(out) :: az
+            end subroutine az_horiz
+            subroutine pol_horiz(kx,ky,az,pol) ! in :kmaps:kmaps.f90:kmaps
+                double precision intent(in) :: kx
+                double precision intent(in) :: ky
+                double precision intent(in) :: az
+                double precision intent(out) :: pol
+            end subroutine pol_horiz
+            function binarysearch(length,array,value,delta) ! in :kmaps:kmaps.f90:kmaps
+                integer intent(in) :: length
+                double precision dimension(length),intent(in),depend(length) :: array
+                double precision intent(in) :: value
+                double precision, optional,intent(in) :: delta
+                integer :: binarysearch
+            end function binarysearch
+            subroutine interpolate_2d(x_len,x_array,y_len,y_array,f,x,y,interpolate_result) ! in :kmaps:kmaps.f90:kmaps
+                integer intent(in) :: x_len
+                double precision dimension(x_len),intent(in),depend(x_len) :: x_array
+                integer intent(in) :: y_len
+                double precision dimension(y_len),intent(in),depend(y_len) :: y_array
+                double precision dimension(x_len,y_len),intent(in),depend(y_len,x_len) :: f
+                double precision intent(in) :: x
+                double precision intent(in) :: y
+                double precision intent(out) :: interpolate_result
+            end subroutine interpolate_2d
+            subroutine interpolate_1d(x_len,x_array,f,x,interpolate_result) ! in :kmaps:kmaps.f90:kmaps
+                integer intent(in) :: x_len
+                double precision dimension(x_len),intent(in),depend(x_len) :: x_array
+                double precision dimension(x_len),intent(in),depend(y_len,x_len) :: f
+                double precision intent(in) :: x
+                double precision intent(out) :: interpolate_result
+            end subroutine interpolate_1d
+        end module kmaps
+    end interface 
+end python module kmaps
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/
