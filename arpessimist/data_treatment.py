@@ -1,21 +1,21 @@
-from basefile_spectra import Spectra
 import numpy as np
 from PyQt5 import QtCore
+from .basefile_spectra import Spectra
 
 
-class Calc_K_space(QtCore.QThread):
-    """ Runs k-space conversion in background """
+# class Calc_K_space(QtCore.QThread):
+#     """ Runs k-space conversion in background """
 
-    def __init__(self, data, ranges, parent=None):
-        QtCore.QThread.__init__(self, parent)
-        self.DataHandler = HandleNielsSpectra(data, ranges)
+#     def __init__(self, data, ranges, parent=None):
+#         QtCore.QThread.__init__(self, parent)
+#         self.DataHandler = HandleNielsSpectra(data, ranges)
 
-    def run(self):
-        self.data_stack_k, self.stack_range_k = self.DataHandler.convert_all_to_k()
-        self.k_space_generated = True
+#     def run(self):
+#         self.data_stack_k, self.stack_range_k = self.DataHandler.convert_all_to_k()
+#         self.k_space_generated = True
 
-    def get(self):
-        return self.data_stack_k, self.stack_range_k, self.k_space_generated
+#     def get(self):
+#         return self.data_stack_k, self.stack_range_k, self.k_space_generated
 
 
 class HandleNielsSpectra(Spectra):
@@ -44,7 +44,7 @@ class HandleNielsSpectra(Spectra):
                 data_stack_k = np.dstack((data_stack_k, intens))
                 data_ranges_k.append(extent)
         return data_stack_k, data_ranges_k
-    
+
     def convert_single_to_k(self, data, extent_in):
         data = np.asarray(data)
         a_min, a_max = extent_in[0], extent_in[1]

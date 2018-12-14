@@ -1,7 +1,8 @@
 from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout, QMenu
-from plot_2d import TwoD_Plotter
+
+from .plot_2d import TwoD_Plotter
 
 
 class K_Window(QMainWindow):

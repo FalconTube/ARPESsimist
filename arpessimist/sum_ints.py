@@ -4,7 +4,7 @@ import os
 from PyQt5.QtWidgets import QFileDialog, QApplication, QWidget, QMessageBox
 from PyQt5 import QtCore
 
-from load_sp2 import Sp2_loader
+from .load_sp2 import Sp2_loader
 
 
 class SumImages(QWidget):

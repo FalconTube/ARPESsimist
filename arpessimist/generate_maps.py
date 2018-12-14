@@ -1,7 +1,6 @@
 import numpy as np
 import os
 import scipy.interpolate as itpt
-import matplotlib.pyplot as plt
 from PyQt5.QtCore import QThread
 
 # import mayavi.mlab as mlb
@@ -421,87 +420,3 @@ class PointCloudHorizontalSlitAziScan(object):
                 )
             ]
         )
-
-
-# # In[9]:
-
-
-# SF = SpecsFiles('E:/ElettraJan17/23/BPh/BPclv2_map01/')
-# SF.load_files()
-
-
-# # In[10]:
-
-
-# PC = PointCloudHorizontalSlitAziScan(SF, 1., -10., 0.)
-
-
-# # In[11]:
-
-
-# PC._theta0 = -10.
-# PC._f = PC.interpolatePointCloud(PC._I[::-1, :, :])
-
-
-# # In[12]:
-
-
-# slK = np.nan_to_num(PC.SliceK(16.64, 0.02, 0.01, kxmax=.6,
-#                               kxmin=-.6, kymax=.6, kymin=-.6))
-# get_ipython().run_line_magic('matplotlib', 'notebook')
-# plt.imshow(slK)
-# plt.show()
-
-
-# # In[16]:
-
-
-# SlA = PC.SliceAngle(16.64)
-# get_ipython().run_line_magic('matplotlib', 'notebook')
-# plt.imshow(SlA)
-# plt.show()
-
-
-# # In[ ]:
-
-
-# steps = 40
-# x, y, z = np.mgrid[-15:15:steps*1j, -15:15:steps*1j, -15:15:steps*1j]
-# mlb.points3d(x, y, z, np.array([[[PC._f((np.sqrt(x**2+y**2), z, (np.arctan2(y, x)*deg-PC._theta0))) for x in np.linspace(-15, 15, steps)]
-#                                  for y in np.linspace(-15, 15, steps)] for z in np.linspace(15.75, 16.7, steps)]), transparent=True)
-# # mlb.points3d(x,y,z,np.array([[[f((x,y,z)) for x in np.linspace(-15,15,steps)] for y in np.linspace(15.75,16.7,steps)] for z in np.linspace(0.,100.,steps)]),transparent=True)
-# mlb.show()
-
-
-# # In[22]:
-
-
-# # vertical slit, polar scan
-
-# E = 16.66
-# kxmax, kxmin = .5, -.5
-# kymax, kymin = .5, -.5
-# dk = 0.01
-# k = 0.512317*np.sqrt(E)
-
-# kSlice = np.zeros(((kxmax-kxmin)/dk, (kymax-kymin)/dk))
-# tilt = -2.
-# azi = 0.
-# for i in xrange(0, int((kxmax-kxmin)/dk)):
-#     a1 = kxmin + i*dk
-#     kx = a1/k
-#     for j in xrange(0, int((kymax-kymin)/dk)):
-#         a2 = kymin + j*dk
-#         ky = a2/k
-#         kz = np.sqrt(1-kx**2-ky**2)
-
-#         tlt = tilt*deg
-#         az = -azi*deg
-#         atilt = np.arcsin((kx*np.sin(az)+ky*np.cos(az))
-#                           * np.cos(tlt)-kz*np.sin(tlt))
-#         cospol = (kz - np.sin(tlt)*np.sin(atilt))/(np.cos(tlt)*np.cos(atilt))
-#         pol = np.arcsin((np.sin(atilt)*np.sin(az)*np.cos(tlt)-kx+np.cos(atilt)
-#                          * cospol*np.sin(az)*np.sin(tlt))/(np.cos(atilt)*np.cos(az)))
-#         kSlice[i, j] = f((-pol*180/np.pi, E, -az*180/np.pi))
-# plt.imshow(kSlice)
-# plt.show()

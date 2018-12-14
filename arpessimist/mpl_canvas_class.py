@@ -18,14 +18,10 @@ from matplotlib.backends.backend_qt5agg import (
 
 from matplotlib.figure import Figure
 import matplotlib.gridspec as gridspec
-from set_parabola_fit import FitParabola
-from lineprofiles import LineProfiles
-import matplotlib.pyplot as plt
-
-# matplotlib.rcParams['toolbar'] = 'toolmanager'
+from .set_parabola_fit import FitParabola
+from .lineprofiles import LineProfiles
 
 
-# class MyMplCanvas(FigureCanvas):
 class MyMplCanvas(QWidget):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
