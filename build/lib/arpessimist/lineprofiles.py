@@ -1,6 +1,5 @@
 import numpy as np
 
-# import matplotlib.pyplot as plt
 # from scipy.constants import hbar, m_e
 from scipy.interpolate import interp2d
 from scipy.stats import norm as Gaussian
@@ -18,20 +17,13 @@ from PyQt5.QtWidgets import (
     QGridLayout,
 )
 
-import matplotlib.pyplot as plt
-
-from dragpoints import DraggablePlotExample
-from edc_fitting import EDCfitter
-
-# from lmfit.models import PseudoVoigtModel
-# from lmfit.models import LorentzianModel
-# from lmfit.models import LinearModel
-# from lmfit.models import GaussianModel
 from scipy.signal import savgol_filter, find_peaks
 import pywt
 
 # from statsmodels.robust import mad
-from point_eraser import PointEraser
+from .point_eraser import PointEraser
+from .dragpoints import DraggablePlotExample
+from .edc_fitting import EDCfitter
 
 
 class LineProfiles(QWidget):
@@ -71,13 +63,12 @@ class LineProfiles(QWidget):
         self.idata, self.xvals, self.yvals = self.processing_data_interpolator(
             data, extent
         )
-    
+
     def reshape_limits(self, extent):
         self.xprof_ax.set_xlim(extent[0], extent[1])
         self.yprof_ax.set_ylim(extent[2], extent[3])
         self.xprof_ax.figure.canvas.draw()
         self.yprof_ax.figure.canvas.draw()
-
 
     def disconnect(self, discostate=True):
         """ Disconnect from figure """
@@ -359,8 +350,6 @@ class LineProfiles(QWidget):
                 raw_lineprof = self.idata(i, line_range)
                 raw_lineprof = np.ravel(raw_lineprof)
 
-            # plt.plot(line_range, raw_lineprof)
-            # plt.show()
             coeff = pywt.wavedec(raw_lineprof, wavelet, mode="per")
             sigma = mad(coeff[-level])
             # sigma = mad(coeff[-level])
@@ -397,48 +386,6 @@ class LineProfiles(QWidget):
         # Have to reset the limits, don't know why this happens
         self.ax.set_ylim(lim_before)
         self.ax.figure.canvas.draw()  # redraw
-        # plt.show()
-
-    # def find_maxima_fit(self):
-    #     max_x = []
-    #     max_y = []
-    #     x_pos = np.logical_and(self.rect_x1 < self.xvals, self.xvals < self.rect_x2)
-    #     y_pos = np.logical_and(self.rect_y1 < self.yvals, self.yvals < self.rect_y2)
-    #     x_range = self.xvals[x_pos]
-    #     y_range = self.yvals[y_pos]
-    #     # print(x_range, y_range)
-    #     for n, i in enumerate(y_range):
-    #         print(n / len(y_range) * 100)
-    #         lineprof = self.idata(x_range, i)
-    #         # pos_max = np.argmax(lineprof)
-    #         center = self.fit_profile(x_range, lineprof)
-    #         max_x.append(center)
-    #         max_y.append(i)
-
-    #     lim_before = self.ax.get_ylim()
-    #     max_line = self.ax.scatter(
-    #         max_x, max_y, s=50, facecolor="none", color="r", zorder=3
-    #     )
-    #     # Have to reset the ylim, don't know why this happens
-    #     self.ax.set_ylim(lim_before)
-    #     self.ax.figure.canvas.draw()  # redraw
-
-    #     # finder = EDCfitter(self.idata)
-
-    # def fit_profile(self, x, y):
-    #     # pseudovoigt = PseudoVoigtModel()
-    #     fitmod = GaussianModel()
-
-    #     background = LinearModel()
-    #     mod = fitmod + background
-    #     # mod = VoigtModel()
-    #     # mod = LorentzianModel()
-    #     pars = fitmod.guess(y, x=x)
-    #     linpars = background.guess(y, x=x)
-    #     allpars = pars + linpars
-    #     out = mod.fit(y, allpars, x=x)
-    #     center = out.values["center"]
-    #     return center
 
     def remove_maxima_points(self):
         if not self.max_line:

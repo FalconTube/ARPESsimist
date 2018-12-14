@@ -2,7 +2,6 @@
 
 import numpy as np
 import os
-import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d, interp2d
 from scipy.ndimage import convolve1d
 from scipy.constants import hbar, m_e
@@ -42,18 +41,6 @@ class Spectra1D(object):
         self.IDATA = interp1d_picklable(xdata, ydata, bounds_error=False)
         self.xlabel = ""
         self.ylabel = ""
-
-    def plot1D(self):
-        """
-        Simple plotting procedure for fast checking
-        :return:
-        """
-        fig = plt.figure(figsize=(4, 3), dpi=200)
-        ax = fig.add_subplot(111)
-        ax.plot(self.XDATA, self.IDATA(self.XDATA))
-        ax.set_xlabel(self.xlabel)
-        ax.set_ylabel(self.ylabel)
-        plt.tight_layout()
 
     def reinterpolate_data(self):
         """reinterpolate data after adjustment"""
@@ -364,33 +351,3 @@ class Spectra(SpectraBase):
         intens = self.IDATA(self.xvals, self.yvals)
         extent = [self.xLimits[0], self.xLimits[1], self.yLimits[0], self.yLimits[1]]
         return intens, extent
-
-
-if __name__ == "__main__":
-    dat = np.loadtxt("C:\\Users\\Niels Ehlen\\Desktop\\SnSe\\data.txt")
-    Spec = Spectra(
-        dat,
-        [-23.943889, 23.943889],
-        [66.158410, 67.841590],
-        "C:\\Users\\Niels Ehlen\\Desktop\\SnSe\\i05-80039.axe",
-    )
-    Spec.cutData("y", 66.2, 67.8)
-    Spec.adjust_Fermilevel(
-        [-17.72, -12.75, -7.75, -2.36, 0.29, 5.5, 10.9, 14.0, 18.5],
-        [67.33, 67.3475, 67.3635, 67.3678, 67.3718, 67.369, 67.36, 67.351, 67.33],
-    )
-
-    # Spec.secondDerivative("x",3,10)
-    Spec.cutData("x", -16, 16)
-    # Spec.adjust_range("x",0)
-    # Spec.convertToKSpace()
-    Spec.adjust_range("y", -67.33)
-
-    x, y = Spec.lineprofileY(0, 0.1)
-    print(x)
-
-    Spec.plot_data()
-    plt.figure()
-    plt.plot(x, y)
-
-    plt.show()

@@ -12,7 +12,6 @@ from scipy.interpolate import interp2d
 
 # from PyQt5.QtCore import QThread
 from PyQt5.QtWidgets import QProgressBar, QWidget, QApplication, QMessageBox
-from progbar import ProgressBar
 
 
 class Sp2_loader:

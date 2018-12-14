@@ -1,7 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import sys
-from matplotlib.widgets import Button
 from scipy.optimize import curve_fit
 from scipy.constants import hbar, m_e
 

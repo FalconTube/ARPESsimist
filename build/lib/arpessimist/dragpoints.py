@@ -1,6 +1,5 @@
 import math
 
-import matplotlib.pyplot as plt
 from matplotlib.backend_bases import MouseEvent
 
 
@@ -124,10 +123,3 @@ class DraggablePlotExample(object):
             self.line.remove()
         except:
             pass
-
-
-if __name__ == "__main__":
-
-    fig, ax = plt.subplots()
-    plot = DraggablePlotExample(fig, ax)
-    plt.show()

@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 
-from progbar_ui import Ui_Form
+from .progbar_ui import Ui_Form
 
 
 class ProgressBar(QtWidgets.QDialog, Ui_Form):

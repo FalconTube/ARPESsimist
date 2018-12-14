@@ -1,12 +1,11 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib
 import os
-from mpl_canvas_class import MyMplCanvas
-from set_parabola_fit import FitParabola
-from lineprofiles import LineProfiles
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QSlider, QFileDialog, QMenu, QLabel, QInputDialog
+
+from .mpl_canvas_class import MyMplCanvas
+from .set_parabola_fit import FitParabola
+from .lineprofiles import LineProfiles
 
 
 class TwoD_Plotter(MyMplCanvas):
@@ -154,10 +153,10 @@ class TwoD_Plotter(MyMplCanvas):
 
     def update_widgets(self):
         self.LineProf.update_data_extent(self.new_current_data, self.new_current_extent)
-    
+
     def reshape_limits(self, extent):
         self.LineProf.reshape_limits(extent)
-    
+
     def update_data_external(self, data, extent):
         self.new_current_data = data
         self.new_current_extent = extent
@@ -189,7 +188,7 @@ class TwoD_Plotter(MyMplCanvas):
             self.twoD_Label.setText("{}: {}".format(self.labelprefix, labelpos))
         self.update_current_data()
         self.initialize_2D_plot()
-    
+
     def shift_x(self):
         val = QInputDialog.getDouble(
             self,

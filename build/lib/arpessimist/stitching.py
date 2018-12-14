@@ -23,8 +23,8 @@ from matplotlib.backends.backend_qt5agg import (
 
 from matplotlib.figure import Figure
 
-from load_sp2 import Sp2_loader
-from sum_ints import SumImages
+from .load_sp2 import Sp2_loader
+from .sum_ints import SumImages
 
 
 class StitchWindow(QMainWindow):
@@ -68,7 +68,6 @@ class StitchWindow(QMainWindow):
 
         self.summation_menu.addAction("&Initialize Summation", self.start_summation)
 
-
         self.menuBar().addMenu(self.file_menu)
         self.menuBar().addMenu(self.summation_menu)
 
@@ -93,8 +92,10 @@ class StitchWindow(QMainWindow):
             # loaded_filenames = sp2.tidy_up_list(many_files[0])
             loaded_filenames = many_files[0]
             fignum = len(loaded_filenames)
-            figs_data, figs_extents = sp2.read_multiple_sp2(loaded_filenames, natsort=False)
-            
+            figs_data, figs_extents = sp2.read_multiple_sp2(
+                loaded_filenames, natsort=False
+            )
+
             self.clear_layout(self.over_layout)
             # Hand over to Stitcher
             self.Stitcher = Stitch(
@@ -109,24 +110,28 @@ class StitchWindow(QMainWindow):
             if self.instance_counter == 0:
                 # Export Menu
                 self.export_menu = QMenu("&Export", self)
-                self.export_menu.addAction("&Save stitched txt", self.Stitcher.export_data)
-                self.export_menu.addAction("&Save stitched sp2", self.Stitcher.export_sp2)
+                self.export_menu.addAction(
+                    "&Save stitched txt", self.Stitcher.export_data
+                )
+                self.export_menu.addAction(
+                    "&Save stitched sp2", self.Stitcher.export_sp2
+                )
                 self.menuBar().addMenu(self.export_menu)
             self.instance_counter += 1
         except:
             pass
         QApplication.restoreOverrideCursor()
-    
-    def clear_layout(self, layout): 
-        if layout is not None: 
-            while layout.count(): 
-                item = layout.takeAt(0) 
-                widget = item.widget() 
-                if widget is not None: 
-                    widget.deleteLater() 
-                else: 
-                    self.clear_layout(item.layout()) 
-    
+
+    def clear_layout(self, layout):
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
+                else:
+                    self.clear_layout(item.layout())
+
     def start_summation(self):
         SI = SumImages(self.settings, self)
 
@@ -569,8 +574,6 @@ class Stitch(QWidget):
             )
         except:
             QApplication.restoreOverrideCursor()
-
-
 
 
 if __name__ == "__main__":

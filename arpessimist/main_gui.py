@@ -22,7 +22,7 @@ from PyQt5.QtGui import QIcon, QScreen, QPixmap
 from .load_sp2 import Sp2_loader, LoadHDF5
 from .plot_2d import TwoD_Plotter
 from .mpl_canvas_class import MyMplCanvas
-from .data_treatment import Calc_K_space, HandleNielsSpectra
+from .data_treatment import HandleNielsSpectra
 from .set_parabola_fit import FitParabola
 from .lineprofiles import LineProfiles
 from .generate_maps import VerticalSlitPolarScan

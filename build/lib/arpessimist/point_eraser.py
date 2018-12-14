@@ -1,12 +1,5 @@
 import math
 import numpy as np
-import matplotlib.pyplot as plt
-
-# # import mplcursors
-# import matplotlib as mpl
-
-# mpl.use("qt5agg")
-# from matplotlib.backend_bases import MouseEvent
 
 
 class PointEraser(object):
