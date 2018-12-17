@@ -23,7 +23,6 @@ import pywt
 # from statsmodels.robust import mad
 from .point_eraser import PointEraser
 from .dragpoints import DraggablePlotExample
-from .edc_fitting import EDCfitter
 
 
 class LineProfiles(QWidget):

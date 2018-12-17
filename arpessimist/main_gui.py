@@ -20,17 +20,17 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QIcon, QScreen, QPixmap
 
 # from .load_sp2 import Sp2_loader, LoadHDF5
-from .plot_2d import TwoD_Plotter
-from .mpl_canvas_class import MyMplCanvas
-from .data_treatment import HandleNielsSpectra
-from .set_parabola_fit import FitParabola
-from .lineprofiles import LineProfiles
-from .generate_maps import VerticalSlitPolarScan
-from .ask_map_parameters import MapParameterBox
-from .new_k_window import K_Window
-from .brillouin_plot import calc_brillouin
-from .stitching import StitchWindow
-from .sum_ints import SumImages
+from src.plot_2d import TwoD_Plotter
+from src.mpl_canvas_class import MyMplCanvas
+from src.data_treatment import HandleNielsSpectra
+from src.set_parabola_fit import FitParabola
+from src.lineprofiles import LineProfiles
+from src.generate_maps import VerticalSlitPolarScan
+from src.ask_map_parameters import MapParameterBox
+from src.new_k_window import K_Window
+from src.brillouin_plot import calc_brillouin
+from src.stitching import StitchWindow
+from src.sum_ints import SumImages
 
 class ApplicationWindow(QMainWindow):
     """ Main Application Window """
