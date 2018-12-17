@@ -19,19 +19,18 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QIcon, QScreen, QPixmap
 
-from .load_sp2 import Sp2_loader, LoadHDF5
-from .plot_2d import TwoD_Plotter
-from .mpl_canvas_class import MyMplCanvas
-from .data_treatment import HandleNielsSpectra
-from .set_parabola_fit import FitParabola
-from .lineprofiles import LineProfiles
-from .generate_maps import VerticalSlitPolarScan
-from .ask_map_parameters import MapParameterBox
-from .new_k_window import K_Window
-from .brillouin_plot import calc_brillouin
-from .stitching import StitchWindow
-from .sum_ints import SumImages
-
+# from .load_sp2 import Sp2_loader, LoadHDF5
+from arpessimist.plot_2d import TwoD_Plotter
+from arpessimist.mpl_canvas_class import MyMplCanvas
+from arpessimist.data_treatment import HandleNielsSpectra
+from arpessimist.set_parabola_fit import FitParabola
+from arpessimist.lineprofiles import LineProfiles
+from arpessimist.generate_maps import VerticalSlitPolarScan
+from arpessimist.ask_map_parameters import MapParameterBox
+from arpessimist.new_k_window import K_Window
+from arpessimist.brillouin_plot import calc_brillouin
+from arpessimist.stitching import StitchWindow
+from arpessimist.sum_ints import SumImages
 
 class ApplicationWindow(QMainWindow):
     """ Main Application Window """
@@ -422,21 +421,21 @@ class ApplicationWindow(QMainWindow):
         self.new_twoD_widget.update_2dplot(extent_k)
         self.new_twoD_widget.update_widgets()
         self.new_twoD_widget.reshape_limits(extent_k)
-
+    
     def convert_to_angle(self):
-        self.new_twoD_widget.update_data_external(
-            self.new_current_data, self.new_current_extent
-        )
+        self.new_twoD_widget.update_data_external(self.new_current_data, self.new_current_extent)
         self.new_twoD_widget.update_2d_data(self.new_current_data)
         self.new_twoD_widget.update_2dplot(self.new_current_extent)
         self.new_twoD_widget.update_widgets()
         self.new_twoD_widget.reshape_limits(self.new_current_extent)
-
+    
     def shiftx(self):
         self.new_twoD_widget.shift_x()
-
+    
     def shifty(self):
         self.new_twoD_widget.shift_y()
+    
+
 
         # self.new_current_data = data_k
         # self.new_current_extent = extent_k
