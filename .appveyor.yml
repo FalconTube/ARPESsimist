@@ -25,15 +25,17 @@ install:
 - cmd: sh compile_windows.sh
 - sh: ./compile.sh
 - echo Compilation finished!
-- 
+- cd ../../
+- sh: "python3 setup.py bdist_wheel"
+- cmd: "python setup.py bdist_wheel"
 
 test_script:
  - echo PUT TEST SCRIPTS HERE  
 
 after_test:
   # - cmd: "build.cmd %PYTHON%\\python.exe setup.py bdist_wheel"
-  - cmd: "%PYTHON%\\python.exe setup.py bdist_wheel"
-  - sh: "python3 setup.py bdist_wheel"
+  # - cmd: "%PYTHON%\\python.exe setup.py bdist_wheel"
+  # - sh: "python3 setup.py bdist_wheel"
 
 artifacts:
   # bdist_wheel puts your built wheel in the dist directory
