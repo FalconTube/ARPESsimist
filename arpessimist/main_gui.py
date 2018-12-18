@@ -18,19 +18,25 @@ from PyQt5.QtWidgets import (
     QTreeView,
 )
 from PyQt5.QtGui import QIcon, QScreen, QPixmap
+# print(__name__)
+# print(__package__)
+# __name__ = 'arpessimist.main_gui'
+# __package__ = 'arpessimist'
+# print(__name__)
+# print(__package__)
 
-# from .load_sp2 import Sp2_loader, LoadHDF5
-from src.plot_2d import TwoD_Plotter
-from src.mpl_canvas_class import MyMplCanvas
-from src.data_treatment import HandleNielsSpectra
-from src.set_parabola_fit import FitParabola
-from src.lineprofiles import LineProfiles
-from src.generate_maps import VerticalSlitPolarScan
-from src.ask_map_parameters import MapParameterBox
-from src.new_k_window import K_Window
-from src.brillouin_plot import calc_brillouin
-from src.stitching import StitchWindow
-from src.sum_ints import SumImages
+from .src.load_sp2 import Sp2_loader, LoadHDF5
+from .src.plot_2d import TwoD_Plotter
+from .src.mpl_canvas_class import MyMplCanvas
+from .src.data_treatment import HandleNielsSpectra
+from .src.set_parabola_fit import FitParabola
+from .src.lineprofiles import LineProfiles
+from .src.generate_maps import VerticalSlitPolarScan
+from .src.ask_map_parameters import MapParameterBox
+from .src.new_k_window import K_Window
+from .src.brillouin_plot import calc_brillouin
+from .src.stitching import StitchWindow
+from .src.sum_ints import SumImages
 
 class ApplicationWindow(QMainWindow):
     """ Main Application Window """
@@ -441,11 +447,18 @@ class ApplicationWindow(QMainWindow):
         # self.new_current_extent = extent_k
         # self.
 
-
-if __name__ == "__main__":
+def run():
     qApp = QApplication(sys.argv)
     # qApp.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
     aw = ApplicationWindow()
     aw.show()
     sys.exit(qApp.exec_())
+
+# if __name__ == "__main__":
+#     qApp = QApplication(sys.argv)
+#     # qApp.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+
+#     aw = ApplicationWindow()
+#     aw.show()
+#     sys.exit(qApp.exec_())
