@@ -27,7 +27,7 @@ init:
 - cmd: set PATH=%PY_DIR%;%PY_DIR%\Scripts;%PATH%
 
 install:
-- "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+- cmd: "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 - pip install -U numpy
 - pip install -U wheel
 - pip install -r requirements.txt
