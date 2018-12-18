@@ -6,6 +6,9 @@ from scipy.interpolate import interp1d, interp2d
 from scipy.ndimage import convolve1d
 from scipy.constants import hbar, m_e
 
+# Global constant
+ev_to_j = 1.6e-19
+
 
 class interp1d_picklable:
     """ class wrapper for piecewise linear function
@@ -72,7 +75,7 @@ class SpectraBase(object):
         # self.NAME = os.path.basename(filepath)
         # self.DATA = data
         self.xvals = np.linspace(xlimits[0], xlimits[1], data.shape[1])
-        self.yvals = np.linspace(ylimits[0], ylimits[1], data.shape[0])
+        self.yvals = np.linspace(ylimits[1], ylimits[0], data.shape[0])
         # linear interpolation of data
         self.IDATA = interp2d(self.xvals, self.yvals, data, fill_value=0.0)
         self.xLimits = np.array(xlimits)
@@ -288,7 +291,7 @@ class Spectra(SpectraBase):
         :param E: float Energy
         :return:
         """
-        ev_to_j = 1.6e-19
+        
         return (
             np.sign(k)
             * np.arcsin(hbar * (np.sign(k) * k * 1e10) / np.sqrt(2 * m_e * E * ev_to_j))
@@ -336,10 +339,21 @@ class Spectra(SpectraBase):
                     len(self.xvals),
                 )
             kmax, kmin = np.amax(kvals), np.amin(kvals)
-            count = 0
-            for E in self.yvals:
-                temp[count, :] = self.IDATA(self.convertKtoAngle(kvals, E), E)
-                count += 1
+            for count, E in enumerate(self.yvals):
+                # kvals[kvals > (np.sqrt(2*m_e * E * ev_to_j)/hbar)/1E10]
+                cutoff = np.sqrt(2*m_e * E * ev_to_j)/hbar/1E10
+                in_range = np.where(np.logical_and(-cutoff<kvals, kvals<cutoff))[0]
+                lower_r = int(in_range[0])
+                upper_r = int(in_range[-1])
+                
+                usevals = kvals[in_range]
+
+                temp[count, lower_r:upper_r+1] = self.IDATA(self.convertKtoAngle(usevals, E), E)
+                # temp[count, :] = self.IDATA(self.convertKtoAngle(kvals, E), E)
+                
+            # for countx, E in enumerate(self.yvals):
+            #     for county, k in enumerate(kvals):
+            #         temp[countx, county] = self.IDATA(self.convertKtoAngle(k, E), E)
             # self.DATA = temp
             self.xLimits = np.array([kmin, kmax])
             self.regenerate_vals_from_limits()
