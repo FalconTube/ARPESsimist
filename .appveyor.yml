@@ -32,8 +32,8 @@ test_script:
 
 after_test:
   # - cmd: "build.cmd %PYTHON%\\python.exe setup.py bdist_wheel"
-  - cmd: %PYTHON%\\python.exe setup.py bdist_wheel
-  - sh: %PYTHON%\\python.exe setup.py bdist_wheel
+  - cmd: "%PYTHON%\\python.exe setup.py bdist_wheel"
+  - sh: "%PYTHON%\\python.exe setup.py bdist_wheel"
 
 artifacts:
   # bdist_wheel puts your built wheel in the dist directory
