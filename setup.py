@@ -18,13 +18,9 @@ here = path.abspath(path.dirname(__file__))
 # Get the long description from the README file
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
-
-# Arguments marked as "Required" below must be included for upload to PyPI.
-# Fields marked as "Optional" may be commented out.
-
 setup(
     name='arpessimist',  # Required
-    version='0.1.0',  # Required
+    version='0.1.3',  # Required
     description='ARPES evaluation software',  # Optional
     long_description=long_description,  # Optional
     long_description_content_type='text/markdown',  # Optional (see note above)
@@ -43,7 +39,7 @@ setup(
         # 'Topic :: Data Evaluation :: ARPES',
 
         # Pick your license as you wish
-        'License :: OSI Approved :: MIT License',
+        'License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)',
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
@@ -57,15 +53,15 @@ setup(
     packages=find_packages(),  # Required
     # package_dir={'' : 'arpessimisst'},
     include_package_data=True,
-    install_requires=['setuptools>=39.0.1',
-                    'PyWavelets>=1.0.1',
-                    'h5py>=2.8.0',
-                    'matplotlib>=3.0.1',
-                    'numpy>=1.13.3',
-                    'scipy>=1.1.0',
-                    'natsort>=5.4.1',
-                    'PyQt5>=5.11.3',
-                    'pywt>=1.0.6',
+    install_requires=['setuptools',
+                    'PyWavelets',
+                    'h5py',
+                    'matplotlib',
+                    'numpy',
+                    'scipy',
+                    'natsort',
+                    'PyQt5',
+                    'pywt',
                     ],  # Optional
     package_data={  # Optional
         'arpessimist': ['src/*.so'],

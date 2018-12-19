@@ -28,6 +28,7 @@ class TwoD_Plotter(MyMplCanvas):
         super().__init__(parent, width, height, dpi)
         self.current_clim = None
         self.colormap = "terrain"
+        self.old_extent = None
         self.xlabel = xlabel
         self.ylabel = ylabel
         self.labellist = labellist
@@ -106,12 +107,17 @@ class TwoD_Plotter(MyMplCanvas):
 
     def update_2dplot(self, extent=None):
         if extent:
+            print('Has extent')
             x_range = abs(extent[1] - extent[0])
             e_range = abs(extent[3] - extent[2])
             aspectratio = x_range / e_range
+        if extent != self.old_extent:
             self.instance_counter = 0
+        self.old_extent = extent
+            
         # print('instance_counter {}'.format(self.instance_counter))
         if self.instance_counter == 0:
+            print('Full redraw')
             self.instance_counter += 1
             self.axes.cla()
             if self.current_clim:
