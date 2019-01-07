@@ -33,7 +33,7 @@ install:
 - cmd: "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 - pip install -U numpy
 - pip install -U wheel
-- pip install -r --quiet requirements.txt
+- pip install --quiet -r requirements.txt
 - echo Starting to compile
 - cd arpessimist/fortran_routines
 - cmd: sh compile_windows.sh
