@@ -39,8 +39,8 @@ install:
 - sh: ./compile.sh
 - echo Compilation finished!
 - cd ../../
-- sh: "python3 setup.py bdist_wheel"
-- cmd: "python setup.py bdist_wheel"
+- sh: "python3 setup.py bdist_wheel --plat-name=manylinux_x86_64"
+- cmd: "python setup.py bdist_wininst"
 
 test_script:
  - echo PUT TEST SCRIPTS HERE  
