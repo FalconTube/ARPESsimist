@@ -27,6 +27,7 @@ setup(
     url='https://github.com/FalconTube/ARPESsimist',  # Optional
     author='Yannic Falke',  # Optional
     author_email='yannic.falke@gmail.com',  # Optional
+    #platform = ['linux_x86_64',],
     classifiers=[  # Optional
         # How mature is this project? Common values are
         #   3 - Alpha

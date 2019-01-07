@@ -70,7 +70,6 @@ class SumImages(QWidget):
         if folders is not None:
             reader = Sp2_loader()
             for enum, files in enumerate(folders):
-                print(files)
                 data, extents = reader.read_multiple_sp2(files)
                 if enum == 0:
                     out = data

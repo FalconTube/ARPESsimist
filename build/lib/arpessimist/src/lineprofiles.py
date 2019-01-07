@@ -58,7 +58,6 @@ class LineProfiles(QWidget):
         """ Update current data and extent """
         self.data = data
         self.ranges = extent
-        print(extent)
         self.idata, self.xvals, self.yvals = self.processing_data_interpolator(
             data, extent
         )
