@@ -40,7 +40,7 @@ install:
 - echo Compilation finished!
 - cd ../../
 - sh: "python3 setup.py sdist dist_wheel --plat-name=manylinux_x86_64"
-- cmd: "python setup.py sdist bdist_wheel --plat-name=win_amd64 dist_wininst"
+- cmd: "python setup.py sdist bdist_wheel --plat-name=win_amd64 "
 - cmd: "python setup.py dist_wininst"
 
 test_script:
