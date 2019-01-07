@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import (
     QSlider,
     QLabel,
     QComboBox,
+    QAction,
 )
 
 from matplotlib.backends.backend_qt5agg import (
@@ -98,7 +99,8 @@ class StitchWindow(QMainWindow):
 
             self.clear_layout(self.over_layout)
             # Hand over to Stitcher
-            self.Stitcher = Stitch(
+            # self.Stitcher = Stitch(
+            Stitcher = Stitch(
                 fignum,
                 figs_data,
                 figs_extents,
@@ -107,18 +109,28 @@ class StitchWindow(QMainWindow):
                 self.main_widget,
                 vertical=self.vertical,
             )
+            if self.instance_counter > 0:
+                self.menuBar().removeAction(self.ex_menu_action)
+                self.instance_counter = 0
+                
+            #     print('Closing')
+            #     self.export_menu.removeAction("&Save stitched txt")
+            #     self.export_menu.removeAction("&Save stitched sp2")
             if self.instance_counter == 0:
                 # Export Menu
                 self.export_menu = QMenu("&Export", self)
+                # self.txt_action = QAction("&Save stitched txt", self.Stitcher.export_data)
                 self.export_menu.addAction(
-                    "&Save stitched txt", self.Stitcher.export_data
+                    "&Save stitched txt", Stitcher.export_data
                 )
                 self.export_menu.addAction(
-                    "&Save stitched sp2", self.Stitcher.export_sp2
+                    "&Save stitched sp2", Stitcher.export_sp2
                 )
-                self.menuBar().addMenu(self.export_menu)
+                self.ex_menu_action = self.menuBar().addMenu(self.export_menu)
+            
+                
             self.instance_counter += 1
-        except:
+        except ValueError:
             pass
         QApplication.restoreOverrideCursor()
 
@@ -200,7 +212,7 @@ class Stitch(QWidget):
         # Add sliders
         # Add LUT Slider
         self.lut_slider_pos = np.amax(self.stichted_data)
-        self.vmax_slider = self.add_slider(0, np.amax(self.stichted_data))
+        self.vmax_slider = self.add_slider(0, 2*np.amax(self.stichted_data))
         self.vmax_slider.setSliderPosition(self.lut_slider_pos)
         self.vmax_label = QLabel(self)
         self.vmax_label.setAlignment(QtCore.Qt.AlignCenter)
@@ -544,7 +556,7 @@ class Stitch(QWidget):
             extent = self.lower_extent
 
             header = "Stitched image\nShape: {}\nExtent {}".format(shape, extent)
-            np.savetxt(location, data, header=header)
+            np.savetxt(location, data.astype(int), header=header)
         except:
             pass
         QApplication.restoreOverrideCursor()
@@ -573,7 +585,9 @@ class Stitch(QWidget):
                 comments="",
             )
         except:
-            QApplication.restoreOverrideCursor()
+            pass
+        QApplication.restoreOverrideCursor()
+
 
 
 if __name__ == "__main__":

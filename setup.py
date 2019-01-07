@@ -65,6 +65,8 @@ setup(
                     ],  # Optional
     package_data={  # Optional
         'arpessimist': ['src/*.so'],
+        'arpessimist': ['src/*.pyd'],
+        'arpessimist': ['src/*.dll'],
     },
     entry_points={  # Optional
         'console_scripts': [

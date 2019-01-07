@@ -1,6 +1,9 @@
 # Ignore all sp2 files, because they are for testing purposes
 *.sp2
 *.txt
+*arpessimist/src/*.so
+*arpessimist/src/*.pyd
+*arpessimist/src/*.dll
 !requirements.txt
 *.json
 logo/
