@@ -17,6 +17,8 @@ fortran_routines/*.so
 fortran_routines/*.pyf
 testvirt/
 test_qtgraph.py
+build/
+dist/
 # !fortran_routines/kmaps.f90
 # !fortran_routines/test_kmaps.f90
 # !fortran_routines/compile.sh
