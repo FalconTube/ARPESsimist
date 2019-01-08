@@ -1,13 +1,13 @@
 image:
-- Visual Studio 2017
-  #- Ubuntu
+    #- Visual Studio 2017
+- Ubuntu
 
   #stack: python 3.6
 
 build: off
 
 environment:
-  APPVEYOR_SAVE_CACHE_ON_ERROR: true
+    #APPVEYOR_SAVE_CACHE_ON_ERROR: true
 
   MINGW_DIR: C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin
   #PY_DIR: C:\Python36-x64
@@ -35,7 +35,7 @@ init:
   #- cmd: set PATH=%PY_DIR%;%PY_DIR%\Scripts;%PATH%
 
 install:
-- "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
+    #- "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
 
     #- cmd: "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 - pip install -U numpy
