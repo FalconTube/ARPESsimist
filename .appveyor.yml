@@ -30,6 +30,8 @@ environment:
 
 clone_depth: 3
 
+stack: python %PYTHON%
+
 init:
 - cmd: set PATH=%MINGW_DIR%;%PATH%
 - cmd: set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
