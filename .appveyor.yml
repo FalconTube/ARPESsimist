@@ -2,7 +2,8 @@ image:
 - Visual Studio 2017
 - Ubuntu
 
-  #stack: python 3.6
+cache:
+  - '%LOCALAPPDATA%\pip\Cache'
 
 build: off
 
@@ -41,8 +42,8 @@ install:
 
 - cmd: "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 - sh: "export PYTHONPATH=$PYTHON"
-- pip install -U numpy
-- pip install -U wheel
+- pip install --quiet -U numpy
+- pip install --quiet -U wheel
 - pip install --quiet -r requirements.txt
 - echo Starting to compile
 - cd arpessimist/fortran_routines

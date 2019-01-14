@@ -8,6 +8,12 @@ https://github.com/pypa/sampleproject
 from setuptools import setup, find_packages
 from os import path
 from io import open
+import sys
+
+if 'win' in sys.platform:
+    extension_packages = {'arpessimist': ['src/*.pyd']}
+else:
+    extension_packages = {'arpessimist': ['src/*.so']}
 
 here = path.abspath(path.dirname(__file__))
 
@@ -63,11 +69,7 @@ setup(
                     'PyQt5',
                     'pywt',
                     ],  # Optional
-    package_data={  # Optional
-        'arpessimist': ['src/*.so'],
-        'arpessimist': ['src/*.pyd'],
-        'arpessimist': ['src/*.dll'],
-    },
+    package_data=extension_packages,
     entry_points={  # Optional
         'console_scripts': [
             # 'arpessimist=arpessimist/src:main_gui.py',
