@@ -44,7 +44,7 @@ install:
 - sh: "export PYTHONPATH=$PYTHON"
 #- sh: "sudo apt-get install libgfortran3"
 - sh: "gfortran --version"
-- pip install --quiet -U numpy
+- pip install --upgrade numpy
 - pip install --quiet -U wheel
 - pip install --quiet -r requirements.txt
 - echo Starting to compile
