@@ -42,6 +42,7 @@ install:
 
 - cmd: "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 - sh: "export PYTHONPATH=$PYTHON"
+- sh: "apt-get install libgfortran3"
 - pip install --quiet -U numpy
 - pip install --quiet -U wheel
 - pip install --quiet -r requirements.txt
