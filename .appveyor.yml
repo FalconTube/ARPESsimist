@@ -1,6 +1,6 @@
 image:
 #- Visual Studio 2017
-- Ubuntu
+- ubuntu1804
 
 cache:
   - '%LOCALAPPDATA%\pip\Cache'
@@ -43,9 +43,6 @@ install:
 - cmd: "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 - sh: "export PYTHONPATH=$PYTHON"
 - sh: "sudo apt-get install libgfortran3"
-- sh: "gfortran --version"
-- sh: "sudo apt-get remove gfortran"
-- sh: "sudo apt-get install gfortran"
 - sh: "gfortran --version"
 - pip install --quiet -U numpy
 - pip install --quiet -U wheel
