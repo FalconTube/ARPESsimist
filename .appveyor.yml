@@ -47,7 +47,7 @@ install:
 - echo Starting to compile
 - cd arpessimist/fortran_routines
 - cmd: sh compile_windows.sh
-- sh: ./compile.sh
+- sh: bash compile.sh
 - echo Compilation finished!
 - cd ../../
 - sh: "python3 setup.py bdist_wheel --plat-name=manylinux1_x86_64"
