@@ -3,7 +3,7 @@ image:
 - ubuntu1804
 
 cache:
-  - '%LOCALAPPDATA%\pip\Cache'
+  #- '%LOCALAPPDATA%\pip\Cache'
 
 build: off
 
