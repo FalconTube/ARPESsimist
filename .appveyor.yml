@@ -41,14 +41,13 @@ install:
     #- "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
 
 - cmd: "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-- sh: "export PYTHONPATH=$PYTHON"
 #- sh: "sudo apt-get install libgfortran3"
 - sh: "gfortran --version"
 - pip install --quiet -U numpy
 - pip install --quiet -U wheel
 - pip install --quiet -r requirements.txt
-- sh: "python3 -c 'import numpy; print(numpy.version)'"
 - echo Starting to compile
+- sh: "python3 -c 'from numpy.core import multiarray'"
 - cd arpessimist/fortran_routines
 - cmd: sh compile_windows.sh
 - sh: bash compile.sh
