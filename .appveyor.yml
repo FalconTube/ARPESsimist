@@ -44,10 +44,10 @@ install:
 - sh: "export PYTHONPATH=$PYTHON"
 #- sh: "sudo apt-get install libgfortran3"
 - sh: "gfortran --version"
-- sh: "python3 -c 'import numpy; print(numpy.version)'"
-- pip install --upgrade numpy
+- pip install --quiet -U numpy
 - pip install --quiet -U wheel
 - pip install --quiet -r requirements.txt
+- sh: "python3 -c 'import numpy; print(numpy.version)'"
 - echo Starting to compile
 - cd arpessimist/fortran_routines
 - cmd: sh compile_windows.sh
