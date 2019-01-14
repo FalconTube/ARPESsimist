@@ -31,8 +31,8 @@ environment:
 clone_depth: 3
 
 init:
-    #- cmd: set PATH=%MINGW_DIR%;%PATH%
-  #- cmd: set PATH=%PY_DIR%;%PY_DIR%\Scripts;%PATH%
+- cmd: set PATH=%MINGW_DIR%;%PATH%
+- cmd: set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
 
 install:
     #- "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
@@ -47,8 +47,10 @@ install:
 - sh: ./compile.sh
 - echo Compilation finished!
 - cd ../../
-- sh: "python3 setup.py sdist bdist_wheel --plat-name=manylinux1_x86_64"
-- cmd: "python setup.py sdist bdist_wheel --plat-name=win_amd64 "
+- sh: "python3 setup.py bdist_wheel --plat-name=manylinux1_x86_64"
+- sh: "python3 rename_version.py"
+- cmd: "python setup.py bdist_wheel --plat-name=win_amd64 " # Readd sdist later
+- cmd: "python rename_version.py"
   #- cmd: "python setup.py bdist_wininst"
 
 test_script:

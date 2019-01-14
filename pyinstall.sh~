@@ -1,1 +1,0 @@
-pyinstaller --onefile --distpath pyinst -p ./arpessimist:./arpessimist/src main_gui.py

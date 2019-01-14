@@ -7,13 +7,11 @@ https://github.com/pypa/sampleproject
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 from os import path
-# io.open is needed for projects that support Python 2.7
-# It ensures open() defaults to text mode with universal newlines,
-# and accepts an argument to specify the text encoding
-# Python 3 only projects can skip this import
 from io import open
 
 here = path.abspath(path.dirname(__file__))
+
+REQUIRES_PYTHON = '>=3.5.0'
 
 # Get the long description from the README file
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
@@ -27,6 +25,7 @@ setup(
     url='https://github.com/FalconTube/ARPESsimist',  # Optional
     author='Yannic Falke',  # Optional
     author_email='yannic.falke@gmail.com',  # Optional
+    python_requires=REQUIRES_PYTHON,
     #platform = ['linux_x86_64',],
     classifiers=[  # Optional
         # How mature is this project? Common values are
