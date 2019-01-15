@@ -75,7 +75,6 @@ class TwoD_Plotter(MyMplCanvas):
         self.grid_layout.addWidget(self.vmax_slider, 0, 2)
         self.grid_layout.addWidget(self.vmax_label, 0, 3)
         self.set_xylabels()
-        print(self.instance_counter_main)
         if self.instance_counter_main == 0:
             self.export_menu = QMenu("&Export Data", parent)
             appwindow.menuBar().addSeparator()
@@ -120,7 +119,6 @@ class TwoD_Plotter(MyMplCanvas):
                 self.instance_counter = 0
             self.old_extent = extent.copy()
             
-        # print('instance_counter {}'.format(self.instance_counter))
         if self.instance_counter == 0:
             self.instance_counter += 1
             self.axes.cla()

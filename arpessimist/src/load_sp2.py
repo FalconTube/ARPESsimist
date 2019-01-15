@@ -116,11 +116,6 @@ class Sp2_loader:
                         else:
                             out_arr = interpolated
                     out_arr = np.dstack((out_arr, data))
-        print(
-            "Loading {} took {:.1f} seconds".format(
-                len(filenames), time.time() - starttime
-            )
-        )
         if not self.multi_file_mode:
             thisshape = out_arr.shape
             out_arr = out_arr.reshape(thisshape[0], thisshape[1], 1)
