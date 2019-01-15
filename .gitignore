@@ -1,6 +1,9 @@
 # Ignore all sp2 files, because they are for testing purposes
 *.sp2
 *.txt
+*~
+*.swo
+*.swp
 *arpessimist/src/*.so
 *arpessimist/src/*.pyd
 *arpessimist/src/*.dll
@@ -17,6 +20,8 @@ fortran_routines/*.so
 fortran_routines/*.pyf
 testvirt/
 test_qtgraph.py
+build/
+dist/
 # !fortran_routines/kmaps.f90
 # !fortran_routines/test_kmaps.f90
 # !fortran_routines/compile.sh

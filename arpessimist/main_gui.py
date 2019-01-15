@@ -18,12 +18,7 @@ from PyQt5.QtWidgets import (
     QTreeView,
 )
 from PyQt5.QtGui import QIcon, QScreen, QPixmap
-# print(__name__)
-# print(__package__)
-# __name__ = 'arpessimist.main_gui'
-# __package__ = 'arpessimist'
-# print(__name__)
-# print(__package__)
+import asyncio
 
 from .src.load_sp2 import Sp2_loader, LoadHDF5
 from .src.plot_2d import TwoD_Plotter
@@ -60,6 +55,7 @@ class ApplicationWindow(QMainWindow):
         self.new_current_extent = []
         self._current_labelname = ""
         self.p_min = False
+        self.instance_counter_main = 0
         QMainWindow.__init__(self)
         # Restoring old position if available
         self.settings = QtCore.QSettings("ARPESsimist", "MainWin")
@@ -72,7 +68,8 @@ class ApplicationWindow(QMainWindow):
 
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("ARPESsimist")
-        iconname = "logo_black.png"
+        pwd = os.system('pwd')
+        iconname = "../logo/logo_black.png"
         basedir = os.path.dirname(os.path.realpath(__file__))
         pm = QPixmap(os.path.join(basedir, iconname))
         self.setWindowIcon(QIcon(pm))
@@ -211,7 +208,7 @@ class ApplicationWindow(QMainWindow):
                 self.loaded_filenames
             )
             self.load_multiple_files()
-        except:
+        except ValueError:
             self.p_min = old_pmin
         QApplication.restoreOverrideCursor()
 
@@ -265,7 +262,9 @@ class ApplicationWindow(QMainWindow):
             ylabel="Energy [eV]",
             appwindow=self,
             labelprefix="Dataset",
+            instance_counter_main = self.instance_counter_main,
         )
+        self.instance_counter_main += 1
         self.over_layout.addWidget(self.new_twoD_widget, 1, 0)
         QApplication.restoreOverrideCursor()
 

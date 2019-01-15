@@ -5,6 +5,9 @@ import time
 from natsort import natsorted
 import multiprocessing
 import h5py as h5
+import asyncio
+import concurrent.futures
+import threading
 
 # import scipy.interpolate as itpt
 from scipy.interpolate import interp2d
@@ -113,11 +116,11 @@ class Sp2_loader:
                         else:
                             out_arr = interpolated
                     out_arr = np.dstack((out_arr, data))
-        # print(
-        #     "Loading {} took {:.1f} seconds".format(
-        #         len(filenames), time.time() - starttime
-        #     )
-        # )
+        print(
+            "Loading {} took {:.1f} seconds".format(
+                len(filenames), time.time() - starttime
+            )
+        )
         if not self.multi_file_mode:
             thisshape = out_arr.shape
             out_arr = out_arr.reshape(thisshape[0], thisshape[1], 1)
