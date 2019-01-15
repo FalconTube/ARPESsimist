@@ -195,6 +195,10 @@ class LineProfiles(QWidget):
             self.free_ax.cla()
         except:
             pass
+        try:
+            self.eraser.get_max_line().remove()
+        except:
+            pass
 
         self.current_hline = False
         self.current_vline = False
@@ -320,8 +324,6 @@ class LineProfiles(QWidget):
         y_pos = np.logical_and(self.rect_y1 < self.yvals, self.yvals < self.rect_y2)
         x_range = self.xvals[x_pos]
         y_range = self.yvals[y_pos][::-1]
-        # print(x_range)
-        # print(y_range)
 
         # Parameters for smoothing
         level = 1
@@ -340,7 +342,6 @@ class LineProfiles(QWidget):
             line_range = y_range
 
         for n, i in enumerate(iterator_range):
-            # print(i)
             if edc == True:
                 raw_lineprof = self.idata(line_range, i)
             else:

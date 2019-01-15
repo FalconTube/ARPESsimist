@@ -24,6 +24,7 @@ class TwoD_Plotter(MyMplCanvas):
         ylabel="",
         appwindow=None,
         labelprefix="",
+        instance_counter_main=0
     ):
         super().__init__(parent, width, height, dpi)
         self.current_clim = None
@@ -40,6 +41,7 @@ class TwoD_Plotter(MyMplCanvas):
             processing_extent,
         )
         stack_size = processing_data.shape[-1]
+        self.instance_counter_main = instance_counter_main
         self.instance_counter = 0
         self.slider_pos = 0
         self.lut_slider_pos = 0
@@ -73,12 +75,15 @@ class TwoD_Plotter(MyMplCanvas):
         self.grid_layout.addWidget(self.vmax_slider, 0, 2)
         self.grid_layout.addWidget(self.vmax_label, 0, 3)
         self.set_xylabels()
-        self.export_menu = QMenu("&Export Data", parent)
-        appwindow.menuBar().addSeparator()
-        appwindow.menuBar().addMenu(self.export_menu)
-        self.export_menu.addAction("&Save txt", self.save_txt)
-        self.export_menu.addAction("&Save Figures", self.save_figs)
-        self.export_menu.addAction("&Save Maxima", self.save_maxima)
+        print(self.instance_counter_main)
+        if self.instance_counter_main == 0:
+            self.export_menu = QMenu("&Export Data", parent)
+            appwindow.menuBar().addSeparator()
+            appwindow.menuBar().addMenu(self.export_menu)
+            self.export_menu.addAction("&Save txt", self.save_txt)
+            self.export_menu.addAction("&Save Figures", self.save_figs)
+            self.export_menu.addAction("&Save Maxima", self.save_maxima)
+            self.instance_counter_main += 1
 
     def update_colormap(self):
         current_map = self.cb.currentText()
@@ -113,7 +118,7 @@ class TwoD_Plotter(MyMplCanvas):
             self.aspectratio = x_range / e_range
             if extent != self.old_extent:
                 self.instance_counter = 0
-            self.old_extent = extent
+            self.old_extent = extent.copy()
             
         # print('instance_counter {}'.format(self.instance_counter))
         if self.instance_counter == 0:
@@ -147,6 +152,7 @@ class TwoD_Plotter(MyMplCanvas):
             self.twoD_ax.set_data(self.twoD_data)
             self.axes.draw_artist(self.twoD_ax)
             self.axes.figure.canvas.update()
+            self.toolbar.update()
 
     def update_2d_data(self, data):
         self.twoD_data = data
@@ -154,7 +160,6 @@ class TwoD_Plotter(MyMplCanvas):
     def update_current_data(self):
         self.new_current_data = self.processing_data[:, :, self.slider_pos]
         self.new_current_extent = self.processing_extent[self.slider_pos]
-        # self.update_widgets()
 
     def update_widgets(self):
         self.LineProf.update_data_extent(self.new_current_data, self.new_current_extent)
@@ -188,7 +193,7 @@ class TwoD_Plotter(MyMplCanvas):
         labelpos = self.labellist[self.slider_pos]
         self.twoD_slider.setToolTip(str(self.slider_pos))
         try:
-            self.twoD_Label.setText("{}: {:4f}".format(self.labelprefix, labelpos))
+            self.twoD_Label.setText("{}: {}".format(self.labelprefix, int(labelpos)))
         except:
             self.twoD_Label.setText("{}: {}".format(self.labelprefix, labelpos))
         self.update_current_data()

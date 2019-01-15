@@ -47,15 +47,18 @@ class PointEraser(object):
 
     def _remove_point(self, event):
         if self.current_object != -1:
-            self.max_line.remove()
-            self.x = np.delete(self.x, self.current_object)
-            self.y = np.delete(self.y, self.current_object)
-            self.scattercolors = np.delete(self.scattercolors, self.current_object)
-            self.max_line = self._axes.scatter(
-                self.x, self.y, s=50, facecolors="none", edgecolors=self.scattercolors
-            )
+            try:
+                self.max_line.remove()
+                self.x = np.delete(self.x, self.current_object)
+                self.y = np.delete(self.y, self.current_object)
+                self.scattercolors = np.delete(self.scattercolors, self.current_object)
+                self.max_line = self._axes.scatter(
+                    self.x, self.y, s=50, facecolors="none", edgecolors=self.scattercolors
+                )
 
-            self._figure.canvas.draw()
+                self._figure.canvas.draw()
+            except:
+                pass
 
     def disconnect(self):
         self._figure.canvas.mpl_disconnect(self.click_cid)
@@ -68,3 +71,6 @@ class PointEraser(object):
 
     def get_data(self):
         return self.x, self.y
+    
+    def get_max_line(self):
+        return self.max_line
