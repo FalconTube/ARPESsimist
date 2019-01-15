@@ -11,11 +11,9 @@ from io import open
 import sys
 
 if 'win' in sys.platform:
-    extension_packages = {'arpessimist': ['src/*.pyd'],
-                        'arpessimist': ['src/images/*']}
+    extension_packages = {'arpessimist': ['src/*.pyd', 'src/images/*']}
 else:
-    extension_packages = {'arpessimist': ['src/*.so'],
-                        'arpessimist': ['src/images/*']}
+    extension_packages = {'arpessimist': ['src/*.so', 'src/images/*']}
 
 here = path.abspath(path.dirname(__file__))
 
@@ -26,7 +24,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 setup(
     name='arpessimist',  # Required
-    version='0.1.6',  # Required
+    version='0.1.7',  # Required
     description='ARPES evaluation software',  # Optional
     long_description=long_description,  # Optional
     long_description_content_type='text/markdown',  # Optional (see note above)

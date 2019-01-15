@@ -60,11 +60,11 @@ Open a terminal at `<Your_install_location>/fortran_routines/` and execute `comp
 
 Start the software by calling `python3 main_gui.py`. This will open an empty window with a file menu in its top left position. From here, you can load multiple `.sp2` data or a single `.nxs` (`hdf5` format) file.
 
-![Empty window](https://github.com/FalconTube/ARPESsimist/blob/master/images/empty_win.png)
+![Empty window](https://github.com/FalconTube/ARPESsimist/blob/master/arpessimist/src/images/empty_win.png)
 
 After loading a set of data, more widgets will populate the main window, like this:
 
-![Main window](https://github.com/FalconTube/ARPESsimist/blob/master/images/main_win.png)
+![Main window](https://github.com/FalconTube/ARPESsimist/blob/master/arpessimist/src/images/main_win.png)
 
 Here you have the options to change the displayed 2D image (bottom slider), the LUT (right slider) and to make lineprofiles (select and right click). Zooming in to the 2D image will automatically adjust the ranges of the respective lineprofiles. All of the obtained plots can be extracted as both data points and the plots themselves using the `Export` button at the top.
 
