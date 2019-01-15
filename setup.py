@@ -67,7 +67,6 @@ setup(
                     'scipy',
                     'natsort',
                     'PyQt5',
-                    'pywt',
                     ],  # Optional
     package_data=extension_packages,
     entry_points={  # Optional
