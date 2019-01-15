@@ -208,7 +208,7 @@ class ApplicationWindow(QMainWindow):
                 self.loaded_filenames
             )
             self.load_multiple_files()
-        except ValueError:
+        except:
             self.p_min = old_pmin
         QApplication.restoreOverrideCursor()
 
