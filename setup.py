@@ -65,7 +65,7 @@ setup(
                     'PyWavelets',
                     'h5py',
                     'matplotlib',
-                    'numpy',
+                    'numpy==1.16.0',
                     'scipy',
                     'natsort',
                     'PyQt5',
