@@ -11,9 +11,11 @@ from io import open
 import sys
 
 if 'win' in sys.platform:
-    extension_packages = {'arpessimist': ['src/*.pyd']}
+    extension_packages = {'arpessimist': ['src/*.pyd'],
+                        'arpessimist': ['src/images/*']}
 else:
-    extension_packages = {'arpessimist': ['src/*.so']}
+    extension_packages = {'arpessimist': ['src/*.so'],
+                        'arpessimist': ['src/images/*']}
 
 here = path.abspath(path.dirname(__file__))
 
