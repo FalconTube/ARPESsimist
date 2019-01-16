@@ -10,7 +10,8 @@ sed -i 's/from .src./from /' main_gui.py
 sed -i "s/def run():/if __name__ == '__main__':/" main_gui.py
 #pyi-grab_version cmd.exe arpessimst_version.txt
 #du -sh arpessimst_version.txt
-cp arpessimst_version.txt ../dist/
+#cp arpessimst_version.txt ../dist/
+cp ../windows_version.txt .
 pyinstaller main_gui.py --debug all --onefile --name=ARPESsimist --version-file=windows_version.txt --hidden-import=pywt._extensions._cwt
 ##pyinstaller main_gui.py --debug --onefile --name=ARPESsimist --version-file=arpessimst_version.txt --hidden-import=pywt._extensions._cwt
 cd dist
