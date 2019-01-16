@@ -13,4 +13,4 @@ pyinstaller main_gui.py --debug --onefile --name=ARPESsimist --version-file=arpe
 cd dist
 echo "ls of dist in pyinstall"
 ls
-#mv main_gui* ../../dist/ARPESsimist.exe
+mv * ../../dist/
