@@ -5,9 +5,6 @@ import time
 from natsort import natsorted
 import multiprocessing
 import h5py as h5
-import asyncio
-import concurrent.futures
-import threading
 
 # import scipy.interpolate as itpt
 from scipy.interpolate import interp2d

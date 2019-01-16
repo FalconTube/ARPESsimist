@@ -191,7 +191,10 @@ class TwoD_Plotter(MyMplCanvas):
         labelpos = self.labellist[self.slider_pos]
         self.twoD_slider.setToolTip(str(self.slider_pos))
         try:
-            self.twoD_Label.setText("{}: {}".format(self.labelprefix, int(labelpos)))
+            if 'Dataset' in self.labelprefix:
+                self.twoD_Label.setText("{}: {}".format(self.labelprefix, int(labelpos)))
+            else:
+                self.twoD_Label.setText("{}: {:.5f}".format(self.labelprefix, labelpos))
         except:
             self.twoD_Label.setText("{}: {}".format(self.labelprefix, labelpos))
         self.update_current_data()

@@ -18,7 +18,6 @@ from PyQt5.QtWidgets import (
     QTreeView,
 )
 from PyQt5.QtGui import QIcon, QScreen, QPixmap
-import asyncio
 
 from .src.load_sp2 import Sp2_loader, LoadHDF5
 from .src.plot_2d import TwoD_Plotter

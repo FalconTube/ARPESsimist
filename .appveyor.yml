@@ -1,6 +1,6 @@
 image:
 - Visual Studio 2017
-- ubuntu1804
+#- ubuntu1804
 
 cache:
   - '%LOCALAPPDATA%\pip\Cache'
@@ -56,7 +56,9 @@ install:
 - sh: "python3 rename_version.py"
 - cmd: "python setup.py bdist_wheel --plat-name=win_amd64 " # Readd sdist later
 - cmd: "python rename_version.py"
+- cmd: bash prepare_pyinstall.sh
   #- cmd: "python setup.py bdist_wininst"
+ 
 
 test_script:
  - echo PUT TEST SCRIPTS HERE  
