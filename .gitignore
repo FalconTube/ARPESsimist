@@ -23,6 +23,7 @@ test_qtgraph.py
 build/
 dist/
 arpessimist.egg-info/
+!windows_version.txt
 # !fortran_routines/kmaps.f90
 # !fortran_routines/test_kmaps.f90
 # !fortran_routines/compile.sh
