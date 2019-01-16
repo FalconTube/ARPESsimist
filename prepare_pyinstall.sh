@@ -7,7 +7,7 @@ sed -i 's/from \./from /' *.py
 cp ../arpessimist/main_gui.py .
 sed -i 's/from .src./from /' main_gui.py
 sed -i "s/def run():/if __name__ == '__main__':/" main_gui.py
-pyinstaller main_gui.py --onefile --hidden-import=pywt._extensions._cwt
+pyinstaller main_gui.py --windowed --onefile --hidden-import=pywt._extensions._cwt
 cd dist
 echo "ls of dist in pyinstall"
 ls
