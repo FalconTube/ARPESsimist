@@ -18,5 +18,5 @@ cd dist
 echo "ls of dist in pyinstall"
 ls
 7z a dist 
-mv dist.7z ../dist/
+mv dist.7z ../../dist/
 #mv * ../../dist/
