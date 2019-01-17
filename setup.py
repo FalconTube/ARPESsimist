@@ -75,5 +75,5 @@ setup(
                     'natsort',
                     'PyQt5',
                     ],  # Optional
-    zip_save=False,
+    zip_safe=False,
 )
