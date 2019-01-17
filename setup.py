@@ -24,7 +24,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 setup(
     name='arpessimist',  # Required
-    version='0.1.8',  # Required
+    version='0.1.9',  # Required
     description='ARPES evaluation software',  # Optional
     long_description=long_description,  # Optional
     long_description_content_type='text/markdown',  # Optional (see note above)
@@ -58,6 +58,13 @@ setup(
     # packages=['arpessimist', 'arpessimist/src'],  # Required
     packages=find_packages(),  # Required
     # package_dir={'' : 'arpessimisst'},
+    package_data=extension_packages,
+    entry_points={  # Optional
+        'console_scripts': [
+            # 'arpessimist=arpessimist/src:main_gui.py',
+            'arpessimist=arpessimist:main_gui.run',
+        ],
+    },
     include_package_data=True,
     install_requires=['setuptools',
                     'PyWavelets',
@@ -68,11 +75,5 @@ setup(
                     'natsort',
                     'PyQt5',
                     ],  # Optional
-    package_data=extension_packages,
-    entry_points={  # Optional
-        'console_scripts': [
-            # 'arpessimist=arpessimist/src:main_gui.py',
-            'arpessimist=arpessimist:main_gui.run',
-        ],
-    },
+    zip_save=False,
 )
