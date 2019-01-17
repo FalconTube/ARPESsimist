@@ -1,6 +1,7 @@
 import sys
 import os
 import numpy as np
+from numpy.core import multiarray
 import time
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import (
@@ -278,11 +279,11 @@ class ApplicationWindow(QMainWindow):
                 "Generating Map. This will take a couple seconds...", 2000
             )
             if not self.p_min:
-                ksteps, esteps, pol_off, angle_off, tilt, azi, kxmin, kxmax, kymin, kymax, self.p_min, self.p_max = (
+                ksteps, esteps, angle_off, tilt, azi, kxmin, kxmax, kymin, kymax, self.p_min, self.p_max = (
                     outvalues
                 )
             else:
-                ksteps, esteps, pol_off, angle_off, tilt, azi, kxmin, kxmax, kymin, kymax = (
+                ksteps, esteps, angle_off, tilt, azi, kxmin, kxmax, kymin, kymax = (
                     outvalues
                 )
 

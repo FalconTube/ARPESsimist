@@ -33,7 +33,7 @@ class MapParameterBox(QDialog):
         # Define LineEdit Fields
         ksteps = QLineEdit("0.01", self)
         esteps = QLineEdit("0.005", self)
-        pol_off = QLineEdit("0.0", self)
+        #pol_off = QLineEdit("0.0", self)
         tilt = QLineEdit("0.0", self)
         angle_off = QLineEdit("0.0", self)
         azi = QLineEdit("0.0", self)
@@ -45,7 +45,7 @@ class MapParameterBox(QDialog):
         # Define Labels
         ksteps_label = QLabel("K Stepsize", self)
         esteps_label = QLabel("Energy Stepsize", self)
-        pol_off_label = QLabel("Polar Offset", self)
+        #pol_off_label = QLabel("Polar Offset", self)
         angle_off_label = QLabel("Angle Offset", self)
         tilt_label = QLabel("Tilt Angle", self)
         azi_label = QLabel("Azimuth Angle", self)
@@ -57,7 +57,7 @@ class MapParameterBox(QDialog):
         # Add Edits
         self.lay.addWidget(ksteps, 0, 1)
         self.lay.addWidget(esteps, 1, 1)
-        self.lay.addWidget(pol_off, 2, 1)
+        #self.lay.addWidget(pol_off, 2, 1)
         self.lay.addWidget(angle_off, 3, 1)
         self.lay.addWidget(tilt, 4, 1)
         self.lay.addWidget(azi, 5, 1)
@@ -69,7 +69,7 @@ class MapParameterBox(QDialog):
         # Add Labels
         self.lay.addWidget(ksteps_label, 0, 0)
         self.lay.addWidget(esteps_label, 1, 0)
-        self.lay.addWidget(pol_off_label, 2, 0)
+        #self.lay.addWidget(pol_off_label, 2, 0)
         self.lay.addWidget(angle_off_label, 3, 0)
         self.lay.addWidget(tilt_label, 4, 0)
         self.lay.addWidget(azi_label, 5, 0)
@@ -95,12 +95,21 @@ class MapParameterBox(QDialog):
             # self.lay.addWidget(self.pol_steps_label, 9, 0)
 
         self.over_layout.addLayout(self.lay)
+        self.sort_taborder()
+
+    def sort_taborder(self):
+        num_widgets = self.lay.count()
+        for n, i in enumerate(range(num_widgets)):
+            thiswidget = self.lay.itemAt(i).widget()
+            if n > 0:
+                self.setTabOrder(lastwidget, thiswidget) # also set tab order
+            lastwidget = thiswidget
 
     def get_values(self):
         outvals = []
         num_widgets = self.lay.count()
-        for i in range(num_widgets):
-            thiswidget = self.lay.itemAt(i).widget()
+        for n, i in enumerate(range(num_widgets)):
             if "Line" in str(thiswidget):
-                outvals.append(float(thiswidget.text()))
+                outvals.append(float(thiswidget.text())) # save the values in order
+            lastwidget = thiswidget
         return outvals
