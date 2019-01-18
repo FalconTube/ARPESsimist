@@ -11,7 +11,7 @@ from io import open
 import sys
 
 if 'win' in sys.platform:
-    extension_packages = {'arpessimist': ['src/*.pyd', 'src/images/*']}
+    extension_packages = {'arpessimist': ['src/*.pyd', 'src/images/*', 'fortran_routines/*']}
 else:
     extension_packages = {'arpessimist': ['src/*.so', 'src/images/*']}
 
