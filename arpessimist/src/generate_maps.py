@@ -6,7 +6,7 @@ from PyQt5.QtCore import QThread
 # import mayavi.mlab as mlb
 # import h5py as h5
 import time
-from .kmaps import kmaps
+from ..fortran_routines.kmaps import kmaps
 from .new_k_window import K_Window
 
 me = 9.11e-31
