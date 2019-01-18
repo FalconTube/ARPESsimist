@@ -35,6 +35,7 @@ class K_Window(QMainWindow):
             labelprefix=labelprefix,
             xlabel=xlabel,
             ylabel=ylabel,
+            respect_aspect=True
         )  # Start 2d plotter
         self.over_layout = QGridLayout(self.k_win_widget)
         self.over_layout.addWidget(self.k_k_widget, 1, 0)

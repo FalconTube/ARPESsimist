@@ -109,6 +109,7 @@ class MapParameterBox(QDialog):
         outvals = []
         num_widgets = self.lay.count()
         for n, i in enumerate(range(num_widgets)):
+            thiswidget = self.lay.itemAt(i).widget()
             if "Line" in str(thiswidget):
                 outvals.append(float(thiswidget.text())) # save the values in order
             lastwidget = thiswidget

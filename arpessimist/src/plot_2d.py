@@ -24,17 +24,22 @@ class TwoD_Plotter(MyMplCanvas):
         ylabel="",
         appwindow=None,
         labelprefix="",
-        instance_counter_main=0
+        instance_counter_main=0,
+        respect_aspect=False,
     ):
         super().__init__(parent, width, height, dpi)
         self.current_clim = None
         self.colormap = "terrain"
         self.old_extent = None
-        self.aspectratio = 1
         self.xlabel = xlabel
         self.ylabel = ylabel
         self.labellist = labellist
         self.labelprefix = labelprefix
+        self.respect_aspect = respect_aspect
+        if self.respect_aspect:
+            self.aspectratio = None
+        else:
+            self.aspectratio = 1
 
         self.processing_data, self.processing_extent = (
             processing_data,
@@ -112,12 +117,15 @@ class TwoD_Plotter(MyMplCanvas):
 
     def update_2dplot(self, extent=None):
         if extent:
-            x_range = abs(extent[1] - extent[0])
-            e_range = abs(extent[3] - extent[2])
-            self.aspectratio = x_range / e_range
-            if extent != self.old_extent:
-                self.instance_counter = 0
-            self.old_extent = extent.copy()
+            if not self.respect_aspect:
+                x_range = abs(extent[1] - extent[0])
+                e_range = abs(extent[3] - extent[2])
+                self.aspectratio = x_range / e_range
+                if extent != self.old_extent:
+                    self.instance_counter = 0
+                self.old_extent = extent.copy()
+            else:
+                self.aspectratio = None
             
         if self.instance_counter == 0:
             self.instance_counter += 1
