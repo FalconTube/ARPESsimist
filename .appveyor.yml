@@ -40,6 +40,7 @@ init:
 install:
     #- "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
 
+- cmd: "set PATH=%MINGW_DIR%;%PATH%"
 - cmd: "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 #- sh: "sudo apt-get install libgfortran3"
 - sh: "gfortran --version"
