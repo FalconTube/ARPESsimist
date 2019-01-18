@@ -10,7 +10,7 @@ build: off
 environment:
     #APPVEYOR_SAVE_CACHE_ON_ERROR: true
 
-  MINGW_DIR: C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin
+    #MINGW_DIR: C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin
   #PY_DIR: C:\Python36-x64
 
 
@@ -33,9 +33,14 @@ clone_depth: 3
 stack: python %PYTHON_VERSION%
 
 init:
-
-- cmd: call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
-- cmd: set PATH=%MINGW_DIR%;%PATH%
+- cmd: call bin\appveyor-download.cmd "https://raw.githubusercontent.com/symengine/dependencies/57834d6007065cdd71964c96b397505b2b4ce78a/x86_64-4.8.5-release-win32-seh-rt_v4-rev0.7z" -FileName mw64.7z
+- cmd : 7z x -oC:\ mw64.7z > NUL
+- cmd: set PATH=C:\mingw64\bin;%PATH%
+# Download pre-compiled gmp binaries
+- cmd: call bin\appveyor-download.cmd "https://raw.githubusercontent.com/symengine/dependencies/57834d6007065cdd71964c96b397505b2b4ce78a/gmp-6.0.0-x86_64-w64-mingw32.7z" -FileName gmp.7z
+- cmd:  7z x -oC:\mingw64 gmp.7z > NUL
+    #- cmd: call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
+    #- cmd: set PATH=%MINGW_DIR%;%PATH%
 - cmd: set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
 
 install:
@@ -58,6 +63,7 @@ install:
 - sh: "python3 rename_version.py"
 - cmd: "python setup.py bdist_wheel --plat-name=win_amd64 " # Readd sdist later
 - cmd: "python rename_version.py"
+- cmd: "cp arpessimist/fortran_routines/*.pyd dist/ "
   #- cmd: bash prepare_pyinstall.sh
   #- cmd: "python setup.py bdist_wininst"
  
