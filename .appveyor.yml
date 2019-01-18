@@ -19,7 +19,7 @@ environment:
     #   PYTHON_VERSION: "3.6.x" # currently 3.6.5
     #   PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python36"
+    - PYTHON: "C:\\Python36-x64"
       #- PYTHON: "C:\\Python36-x64"
       PYTHON_VERSION: "3.6.7" # currently 3.6.5
       PYTHON_ARCH: "64"
@@ -34,6 +34,8 @@ clone_depth: 3
 stack: python %PYTHON_VERSION%
 
 init:
+
+- call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
 - cmd: set PATH=%MINGW_DIR%;%PATH%
 - cmd: set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
 
@@ -44,7 +46,7 @@ install:
 - cmd: "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 #- sh: "sudo apt-get install libgfortran3"
 - sh: "gfortran --version"
-- pip install --quiet -U wheel
+- pip install --quiet -U --upgrade wheel
 - pip install --quiet -r requirements.txt
 - sh: "python3 -c 'import numpy; print(numpy.version.version)'"
 - echo Starting to compile
