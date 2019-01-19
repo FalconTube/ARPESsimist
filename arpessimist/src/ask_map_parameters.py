@@ -11,9 +11,10 @@ from PyQt5.QtWidgets import (
 class MapParameterBox(QDialog):
     """ Initiates Box for user input of Map parameters """
 
-    def __init__(self, pol_available=False):
+    def __init__(self, saved_values=None ,pol_available=False):
         super().__init__()
         self.pol_available = pol_available
+        self.saved_values = saved_values
         self.init_box()
         self.init_buttons()
 
@@ -30,17 +31,32 @@ class MapParameterBox(QDialog):
 
         self.lay = QGridLayout(self)
 
-        # Define LineEdit Fields
-        ksteps = QLineEdit("0.01", self)
-        esteps = QLineEdit("0.005", self)
-        #pol_off = QLineEdit("0.0", self)
-        tilt = QLineEdit("0.0", self)
-        angle_off = QLineEdit("0.0", self)
-        azi = QLineEdit("0.0", self)
-        kxmin = QLineEdit("-1.0", self)
-        kxmax = QLineEdit("1.0", self)
-        kymin = QLineEdit("-1.0", self)
-        kymax = QLineEdit("1.0", self)
+        if self.saved_values == None:
+            # Define LineEdit Fields
+            ksteps = QLineEdit("0.01", self)
+            esteps = QLineEdit("0.005", self)
+            #pol_off = QLineEdit("0.0", self)
+            tilt = QLineEdit("0.0", self)
+            angle_off = QLineEdit("0.0", self)
+            azi = QLineEdit("0.0", self)
+            kxmin = QLineEdit("-1.0", self)
+            kxmax = QLineEdit("1.0", self)
+            kymin = QLineEdit("-1.0", self)
+            kymax = QLineEdit("1.0", self)
+        else:
+            # TODO This seems like a really stupid way to do, but dont know
+            # how to do better...
+            ksteps = QLineEdit(str(self.saved_values[0]), self)
+            esteps = QLineEdit(str(self.saved_values[1]), self)
+            #pol_off = QLineEdit("0.0", self)
+            tilt = QLineEdit(str(self.saved_values[2]), self)
+            angle_off = QLineEdit(str(self.saved_values[3]), self)
+            azi = QLineEdit(str(self.saved_values[4]), self)
+            kxmin = QLineEdit(str(self.saved_values[5]), self)
+            kxmax = QLineEdit(str(self.saved_values[6]), self)
+            kymin = QLineEdit(str(self.saved_values[7]), self)
+            kymax = QLineEdit(str(self.saved_values[8]), self)
+
 
         # Define Labels
         ksteps_label = QLabel("K Stepsize", self)

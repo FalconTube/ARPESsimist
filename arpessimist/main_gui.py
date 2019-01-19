@@ -55,6 +55,7 @@ class ApplicationWindow(QMainWindow):
         self.new_current_extent = []
         self._current_labelname = ""
         self.p_min = False
+        self.map_parameters = None
         self.instance_counter_main = 0
         QMainWindow.__init__(self)
         # Restoring old position if available
@@ -100,6 +101,7 @@ class ApplicationWindow(QMainWindow):
 
         self.map_menu.addAction("&3D-Map Polar", self.polar_maps)
         self.map_menu.addAction("&3D-Map Azimuth", self.azi_maps)
+        self.map_menu.addAction("&Single Slice Vertical", self.single_slice_vertical)
 
         # Set up Stitch Menu
         self.stitch_menu = QMenu("&Stitching", self)
@@ -270,11 +272,12 @@ class ApplicationWindow(QMainWindow):
 
     def gen_maps(self):
         if self.p_min:
-            parameters = MapParameterBox(pol_available=True)
+            parameters = MapParameterBox(self.map_parameters, pol_available=True)
         else:
-            parameters = MapParameterBox(pol_available=False)
+            parameters = MapParameterBox(self.map_parameters, pol_available=False) 
         if parameters.exec_() == parameters.Accepted:
             outvalues = parameters.get_values()
+            self.map_parameters = outvalues
             self.statusBar().showMessage(
                 "Generating Map. This will take a couple seconds...", 2000
             )
@@ -317,7 +320,8 @@ class ApplicationWindow(QMainWindow):
             self.KEWin = K_Window(
                 ke_slice,
                 extent_stack_E,
-                E_list[::-1],  # reverse because of reverse plotting
+                #E_list[::-1],  # reverse because of reverse plotting
+                E_list,  # reverse because of reverse plotting
                 labelprefix="Energy [eV]",
                 xlabel=r"kx [$\mathrm{\AA^{-1}}$]",
                 ylabel=r"ky [$\mathrm{\AA^{-1}}$]",
@@ -347,6 +351,48 @@ class ApplicationWindow(QMainWindow):
             self.KxWin.show()
         self.p_min = None
         QApplication.restoreOverrideCursor()
+
+    def single_slice_vertical(self):
+        # Use static data for testing
+        self.p_min = 0
+        self.p_max = 120
+        angle_off = 40
+        kxmin=0
+        kxmax=1.3
+        kymin=-2.5
+        kymax=2.5
+        E_slice_val = 25.7
+        ksteps = 0.03
+        esteps = 0.005
+        azi = 0
+        tilt = 0
+        self.use_azi=True
+        All_maps = VerticalSlitPolarScan(
+            self.processing_data,
+            self.processing_extent,
+            self.p_min,
+            self.p_max,
+            angle_offset=angle_off,
+            kxmin=kxmin,
+            kxmax=kxmax,
+            kymin=kymin,
+            kymax=kymax,
+        )
+        ke_slice, ky_slice, kx_slice, kxmin, kxmax, kymin, kymax, kx_list, ky_list, E_list = All_maps.slice_K_fortran(
+            ksteps, esteps, azi, tilt, self.use_azi, False
+        )
+        extent_stack_E = list([[kxmin, kxmax, kymax, kymin]]) * ke_slice.shape[-1]
+        self.KEWin = K_Window(
+            ke_slice,
+            extent_stack_E,
+            E_list[::-1],  # reverse because of reverse plotting
+            labelprefix="Energy [eV]",
+            xlabel=r"kx [$\mathrm{\AA^{-1}}$]",
+            ylabel=r"ky [$\mathrm{\AA^{-1}}$]",
+        )
+        self.KEWin.show()
+        
+
 
     def polar_maps(self):
         self.use_azi = False

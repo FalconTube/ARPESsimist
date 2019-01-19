@@ -189,16 +189,19 @@ class VerticalSlitPolarScan(object):
 
         return kSlice.T
 
-    def slice_K_fortran(self, dk, dE, azi, tilt, useazi=False):
+    def slice_K_fortran(self, dk, dE, azi, tilt, useazi=False, single_slice=False):
         """ Performs K Slice in fortran routine """
         # self.data = self.data[:, ::2, ::2]
-        Ecutmin = self.Emin
-        Ecutmax = self.Emax
-        print(self.convertAngleToK(self.dmin + self.angle_offset, self.Emin))
-        print(self.convertAngleToK(self.dmax + self.angle_offset, self.Emax))
+        if single_slice == False:
+            Ecutmin = self.Emin
+            Ecutmax = self.Emax
+            print(self.convertAngleToK(self.dmin + self.angle_offset, self.Emin))
+            print(self.convertAngleToK(self.dmax + self.angle_offset, self.Emax))
+            Ecut_range = np.arange(Ecutmin, Ecutmax, dE)
+        else:
+            Ecut_range = np.array([single_slice])
         kx_range = np.arange(self.kxmin, self.kxmax, dk)
         ky_range = np.arange(self.kymin, self.kymax, dk)
-        Ecut_range = np.arange(Ecutmin, Ecutmax, dE)
 
         if useazi:
             self.data = np.swapaxes(self.data, 0, 1)
