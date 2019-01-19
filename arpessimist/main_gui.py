@@ -309,7 +309,7 @@ class ApplicationWindow(QMainWindow):
                 ksteps, esteps, azi, tilt, self.use_azi
             )
 
-            extent_stack_E = list([[kxmin, kxmax, kymax, kymin]]) * ke_slice.shape[-1]
+            extent_stack_E = list([[kxmin, kxmax, kymin, kymax]]) * ke_slice.shape[-1]
             extent_stack_ky = (
                 list([[kxmin, kxmax, min(E_list), max(E_list)]]) * ky_slice.shape[-1]
             )
@@ -320,8 +320,7 @@ class ApplicationWindow(QMainWindow):
             self.KEWin = K_Window(
                 ke_slice,
                 extent_stack_E,
-                #E_list[::-1],  # reverse because of reverse plotting
-                E_list,  # reverse because of reverse plotting
+                E_list[::-1],  # reverse because of reverse plotting
                 labelprefix="Energy [eV]",
                 xlabel=r"kx [$\mathrm{\AA^{-1}}$]",
                 ylabel=r"ky [$\mathrm{\AA^{-1}}$]",

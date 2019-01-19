@@ -6,6 +6,7 @@
 *.swp
 *.o
 *.so
+*.mod
 *arpessimist/src/*.so
 *arpessimist/src/*.pyd
 *arpessimist/src/*.dll
