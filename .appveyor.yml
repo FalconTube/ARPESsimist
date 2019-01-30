@@ -10,10 +10,10 @@ build: off
 environment:
 
   global:
-    PLATFORMTOOLSET: "v140"
-    #APPVEYOR_SAVE_CACHE_ON_ERROR: true
-
-  MINGW_DIR: C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin
+      #PLATFORMTOOLSET: "v140"
+    NUMPY_HEAD: https://github.com/numpy/numpy.git
+    NUMPY_BRANCH: master 
+    MINGW_DIR: C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin
   #PY_DIR: C:\Python36-x64
 
 
@@ -26,9 +26,9 @@ environment:
       PYTHON_VERSION: "3.6.7" # currently 3.6.5
       PYTHON_ARCH: "64"
 
-    - PYTHON: "C:\\Python37-x64"
-      PYTHON_VERSION: "3.7.1" # currently 3.6.5
-      PYTHON_ARCH: "64"
+    #- PYTHON: "C:\\Python37-x64"
+      #PYTHON_VERSION: "3.7.1" # currently 3.6.5
+      #PYTHON_ARCH: "64"
 
 clone_depth: 3
 
@@ -36,10 +36,17 @@ stack: python %PYTHON_VERSION%
 
 init:
 
-    #- cmd: call "C:\Program Files (x86)\Microsoft Visual Studio\2015\Community\VC\Auxiliary\Build\vcvars64.bat"
 - cmd: set PATH=%MINGW_DIR%;%PATH%
 - cmd: set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
-
+# Replace numpy distutils with a version that can build with msvc + mingw-gfortran
+- ps: |
+      $NumpyDir = $((python -c 'import os; import numpy; print(os.path.dirname(numpy.__file__))') | Out-String).Trim()
+      rm -r -Force "$NumpyDir\distutils"
+      $tmpdir = New-TemporaryFile | %{ rm $_; mkdir $_ }
+      echo $env:NUMPY_HEAD
+      echo $env:NUMPY_BRANCH
+      git clone -q --depth=1 -b $env:NUMPY_BRANCH $env:NUMPY_HEAD $tmpdir
+      mv $tmpdir\numpy\distutils $NumpyDir
 install:
     #- "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
 
@@ -47,6 +54,7 @@ install:
 - cmd: "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 #- sh: "sudo apt-get install libgfortran3"
 #- sh: "gfortran --version"
+- pip install -U pip setuptools wheel
 - pip install --quiet -U --upgrade wheel
 - pip install --quiet -r requirements.txt
 - pip wheel --no-build-isolation --wheel-dir=dist .
