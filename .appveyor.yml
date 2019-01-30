@@ -26,10 +26,9 @@ environment:
       PYTHON_VERSION: "3.6.7" # currently 3.6.5
       PYTHON_ARCH: "64"
 
-    #- PYTHON: "C:\\Python37-x64"
-      ##- PYTHON: "C:\\Python36-x64"
-      #PYTHON_VERSION: "3.7.1" # currently 3.6.5
-      #PYTHON_ARCH: "64"
+    - PYTHON: "C:\\Python37-x64"
+      PYTHON_VERSION: "3.7.1" # currently 3.6.5
+      PYTHON_ARCH: "64"
 
 clone_depth: 3
 
@@ -47,21 +46,10 @@ install:
 - cmd: "set PATH=%MINGW_DIR%;%PATH%"
 - cmd: "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 #- sh: "sudo apt-get install libgfortran3"
-- sh: "gfortran --version"
+#- sh: "gfortran --version"
 - pip install --quiet -U --upgrade wheel
 - pip install --quiet -r requirements.txt
-- sh: "python3 -c 'import numpy; print(numpy.version.version)'"
-- echo Starting to compile
-- cd arpessimist/fortran_routines
-- cmd: sh compile_windows.sh
-- sh: bash compile.sh
-- echo Compilation finished!
-- cd ../../
-- sh: "python3 setup.py bdist_wheel --plat-name=manylinux1_x86_64"
-- sh: "python3 rename_version.py"
-- cmd: "python setup.py bdist_wheel --plat-name=win_amd64 " # Readd sdist later
-- cmd: "python rename_version.py"
-- cmd: "cp arpessimist/fortran_routines/*.pyd dist/ "
+- pip wheel --no-build-isolation --wheel-dir=dist .
   #- cmd: bash prepare_pyinstall.sh
   #- cmd: "python setup.py bdist_wininst"
  

@@ -32,7 +32,7 @@ def build_objects_from_fortran(sources):
       os.path.splitext(name)[0] + '.o')
     objects.append(os.path.relpath(path_object))
     command_compile_fortran_mod = (
-      'gfortran ' + ' -O3 -fPIC -c ' + source + ' -o ' + path_object)
+      'gfortran ' + '-O3 -fPIC -c ' + source + ' -o ' + path_object)
 
     print(command_compile_fortran_mod)
     subprocess.check_output(command_compile_fortran_mod, shell=True)
@@ -40,17 +40,17 @@ def build_objects_from_fortran(sources):
 
 ext_folder = 'arpessimist/fortran_routines/'
 
-object_sources = [ext_folder + 'bspline_kinds_module.f90',
-    ext_folder + 'bspline_sub_module.f90',
-    ext_folder + 'bspline_oo_module.f90',
-    ext_folder + 'bspline_module.f90',
+object_sources = [os.path.relpath(ext_folder + 'bspline_kinds_module.f90'),
+    os.path.relpath(ext_folder + 'bspline_sub_module.f90'),
+    os.path.relpath(ext_folder + 'bspline_oo_module.f90'),
+    os.path.relpath(ext_folder + 'bspline_module.f90'),
     ]
 # build requirements
 extra_objects = build_objects_from_fortran(object_sources)
 # build kmap extension
-ext_sources = [ext_folder + 'kmaps.f90']
+ext_sources = [os.path.relpath(ext_folder + 'kmaps.f90')]
 extensions = Extension(
-        name = 'kmaps',
+        name = 'arpessimist.kmaps',
         sources = ext_sources,
         extra_objects = extra_objects,
         )
