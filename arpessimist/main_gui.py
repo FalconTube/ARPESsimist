@@ -222,7 +222,6 @@ class ApplicationWindow(QMainWindow):
             self.statusBar().showMessage("Loading Data...", 2000)
             location = QFileDialog.getOpenFileNames(
                 self, "Select one NXS file to open", directory=LastDir, filter='*.nxs')
-            )
             QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
             LastDir = os.path.dirname(location[0][0])
             self.settings.setValue("LastDir", LastDir)

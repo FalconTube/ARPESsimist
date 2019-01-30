@@ -1,79 +1,99 @@
-"""A setuptools based setup module.
-See:
-https://packaging.python.org/en/latest/distributing.html
-https://github.com/pypa/sampleproject
-"""
-
-# Always prefer setuptools over distutils
-from setuptools import setup, find_packages
-from os import path
-from io import open
+from __future__ import division, absolute_import, print_function
+import os, platform, subprocess
+from setuptools import find_packages
+from numpy.distutils.core import setup, Extension
+from distutils.command.sdist import sdist
 import sys
+import glob
 
-if 'win' in sys.platform:
-    extension_packages = {'arpessimist': ['src/*.pyd', 'src/images/*', 'fortran_routines/*']}#, 'fortran_routines/fortran_build/']}
-else:
-    extension_packages = {'arpessimist': ['src/*.so', 'src/images/*']}
+#extension_packages = {'arpessimist': ['src/*.so', 'src/images/*']}
 
-here = path.abspath(path.dirname(__file__))
+here = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 REQUIRES_PYTHON = '>=3.5.0'
 
+# build requirements
+def build_objects_from_fortran(sources):
+  objects = []
+  path_base = os.path.join(
+    'build',
+    'temp.' + platform.system().lower() + '-'
+    + platform.machine() + '-'
+    + '.'.join(platform.python_version_tuple()[:2]))
+  for source in sources:
+    path_dir, name = source.rsplit(os.path.sep, 1)
+    path_dir_object = os.path.join(path_base, path_dir)
+    if not os.path.exists(path_dir_object):
+      os.makedirs(path_dir_object)
+    path_object = os.path.join(
+      path_dir_object,
+      os.path.splitext(name)[0] + '.o')
+    objects.append(os.path.relpath(path_object))
+    command_compile_fortran_mod = (
+      'gfortran ' + ' -O3 -fPIC -c ' + source + ' -o ' + path_object)
+
+    print(command_compile_fortran_mod)
+    subprocess.check_output(command_compile_fortran_mod, shell=True)
+  return objects
+
+ext_folder = 'arpessimist/fortran_routines/'
+
+object_sources = [ext_folder + 'bspline_kinds_module.f90',
+    ext_folder + 'bspline_sub_module.f90',
+    ext_folder + 'bspline_oo_module.f90',
+    ext_folder + 'bspline_module.f90',
+    ]
+# build requirements
+extra_objects = build_objects_from_fortran(object_sources)
+# build kmap extension
+ext_sources = [ext_folder + 'kmaps.f90']
+extensions = Extension(
+        name = 'kmaps',
+        sources = ext_sources,
+        extra_objects = extra_objects,
+        )
 # Get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
-setup(
+
+metadata = dict(
     name='arpessimist',  # Required
     version='0.1.10',  # Required
     description='ARPES evaluation software',  # Optional
     long_description=long_description,  # Optional
-    long_description_content_type='text/markdown',  # Optional (see note above)
     url='https://github.com/FalconTube/ARPESsimist',  # Optional
     author='Yannic Falke',  # Optional
     author_email='yannic.falke@gmail.com',  # Optional
     python_requires=REQUIRES_PYTHON,
-    #platform = ['linux_x86_64',],
+    platforms = ['Linux'],
     classifiers=[  # Optional
-        # How mature is this project? Common values are
-        #   3 - Alpha
-        #   4 - Beta
-        #   5 - Production/Stable
         'Development Status :: 4 - Beta',
-
-        # Indicate who your project is intended for
-        # 'Intended Audience :: SCIENCE/RESEARCH',
-        # 'Topic :: Data Evaluation :: ARPES',
-
-        # Pick your license as you wish
         'License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)',
-
-        # Specify the Python versions you support here. In particular, ensure
-        # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
     ],
-    # packages=find_packages(exclude=['contrib', 'docs', 'tests']),  # Required
-    # packages=['arpessimist', 'arpessimist/src'],  # Required
-    packages=find_packages(),  # Required
-    # package_dir={'' : 'arpessimisst'},
-    package_data=extension_packages,
+    package_dir={'arpessimist' : 'arpessimist'},
+    packages=find_packages(
+        exclude='logo'
+        ),  # Required
+    #package_data=extension_packages,
     entry_points={  # Optional
         'console_scripts': [
             # 'arpessimist=arpessimist/src:main_gui.py',
             'arpessimist=arpessimist:main_gui.run',
         ],
     },
-    include_package_data=True,
+    #include_package_data=True,
     install_requires=['setuptools',
                     'PyWavelets',
                     'h5py',
                     'matplotlib',
-                    'numpy==1.16.0',
+                    'numpy',
                     'scipy',
                     'natsort',
                     'PyQt5',
                     ],  # Optional
     zip_safe=False,
+    ext_modules = [extensions],
+    cmdclass={'sdist' : sdist},
 )
+
+setup(**metadata)
