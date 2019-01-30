@@ -46,7 +46,7 @@ install:
 - cmd: "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 #- sh: "sudo apt-get install libgfortran3"
 #- sh: "gfortran --version"
-- pip install -U --upgrade pip setuptools wheel
+- '%CMD_IN_ENV% python -m pip install -U pip setuptools wheel'
 - pip install --quiet -U --upgrade wheel
 - pip install --quiet -r requirements.txt
 - ps: |
