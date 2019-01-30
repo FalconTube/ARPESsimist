@@ -39,6 +39,9 @@ init:
 - cmd: set PATH=%MINGW_DIR%;%PATH%
 - cmd: set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
 # Replace numpy distutils with a version that can build with msvc + mingw-gfortran
+- pip install -U pip setuptools wheel
+- pip install --quiet -U --upgrade wheel
+- pip install --quiet -r requirements.txt
 - ps: |
       $NumpyDir = $((python -c 'import os; import numpy; print(os.path.dirname(numpy.__file__))') | Out-String).Trim()
       rm -r -Force "$NumpyDir\distutils"
@@ -54,9 +57,7 @@ install:
 - cmd: "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 #- sh: "sudo apt-get install libgfortran3"
 #- sh: "gfortran --version"
-- pip install -U pip setuptools wheel
-- pip install --quiet -U --upgrade wheel
-- pip install --quiet -r requirements.txt
+- mkdir dist
 - pip wheel --no-build-isolation --wheel-dir=dist .
   #- cmd: bash prepare_pyinstall.sh
   #- cmd: "python setup.py bdist_wininst"
