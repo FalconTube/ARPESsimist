@@ -192,10 +192,8 @@ class ApplicationWindow(QMainWindow):
             LastDir = self.settings.value("LastDir")
 
         many_files = QFileDialog.getOpenFileNames(
-            self, "Select one or more files to open", LastDir
-        )
-
-        QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+            self, "Select one or more files to open", directory=LastDir,
+           filter='*.sp2')
         try:
             LastDir = os.path.dirname(many_files[0][0])
             self.settings.setValue("LastDir", LastDir)
@@ -223,7 +221,7 @@ class ApplicationWindow(QMainWindow):
                 LastDir = self.settings.value("LastDir")
             self.statusBar().showMessage("Loading Data...", 2000)
             location = QFileDialog.getOpenFileNames(
-                self, "Select one NXS file to open", LastDir
+                self, "Select one NXS file to open", directory=LastDir, filter='*.nxs')
             )
             QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
             LastDir = os.path.dirname(location[0][0])
@@ -282,11 +280,11 @@ class ApplicationWindow(QMainWindow):
                 "Generating Map. This will take a couple seconds...", 2000
             )
             if not self.p_min:
-                ksteps, esteps, angle_off, tilt, azi, kxmin, kxmax, kymin, kymax, self.p_min, self.p_max = (
+                ksteps, esteps, tilt, angle_off, azi, kxmin, kxmax, kymin, kymax, self.p_min, self.p_max = (
                     outvalues
                 )
             else:
-                ksteps, esteps, angle_off, tilt, azi, kxmin, kxmax, kymin, kymax = (
+                ksteps, esteps, tilt, angle_off, azi, kxmin, kxmax, kymin, kymax = (
                     outvalues
                 )
 

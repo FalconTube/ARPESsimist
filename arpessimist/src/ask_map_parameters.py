@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
 class MapParameterBox(QDialog):
     """ Initiates Box for user input of Map parameters """
 
-    def __init__(self, saved_values=None ,pol_available=False):
+    def __init__(self, saved_values=None, pol_available=False):
         super().__init__()
         self.pol_available = pol_available
         self.saved_values = saved_values
@@ -95,8 +95,12 @@ class MapParameterBox(QDialog):
         self.lay.addWidget(kymax_label, 9, 0)
 
         if not self.pol_available:
-            pol_min = QLineEdit("0.0", self)
-            pol_max = QLineEdit("20.0", self)
+            if self.saved_values == None:
+                pol_min = QLineEdit("0.0", self)
+                pol_max = QLineEdit("20.0", self)
+            else:
+                pol_min = QLineEdit(str(self.saved_values[9]), self)
+                pol_max = QLineEdit(str(self.saved_values[10]), self)
             # pol_steps = QLineEdit('20.0', self)
             pol_min_label = QLabel("Azimuth Start", self)
             pol_max_label = QLabel("Azimuth End", self)

@@ -1,5 +1,6 @@
 module kmaps
-use bspline_sub_module
+!use bspline_sub_module
+use bspline_module
   implicit none  
 
   contains
