@@ -120,7 +120,10 @@ class TwoD_Plotter(MyMplCanvas):
             if not self.respect_aspect:
                 x_range = abs(extent[1] - extent[0])
                 e_range = abs(extent[3] - extent[2])
-                self.aspectratio = x_range / e_range
+                range_rat = x_range / e_range
+                x_pix, e_pix = self.twoD_data.shape
+                pix_rat = x_pix / e_pix
+                self.aspectratio = range_rat * pix_rat
                 if extent != self.old_extent:
                     self.instance_counter = 0
                 self.old_extent = extent.copy()
