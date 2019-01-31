@@ -112,10 +112,7 @@ class StitchWindow(QMainWindow):
             if self.instance_counter > 0:
                 self.menuBar().removeAction(self.ex_menu_action)
                 self.instance_counter = 0
-                
-            #     print('Closing')
-            #     self.export_menu.removeAction("&Save stitched txt")
-            #     self.export_menu.removeAction("&Save stitched sp2")
+
             if self.instance_counter == 0:
                 # Export Menu
                 self.export_menu = QMenu("&Export", self)
@@ -127,6 +124,12 @@ class StitchWindow(QMainWindow):
                     "&Save stitched sp2", Stitcher.export_sp2
                 )
                 self.ex_menu_action = self.menuBar().addMenu(self.export_menu)
+
+                # Stitch 2 Map Menu
+                self.map_menu = QMenu("&Stitch_2_Maps", self)
+                self.map_menu.addAction(
+                        "&Start with current parameters", Stitcher.apply_two_maps)
+                self.map_menu_action = self.menuBar().addMenu(self.map_menu)
             
                 
             self.instance_counter += 1
@@ -179,10 +182,12 @@ class Stitch(QWidget):
         self.fig_layout = fig_layout
         self.vertical = vertical
         self.setParent(self.parent)
+        self.settings = QtCore.QSettings("Stitching", "StitchWin")
 
         # Variables
         self.overlap_percentage = 0
-        self.slider_pos = 0
+        self.overlap_slider_pos = 0
+        self.trimmer_pos = 0
         self.figs_data = self.figs_data
         self.figs_data_initial = self.figs_data
         self.colormap = "terrain"
@@ -248,6 +253,7 @@ class Stitch(QWidget):
         self.layout.addWidget(self.trim_label)
         self.layout.addWidget(self.vmax_slider)
         self.layout.addWidget(self.vmax_label)
+
 
     def compute_aspect(self, extent, orient="s"):
         x_range = abs(extent[1] - extent[0])
@@ -393,7 +399,7 @@ class Stitch(QWidget):
             self.update_vmax(self.lut_slider_pos)
         QApplication.restoreOverrideCursor()
 
-    def stitch(self, overlap):
+    def stitch(self, overlap, drawing=True):
         out = 0
         self.overlap = overlap
         if overlap > 0:
@@ -442,9 +448,12 @@ class Stitch(QWidget):
 
         else:
             out = self.stitch_init()
-        self.stitched_image.set_data(out)
-        self.ax.draw_artist(self.stitched_image)
-        self.ax.figure.canvas.update()
+        if drawing:
+            self.stitched_image.set_data(out)
+            self.ax.draw_artist(self.stitched_image)
+            self.ax.figure.canvas.update()
+        else:
+            return out
 
     def trimmer(self, trimvalue):
         if trimvalue == 0:
@@ -527,15 +536,15 @@ class Stitch(QWidget):
         self.slider.setRange(0, self.slider_range)
         self.slider.setSliderPosition(0)
         self.slider.update()
-        self.stitch(self.slider_pos)
+        self.stitch(self.overlap_slider_pos)
         QApplication.restoreOverrideCursor()
 
     def slider_changed(self, value):
         changed_slider = self.sender()
-        self.slider_pos = changed_slider.value()
-        self.overlap_percentage = self.slider_pos / self.slider_range * 100
+        self.overlap_slider_pos = changed_slider.value()
+        self.overlap_percentage = self.overlap_slider_pos / self.slider_range * 100
         self.Label.setText("Overlap: {:.1f} %".format(self.overlap_percentage))
-        self.stitch(self.slider_pos)
+        self.stitch(self.overlap_slider_pos)
 
     def trimmer_changed(self, value):
         self.need_redraw_upper = True
@@ -544,6 +553,53 @@ class Stitch(QWidget):
         labelpos = self.trimmer_pos / self.trimmer_range * 100
         self.trim_label.setText("Trim: {:.1f} %".format(labelpos))
         self.trimmer(self.trimmer_pos)
+
+    def apply_two_maps(self):
+        trimvalue = self.trimmer_pos
+        overlap = self.overlap_slider_pos
+        self.loader = Sp2_loader()
+        figs_data_left, figs_extents_left, self.settings = self.loader.read_with_gui(location_settings=self.settings)
+        figs_data_right, figs_extents_right, self.settings = self.loader.read_with_gui(location_settings=self.settings)
+        if len(figs_extents_left) != len(figs_extents_right):
+            print('wrong lengths')
+            # QAlertbox
+            return
+        # Define savename
+        location = QFileDialog.getSaveFileName(self, "Choose savename", ".")[0]
+
+        for n in range(len(figs_extents_left)):
+            # Trim
+            left = figs_data_left[:, :, n][:, trimvalue:-trimvalue]
+            right = figs_data_right[:, :, n][:, trimvalue:-trimvalue]
+            # Add to figs_data
+            self.figs_data = left
+            self.figs_data = np.dstack((self.figs_data, right))
+            stitched_data = self.stitch(overlap, drawing=False)
+
+            # Save data
+            shape = stitched_data.shape
+            stitched_data = np.ravel(stitched_data[::-1].T)
+            intens = np.sum(stitched_data)
+            extent = self.lower_extent
+            header = (
+                "P2\n# ERange\t = {} {} # [eV]\n".format(extent[2], extent[3])
+                + "# aRange\t = {} {} # [deg]\n".format(extent[0], extent[1])
+                + "{} {} {}".format(shape[0], shape[1], int(intens))
+            )
+            if '.sp2' in location:
+                savename = location.split('.')[0] + '_{}'.format(n) + '.sp2'
+            else:
+                savename = location + '_{}.sp2'.format(n)
+            # TODO: Check if file already exists
+            np.savetxt(
+                savename,
+                stitched_data.astype(int),
+                fmt="%i",
+                header=header,
+                footer="P2",
+                comments="",
+            )
+
 
     def export_data(self):
         try:
@@ -566,7 +622,7 @@ class Stitch(QWidget):
             location = QFileDialog.getSaveFileName(self, "Choose savename", ".")
             QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
             location = str(location[0])
-            data = self.stitched_image.get_array()
+            #data = self.stitched_image.get_array()
             shape = data.shape
             data = np.ravel(data[::-1].T)
             intens = np.sum(data)

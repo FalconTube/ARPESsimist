@@ -11,7 +11,8 @@ from scipy.interpolate import interp2d
 
 
 # from PyQt5.QtCore import QThread
-from PyQt5.QtWidgets import QProgressBar, QWidget, QApplication, QMessageBox
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import QProgressBar, QWidget, QApplication, QMessageBox, QFileDialog
 
 
 class Sp2_loader:
@@ -133,6 +134,54 @@ class Sp2_loader:
         indata = np.reshape(indata, (ydim, -1))
         data = np.swapaxes(indata, 0, 1)[::-1]
         return data
+
+    def read_with_gui(self, is_sp2=True, location_settings=None, sort=True):
+        settings = location_settings
+        if is_sp2:
+            # Choose Data
+            LastDir = "."
+            if not settings.value("LastDir") == None:
+                LastDir = settings.value("LastDir")
+            try:
+                many_files = QFileDialog.getOpenFileNames(
+                    self.parent, "Select one or more files to open", LastDir
+                )
+                QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+
+                LastDir = os.path.dirname(many_files[0][0])
+                settings.setValue("LastDir", LastDir)
+                # Start loading Data
+                sp2 = Sp2_loader()
+                # loaded_filenames = sp2.tidy_up_list(many_files[0])
+                loaded_filenames = many_files[0]
+                fignum = len(loaded_filenames)
+                figs_data, figs_extents = sp2.read_multiple_sp2(
+                    loaded_filenames, natsort=False
+                )
+                QApplication.restoreOverrideCursor()
+                return figs_data, figs_extents, settings
+            except ValueError:
+                return
+
+        else:
+            LastDir = "."
+            if not settings.value("LastDir") == None:
+                LastDir = settings.value("LastDir")
+            self.statusBar().showMessage("Loading Data...", 2000)
+            location = QFileDialog.getOpenFileNames(
+                self.parent, "Select one NXS file to open", directory=LastDir, filter='*.nxs')
+            QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+            LastDir = os.path.dirname(location[0][0])
+            settings.setValue("LastDir", LastDir)
+
+            location = str(location[0][0])
+            self.hd5mode = True
+            H5loader = LoadHDF5(location)
+            angle_data, angle_extent, p_min, p_max = (
+                H5loader.return_data()
+            )
+            QApplication.restoreOverrideCursor()
+            return angle_data, angle_extent, p_min, p_max, settings
 
     def interpolate_data(self, out_arr, data, extent):
         out_data = True
