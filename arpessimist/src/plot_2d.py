@@ -1,7 +1,7 @@
 import numpy as np
 import os
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QSlider, QFileDialog, QMenu, QLabel, QInputDialog
+from PyQt5.QtWidgets import QSlider, QFileDialog, QMenu, QLabel, QInputDialog, QApplication
 
 from .mpl_canvas_class import MyMplCanvas
 from .set_parabola_fit import FitParabola
@@ -218,12 +218,12 @@ class TwoD_Plotter(MyMplCanvas):
             50,
             3,
         )[0]
-        tmp_extent = self.new_current_extent
-        tmp_extent[0] += val
-        tmp_extent[1] += val
-        self.new_current_extent = tmp_extent
+        QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+        self.processing_extent = [([x[0] + val, x[1] + val, x[2], x[3]]) for x in self.processing_extent]
+        self.update_current_data()
         self.update_widgets()
         self.initialize_2D_plot()
+        QApplication.restoreOverrideCursor()
 
     def shift_y(self):
         val = QInputDialog.getDouble(
@@ -235,12 +235,12 @@ class TwoD_Plotter(MyMplCanvas):
             50,
             3,
         )[0]
-        tmp_extent = self.new_current_extent
-        tmp_extent[2] += val
-        tmp_extent[3] += val
-        self.new_current_extent = tmp_extent
+        QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+        self.processing_extent = [([x[0], x[1], x[2] + val, x[3] + val]) for x in self.processing_extent]
+        self.update_current_data()
         self.update_widgets()
         self.initialize_2D_plot()
+        QApplication.restoreOverrideCursor()
 
     def save_maxima(self):
         try:

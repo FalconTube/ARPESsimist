@@ -194,6 +194,7 @@ class ApplicationWindow(QMainWindow):
         many_files = QFileDialog.getOpenFileNames(
             self, "Select one or more files to open", directory=LastDir,
            filter='*.sp2')
+        QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         try:
             LastDir = os.path.dirname(many_files[0][0])
             self.settings.setValue("LastDir", LastDir)
