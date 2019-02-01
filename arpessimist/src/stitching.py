@@ -1,6 +1,7 @@
 import sys
 import numpy as np
 import os
+import glob
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import (
     QMainWindow,
@@ -15,6 +16,7 @@ from PyQt5.QtWidgets import (
     QLabel,
     QComboBox,
     QAction,
+    QMessageBox,
 )
 
 from matplotlib.backends.backend_qt5agg import (
@@ -33,6 +35,7 @@ class StitchWindow(QMainWindow):
 
     def __init__(self, vertical=False):
         QMainWindow.__init__(self)
+        self.statusbar = self.statusBar()
         self.vertical = vertical
         self.instance_counter = 0
         self.settings = QtCore.QSettings("Stitching", "StitchWin")
@@ -57,7 +60,8 @@ class StitchWindow(QMainWindow):
 
         # File Menu
         self.file_menu = QMenu("&File", self)
-        self.file_menu.addAction("&Load Data", self.get_figdat)
+        self.file_menu.addAction("&Load Data", self.get_figdat_normal)
+        self.file_menu.addAction("&Load Map Stitching", self.get_figdat_maps)
         self.file_menu.addAction(
             "&Quit", self.fileQuit, QtCore.Qt.CTRL + QtCore.Qt.Key_Q
         )
@@ -75,7 +79,7 @@ class StitchWindow(QMainWindow):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("ARPESsimist - Stitching")
 
-    def get_figdat(self):
+    def get_figdat_normal(self):
         # Choose Data
         LastDir = "."
         if not self.settings.value("LastDir") == None:
@@ -99,43 +103,49 @@ class StitchWindow(QMainWindow):
 
             self.clear_layout(self.over_layout)
             # Hand over to Stitcher
-            # self.Stitcher = Stitch(
-            Stitcher = Stitch(
-                fignum,
-                figs_data,
-                figs_extents,
-                self.over_layout,
-                self.figs_layout,
-                self.main_widget,
-                vertical=self.vertical,
-            )
-            if self.instance_counter > 0:
-                self.menuBar().removeAction(self.ex_menu_action)
-                self.instance_counter = 0
+            self.start_stitcher(fignum, figs_data, figs_extents)
 
-            if self.instance_counter == 0:
-                # Export Menu
-                self.export_menu = QMenu("&Export", self)
-                # self.txt_action = QAction("&Save stitched txt", self.Stitcher.export_data)
-                self.export_menu.addAction(
-                    "&Save stitched txt", Stitcher.export_data
-                )
-                self.export_menu.addAction(
-                    "&Save stitched sp2", Stitcher.export_sp2
-                )
-                self.ex_menu_action = self.menuBar().addMenu(self.export_menu)
-
-                # Stitch 2 Map Menu
-                self.map_menu = QMenu("&Stitch_2_Maps", self)
-                self.map_menu.addAction(
-                        "&Start with current parameters", Stitcher.apply_two_maps)
-                self.map_menu_action = self.menuBar().addMenu(self.map_menu)
-            
-                
             self.instance_counter += 1
+
         except ValueError:
+            QApplication.restoreOverrideCursor()
             pass
         QApplication.restoreOverrideCursor()
+
+    def get_figdat_maps(self):
+        LastDir = '.'
+        if not self.settings.value("LastDir") == None:
+            LastDir = self.settings.value("LastDir")
+        try:
+            QMessageBox(
+                    QMessageBox.Information,
+                    "Stitch 2 Maps",
+                    "Two windows will open:<br>"+
+                    "1. Select <b>one</b> file from <b>first</b> map<br>"+
+                    "2. Select <b>matching</b> file from <b>second</b> map<br>",
+                    QMessageBox.Ok 
+                    ).exec()
+
+            fp1 = QFileDialog.getOpenFileName(
+                    self, "Select left", LastDir
+            )[0]
+            LastDir = os.path.dirname(fp1)
+            fp2 = QFileDialog.getOpenFileName(
+                    self, "Select right", LastDir
+            )[0]
+            loaded_filenames = [fp1, fp2]
+
+            sp2 = Sp2_loader()
+            figs_data, figs_extents = sp2.read_multiple_sp2(
+                loaded_filenames, natsort=False
+            )
+            self.clear_layout(self.over_layout)
+            # Hand over to Stitcher
+            self.start_stitcher(2, figs_data, figs_extents, loaded_filenames)
+            
+
+        except ValueError:
+            pass
 
     def clear_layout(self, layout):
         if layout is not None:
@@ -149,6 +159,41 @@ class StitchWindow(QMainWindow):
 
     def start_summation(self):
         SI = SumImages(self.settings, self)
+
+    def start_stitcher(self,fignum, figs_data, figs_extents, filepaths=None):
+        Stitcher = Stitch(
+            fignum,
+            figs_data,
+            figs_extents,
+            self.over_layout,
+            self.figs_layout,
+            self.main_widget,
+            statusbar=self.statusbar,
+            vertical=self.vertical,
+            filepaths=filepaths
+        )
+        if self.instance_counter > 0:
+            self.menuBar().removeAction(self.ex_menu_action)
+            self.instance_counter = 0
+
+        if self.instance_counter == 0:
+            # Export Menu
+            self.export_menu = QMenu("&Export", self)
+            # self.txt_action = QAction("&Save stitched txt", self.Stitcher.export_data)
+            self.export_menu.addAction(
+                "&Save stitched txt", Stitcher.export_data
+            )
+            self.export_menu.addAction(
+                "&Save stitched sp2", Stitcher.export_sp2
+            )
+            self.ex_menu_action = self.menuBar().addMenu(self.export_menu)
+
+            # Stitch 2 Map Menu
+            self.map_menu = QMenu("&Stitch_2_Maps", self)
+            self.map_menu.addAction(
+                    "&Start with current parameters", Stitcher.apply_two_maps)
+            self.map_menu_action = self.menuBar().addMenu(self.map_menu)
+        self.instance_counter += 1
 
     def fileQuit(self):
         """ Closes current instance """
@@ -171,7 +216,9 @@ class Stitch(QWidget):
         layout,
         fig_layout,
         parent=None,
+        statusbar=None,
         vertical=False,
+        filepaths=None,
     ):
         super().__init__()
         self.parent = parent
@@ -181,12 +228,15 @@ class Stitch(QWidget):
         self.layout = layout
         self.fig_layout = fig_layout
         self.vertical = vertical
+        self.filepaths = filepaths
         self.setParent(self.parent)
+        self.statusbar = statusbar
         self.settings = QtCore.QSettings("Stitching", "StitchWin")
+        self.statusbar.showMessage("Finished loading data", 2000)
 
         # Variables
         self.overlap_percentage = 0
-        self.overlap_slider_pos = 0
+        self.slider_pos = 0
         self.trimmer_pos = 0
         self.figs_data = self.figs_data
         self.figs_data_initial = self.figs_data
@@ -401,7 +451,7 @@ class Stitch(QWidget):
 
     def stitch(self, overlap, drawing=True):
         out = 0
-        self.overlap = overlap
+        #self.overlap = overlap
         if overlap > 0:
             prev_data = None
             for n in range(self.fignum):
@@ -448,12 +498,11 @@ class Stitch(QWidget):
 
         else:
             out = self.stitch_init()
+        # Always update the dataset
+        self.stitched_image.set_data(out)
         if drawing:
-            self.stitched_image.set_data(out)
             self.ax.draw_artist(self.stitched_image)
             self.ax.figure.canvas.update()
-        else:
-            return out
 
     def trimmer(self, trimvalue):
         if trimvalue == 0:
@@ -536,15 +585,18 @@ class Stitch(QWidget):
         self.slider.setRange(0, self.slider_range)
         self.slider.setSliderPosition(0)
         self.slider.update()
-        self.stitch(self.overlap_slider_pos)
+        self.stitch(self.slider_pos)
         QApplication.restoreOverrideCursor()
 
-    def slider_changed(self, value):
-        changed_slider = self.sender()
-        self.overlap_slider_pos = changed_slider.value()
-        self.overlap_percentage = self.overlap_slider_pos / self.slider_range * 100
+    def slider_changed(self, value=None):
+        if value is None:
+            changed_slider = self.sender()
+            self.slider_pos = changed_slider.value()
+        else:
+            self.slider_pos = value
+        self.overlap_percentage = self.slider_pos / self.slider_range * 100
         self.Label.setText("Overlap: {:.1f} %".format(self.overlap_percentage))
-        self.stitch(self.overlap_slider_pos)
+        self.stitch(self.slider_pos)
 
     def trimmer_changed(self, value):
         self.need_redraw_upper = True
@@ -556,30 +608,40 @@ class Stitch(QWidget):
 
     def apply_two_maps(self):
         trimvalue = self.trimmer_pos
-        overlap = self.overlap_slider_pos
-        self.loader = Sp2_loader()
-        figs_data_left, figs_extents_left, self.settings = self.loader.read_with_gui(location_settings=self.settings)
-        figs_data_right, figs_extents_right, self.settings = self.loader.read_with_gui(location_settings=self.settings)
+        overlap = self.slider_pos
+        loader = Sp2_loader()
+        folder1, folder2 = [os.path.dirname(i) for i in self.filepaths]
+        files_1 = glob.glob(folder1 + '/*.sp2')
+        files_2 = glob.glob(folder2 + '/*.sp2')
+        location = QFileDialog.getSaveFileName(self, "Choose savename", ".")[0]
+        QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+        self.statusbar.showMessage("Loading dataset 1...", 2000)
+        figs_data_left, figs_extents_left  = loader.read_multiple_sp2(files_1)
+        self.statusbar.showMessage("Loading dataset 2...", 2000)
+        figs_data_right, figs_extents_right = loader.read_multiple_sp2(files_2)
         if len(figs_extents_left) != len(figs_extents_right):
             print('wrong lengths')
             # QAlertbox
             return
         # Define savename
-        location = QFileDialog.getSaveFileName(self, "Choose savename", ".")[0]
 
         for n in range(len(figs_extents_left)):
+            self.statusbar.showMessage("Stitching data {}...".format(n), 2000)
             # Trim
             left = figs_data_left[:, :, n][:, trimvalue:-trimvalue]
             right = figs_data_right[:, :, n][:, trimvalue:-trimvalue]
             # Add to figs_data
-            self.figs_data = left
-            self.figs_data = np.dstack((self.figs_data, right))
-            stitched_data = self.stitch(overlap, drawing=False)
+            tmp = left
+            self.figs_data = np.dstack((tmp, right))
+            #self.slider_range = int((self.figs_data.shape[0]) / 1)
+            self.stitch(overlap, drawing=False)
+            self.slider_changed(overlap)
+            data = self.stitched_image.get_array()
 
             # Save data
-            shape = stitched_data.shape
-            stitched_data = np.ravel(stitched_data[::-1].T)
-            intens = np.sum(stitched_data)
+            shape = data.shape
+            data = np.ravel(data[::-1].T)
+            intens = np.sum(data)
             extent = self.lower_extent
             header = (
                 "P2\n# ERange\t = {} {} # [eV]\n".format(extent[2], extent[3])
@@ -593,12 +655,14 @@ class Stitch(QWidget):
             # TODO: Check if file already exists
             np.savetxt(
                 savename,
-                stitched_data.astype(int),
+                data.astype(int),
                 fmt="%i",
                 header=header,
                 footer="P2",
                 comments="",
             )
+        self.statusbar.showMessage("Finished!", 2000)
+        QApplication.restoreOverrideCursor()
 
 
     def export_data(self):
@@ -619,10 +683,9 @@ class Stitch(QWidget):
 
     def export_sp2(self):
         try:
-            location = QFileDialog.getSaveFileName(self, "Choose savename", ".")
+            location = QFileDialog.getSaveFileName(self, "Choose savename", ".")[0]
             QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-            location = str(location[0])
-            #data = self.stitched_image.get_array()
+            data = self.stitched_image.get_array()
             shape = data.shape
             data = np.ravel(data[::-1].T)
             intens = np.sum(data)
@@ -640,7 +703,7 @@ class Stitch(QWidget):
                 footer="P2",
                 comments="",
             )
-        except:
+        except ValueError:
             pass
         QApplication.restoreOverrideCursor()
 
