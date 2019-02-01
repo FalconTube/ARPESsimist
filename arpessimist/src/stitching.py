@@ -613,7 +613,16 @@ class Stitch(QWidget):
         folder1, folder2 = [os.path.dirname(i) for i in self.filepaths]
         files_1 = glob.glob(folder1 + '/*.sp2')
         files_2 = glob.glob(folder2 + '/*.sp2')
+        # Choose a savename
+
+        QMessageBox(
+                QMessageBox.Information,
+                "Stitch 2 Maps",
+                "Now choose a <b>directory</b> and <b>name</b> for saving",
+                QMessageBox.Ok 
+                ).exec()
         location = QFileDialog.getSaveFileName(self, "Choose savename", ".")[0]
+
         QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         self.statusbar.showMessage("Loading dataset 1...", 2000)
         figs_data_left, figs_extents_left  = loader.read_multiple_sp2(files_1)
