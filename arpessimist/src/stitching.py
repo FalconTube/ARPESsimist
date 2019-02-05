@@ -451,18 +451,19 @@ class Stitch(QWidget):
 
     def stitch(self, overlap, drawing=True):
         out = 0
-        #self.overlap = overlap
         if overlap > 0:
+            print('overlap {}'.format(overlap))
             prev_data = None
             for n in range(self.fignum):
                 current_data = self.figs_data[:, :, n]
-                if self.vertical:
-                    current_data = current_data.T
 
-                l_over = current_data[:, :overlap]
+                #curr_overlap = current_data[:, overlap:]
+                curr_overlap = current_data[:, :overlap]
                 if n == 0:  # Ensure that we start with a left side
-                    out = l_over
-                    data = current_data[:, overlap:-overlap]
+                    #out = curr_overlap
+                    #data = current_data[:, overlap:-overlap]
+                    out = current_data[:, :-overlap]
+                    #data = current_data[:, :overlap]
                 if n == self.fignum - 1:  # If at end
                     data = current_data[:, overlap:]
                 else:
@@ -472,27 +473,15 @@ class Stitch(QWidget):
                     prev_overlap = prev_data[:, -overlap:]
                     # Renormalize Data
                     sum_prev = np.sum(prev_overlap)
-                    sum_curr = np.sum(l_over)
+                    sum_curr = np.sum(curr_overlap)
                     ratio = sum_prev / sum_curr
                     self.figs_data[:, :, n - 1] = self.figs_data[:, :, n - 1] / ratio
                     # Linear overlap
                     r_tmp = self.linear_profile(prev_overlap, "r")
-                    l_tmp = self.linear_profile(l_over, "l")
-                    l_over = l_tmp + r_tmp
-                    if self.vertical:
-                        print("VERTICAL")
-                        # print('lover')
-                        # print(out.shape)
-                        # print(l_over.shape)
-                        out = np.vstack((out, l_over))
-                    else:
-                        out = np.hstack((out, l_over))
-                # print('###########')
-                # print(out.shape)
-                # print(data.shape)
-                if self.vertical:
-                    out = np.vstack((out, data))
-                else:
+                    l_tmp = self.linear_profile(curr_overlap, "l")
+                    curr_overlap = l_tmp + r_tmp
+                    out = np.hstack((out, curr_overlap))
+                #out = np.hstack((out, data))
                     out = np.hstack((out, data))
                 prev_data = current_data
 
