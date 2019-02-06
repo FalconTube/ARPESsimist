@@ -140,7 +140,6 @@ use bspline_module
       integer, intent(in) :: outx ! length of out arrays
       integer, intent(in) :: outy
       integer, intent(in) :: outz
-      
 
       
       double precision, dimension(nx), intent(in) :: xgrid
@@ -262,135 +261,135 @@ use bspline_module
 
   end subroutine kslice_spline_horizontal
 
-  subroutine kslice_trilin(xgrid, ygrid, zgrid, nx, ny, nz, indata,&
-    xevalgrid, yevalgrid, zevalgrid, outx, outy, outz,&
-    tilt, azimuth, outarray)
-integer, intent(in) :: nx ! length of arrays
-integer, intent(in) :: ny
-integer, intent(in) :: nz
-integer, intent(in) :: outx ! length of out arrays
-integer, intent(in) :: outy
-integer, intent(in) :: outz
+  !subroutine kslice_trilin(xgrid, ygrid, zgrid, nx, ny, nz, indata,&
+    !xevalgrid, yevalgrid, zevalgrid, outx, outy, outz,&
+    !tilt, azimuth, outarray)
+!integer, intent(in) :: nx ! length of arrays
+!integer, intent(in) :: ny
+!integer, intent(in) :: nz
+!integer, intent(in) :: outx ! length of out arrays
+!integer, intent(in) :: outy
+!integer, intent(in) :: outz
 
 
 
-double precision, dimension(nx), intent(in) :: xgrid
-double precision, dimension(ny), intent(in) :: ygrid
-double precision, dimension(nz), intent(in) :: zgrid
-double precision, dimension(nx, ny, nz), intent(in) :: indata
+!double precision, dimension(nx), intent(in) :: xgrid
+!double precision, dimension(ny), intent(in) :: ygrid
+!double precision, dimension(nz), intent(in) :: zgrid
+!double precision, dimension(nx, ny, nz), intent(in) :: indata
 
-double precision, dimension(outx), intent(in) :: xevalgrid
-double precision, dimension(outy), intent(in) :: yevalgrid
-double precision, dimension(outz), intent(in) :: zevalgrid
+!double precision, dimension(outx), intent(in) :: xevalgrid
+!double precision, dimension(outy), intent(in) :: yevalgrid
+!double precision, dimension(outz), intent(in) :: zevalgrid
 
-double PRECISION, intent(in) :: tilt
-double PRECISION, intent(in) :: azimuth
+!double PRECISION, intent(in) :: tilt
+!double PRECISION, intent(in) :: azimuth
 
-double precision, dimension(outx, outy, outz), intent(out) :: outarray 
-double precision, dimension(outx, outy, nz) :: tmp_array 
-
-
-double precision :: outval
-
-double precision :: xeval
-double precision :: yeval
-double precision :: zeval
-double precision :: xpoint
-double precision :: ypoint
-double precision :: zpoint
-integer :: countx
-integer :: county
-integer :: countz
+!double precision, dimension(outx, outy, outz), intent(out) :: outarray 
+!double precision, dimension(outx, outy, nz) :: tmp_array 
 
 
+!double precision :: outval
+
+!double precision :: xeval
+!double precision :: yeval
+!double precision :: zeval
+!double precision :: xpoint
+!double precision :: ypoint
+!double precision :: zpoint
+!integer :: countx
+!integer :: county
+!integer :: countz
 
 
-double PRECISION :: inner_sqrt_term
-double PRECISION :: k
-double PRECISION :: pi
-double PRECISION :: tlt
-double PRECISION :: az
-double PRECISION :: kx
-double PRECISION :: ky
-double PRECISION :: kz
-double PRECISION :: atilt
-double PRECISION :: cospol
-double PRECISION :: pol_angle
-
-double PRECISION :: rad
-
-print *, 'init'
-
-! convert to rad
-PI=4.D0*DATAN(1.D0)
-rad = 180.D0/PI
-tlt = tilt * PI/180.D0 
-az = azimuth*PI/180.D0
-print *, nx, ny, nz
-
-print *, 'starting loop'
-
-!$omp parallel private(zeval, xeval, yeval, countx, county) &
-!$omp& private(kx, ky, kz, k, az, tlt, atilt, cospol, pol_angle) &
-!$omp& private(xpoint, ypoint, zpoint, outval)
-!$omp do
-do countz=1, nz
-  zeval = zgrid(countz)
-  do countx=1, outx
-    xeval = xevalgrid(countx)
-    do county=1, outy
-      yeval = yevalgrid(county)
-
-      call calc_k(zeval, xeval, yeval, inner_sqrt_term, k)
-      kx = xeval/k
-      ky = yeval/k
-      kz = sqrt(1.D0- kx*kx - ky*ky)
-      call c_a_tilt(kx, ky, kz, az, tlt, atilt)
-      call c_cos_pol(kz, tlt, atilt, cospol)
-      call c_pol(atilt, az, tlt, kx, cospol, pol_angle)
-
-      xpoint = -pol_angle * rad
-      ypoint = atilt * rad
-      ! zpoint = zeval
-      call interpolate_2D(nx, xgrid, ny, ygrid, indata(:,:, countz),&
-                          xpoint, ypoint, outval)
-      
-      tmp_array(countx, county, countz) = outval
-
-    end do
-  end do
-end do
-!$omp end do
-!$omp end parallel
-print *, 'finished first loop'
 
 
-print *, 'starting second loop'
+!double PRECISION :: inner_sqrt_term
+!double PRECISION :: k
+!double PRECISION :: pi
+!double PRECISION :: tlt
+!double PRECISION :: az
+!double PRECISION :: kx
+!double PRECISION :: ky
+!double PRECISION :: kz
+!double PRECISION :: atilt
+!double PRECISION :: cospol
+!double PRECISION :: pol_angle
 
-!!$omp parallel private(zeval, countx, county, outval)
+!double PRECISION :: rad
+
+!print *, 'init'
+
+!! convert to rad
+!PI=4.D0*DATAN(1.D0)
+!rad = 180.D0/PI
+!tlt = tilt * PI/180.D0 
+!az = azimuth*PI/180.D0 
+!print *, nx, ny, nz
+
+!print *, 'starting loop'
+
+!!$omp parallel private(zeval, xeval, yeval, countx, county) &
+!!$omp& private(kx, ky, kz, k, az, tlt, atilt, cospol, pol_angle) &
+!!$omp& private(xpoint, ypoint, zpoint, outval)
 !!$omp do
-do countz=1, outz
-  zeval=zevalgrid(countz)
-  do countx=1, outx
-    do county=1, outy
+!do countz=1, nz
+  !zeval = zgrid(countz)
+  !do countx=1, outx
+    !xeval = xevalgrid(countx)
+    !do county=1, outy
+      !yeval = yevalgrid(county)
 
-      call interpolate_1D(nz, zgrid, tmp_array(countx, county, :),&
-                      zeval, outval)
+      !call calc_k(zeval, xeval, yeval, inner_sqrt_term, k)
+      !kx = xeval/k
+      !ky = yeval/k
+      !kz = sqrt(1.D0- kx*kx - ky*ky)
+      !call c_a_tilt(kx, ky, kz, az, tlt, atilt)
+      !call c_cos_pol(kz, tlt, atilt, cospol)
+      !call c_pol(atilt, az, tlt, kx, cospol, pol_angle)
+
+      !xpoint = -pol_angle * rad
+      !ypoint = atilt * rad
+      !! zpoint = zeval
+      !call interpolate_2D(nx, xgrid, ny, ygrid, indata(:,:, countz),&
+                          !xpoint, ypoint, outval)
       
-      outarray(countx, county, countz) = outval
+      !tmp_array(countx, county, countz) = outval
 
-    end do
-  end do
-end do
-! !$omp end do
-! !$omp end parallel
-
-print *, 'finished second loop'
-
+    !end do
+  !end do
+!end do
+!!$omp end do
+!!$omp end parallel
+!print *, 'finished first loop'
 
 
+!print *, 'starting second loop'
 
-end subroutine kslice_trilin
+!!!$omp parallel private(zeval, countx, county, outval)
+!!!$omp do
+!do countz=1, outz
+  !zeval=zevalgrid(countz)
+  !do countx=1, outx
+    !do county=1, outy
+
+      !call interpolate_1D(nz, zgrid, tmp_array(countx, county, :),&
+                      !zeval, outval)
+      
+      !outarray(countx, county, countz) = outval
+
+    !end do
+  !end do
+!end do
+!! !$omp end do
+!! !$omp end parallel
+
+!print *, 'finished second loop'
+
+
+
+
+!end subroutine kslice_trilin
 
 
   subroutine calc_k(E, k1, k2, inner_sqrt_term, k)
@@ -432,10 +431,21 @@ end subroutine kslice_trilin
   subroutine az_horiz(kx, ky, kz, tlt, az)
   double precision, intent(in) :: kx, ky, kz, tlt
   double precision, intent(out) :: az
+  double precision :: sin_term, cos_term
   
-  az = asin(&
-    (abs(kx) * kz * tan(tlt) - abs(ky) * sqrt(1d0-kz**2/(cos(tlt)**2)))/&
+  sin_term = (&
+    ((kx) * kz * tan(tlt) -(ky) * sqrt(1d0-kz**2/(cos(tlt)**2)))/&
     (1d0-kz**2))
+
+  cos_term =(&
+      (kz * tan(tlt) - kx * sin_term) / ky &
+      )
+  
+  !az = mod(atan2(sin_term, cos_term) / 3.1415 * 180d0, 360d0) * 3.1415/180d0
+  az = atan2(sin_term, cos_term)
+  !az = asin(&
+    !((kx) * kz * tan(tlt) -(ky) * sqrt(1d0-kz**2/(cos(tlt)**2)))/&
+    !(1d0-kz**2))
   
   end subroutine
 
@@ -444,7 +454,8 @@ end subroutine kslice_trilin
   double precision, intent(out) :: pol
   
 
-  pol = asin(abs(ky) * sin(az) - abs(kx) * cos(az))
+  pol = asin((ky) * sin(az) -(kx) * cos(az))
+  !pol = asin(abs(ky) * sin(az) - abs(kx) * cos(az))
 
   end subroutine
 

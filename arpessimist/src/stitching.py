@@ -225,12 +225,14 @@ class Stitch(QWidget):
         self.fignum = fignum
         self.figs_data = figs_data
         self.figs_extents = figs_extents
+        self.half_width = int(self.figs_data.shape[1]/2)
         self.layout = layout
         self.fig_layout = fig_layout
         self.vertical = vertical
         self.filepaths = filepaths
         self.setParent(self.parent)
         self.statusbar = statusbar
+        self.is_over_50_count = 0
         self.settings = QtCore.QSettings("Stitching", "StitchWin")
         self.statusbar.showMessage("Finished loading data", 2000)
 
@@ -449,49 +451,81 @@ class Stitch(QWidget):
             self.update_vmax(self.lut_slider_pos)
         QApplication.restoreOverrideCursor()
 
-    def stitch(self, overlap, drawing=True):
-        out = 0
-        if overlap > 0:
-            print('overlap {}'.format(overlap))
-            prev_data = None
-            for n in range(self.fignum):
-                current_data = self.figs_data[:, :, n]
+    def stitch_n(self, overlap, drawing=True):
 
-                #curr_overlap = current_data[:, overlap:]
-                curr_overlap = current_data[:, :overlap]
-                if n == 0:  # Ensure that we start with a left side
-                    #out = curr_overlap
-                    #data = current_data[:, overlap:-overlap]
-                    out = current_data[:, :-overlap]
-                    #data = current_data[:, :overlap]
-                if n == self.fignum - 1:  # If at end
-                    data = current_data[:, overlap:]
-                else:
-                    data = current_data[:, overlap:-overlap]
-                if n > 0:
-                    prev_data = self.figs_data[:, :, n - 1]
-                    prev_overlap = prev_data[:, -overlap:]
-                    # Renormalize Data
-                    sum_prev = np.sum(prev_overlap)
-                    sum_curr = np.sum(curr_overlap)
-                    ratio = sum_prev / sum_curr
-                    self.figs_data[:, :, n - 1] = self.figs_data[:, :, n - 1] / ratio
-                    # Linear overlap
-                    r_tmp = self.linear_profile(prev_overlap, "r")
-                    l_tmp = self.linear_profile(curr_overlap, "l")
-                    curr_overlap = l_tmp + r_tmp
-                    out = np.hstack((out, curr_overlap))
-                #out = np.hstack((out, data))
-                    out = np.hstack((out, data))
-                prev_data = current_data
+        def stitch(overlap, drawing=True):
+            out = 0
+            if overlap > 0:
+                print('overlap {}'.format(overlap))
+                prev_data = None
+                for n in range(self.fignum):
+                    print('fignum {}'.format(self.fignum))
+                    current_data = self.figs_data[:, :, n]
 
-        else:
-            out = self.stitch_init()
-        # Always update the dataset
-        self.stitched_image.set_data(out)
-        if drawing:
-            self.ax.draw_artist(self.stitched_image)
-            self.ax.figure.canvas.update()
+                    #curr_overlap = current_data[:, overlap:]
+                    curr_overlap = current_data[:, :overlap]
+                    if n == 0:  # Ensure that we start with a left side
+                        out = current_data[:, :-overlap]
+                    if n == self.fignum - 1:  # If at end
+                        data = current_data[:, overlap:]
+                    else:
+                        data = current_data[:, overlap:-overlap]
+                    if n > 0:
+                        prev_data = self.figs_data[:, :, n - 1]
+                        prev_overlap = prev_data[:, -overlap:]
+                        # Renormalize Data
+                        sum_prev = np.sum(prev_overlap)
+                        sum_curr = np.sum(curr_overlap)
+                        ratio = sum_prev / sum_curr
+                        self.figs_data[:, :, n - 1] = self.figs_data[:, :, n - 1] / ratio
+                        # Linear overlap
+                        r_tmp = self.linear_profile(prev_overlap, "r")
+                        l_tmp = self.linear_profile(curr_overlap, "l")
+                        curr_overlap = l_tmp + r_tmp
+                        out = np.hstack((out, curr_overlap))
+                    #out = np.hstack((out, data))
+                        out = np.hstack((out, data))
+                    prev_data = current_data
+
+            else:
+                out = self.stitch_init()
+            # Always update the dataset
+            self.stitched_image.set_data(out)
+            if drawing:
+                self.ax.draw_artist(self.stitched_image)
+                self.ax.figure.canvas.update()
+        if self.fignum > 2 and overlap >= self.half_width:
+            QMessageBox(
+                    QMessageBox.Information,
+                    "Alert",
+                    "Stitching Overlap >50% for more than 3 figures is<br>"+
+                    " not yet supported!",
+                    QMessageBox.Ok 
+                    ).exec()
+
+        # if overlap >= self.half_width:
+            # print('IS OVER')
+            # if self.is_over_50_count == 0:
+                # stitch(self.half_width)
+                # curr_fignum = self.figs_data.shape[-1] - 1
+                # self.fignum = curr_fignum
+                # curr_data = self.stitched_image.get_array().copy()
+                # print('curr data shape {}'.format(curr_data.shape))
+                # curr_width = curr_data.shape[-1]
+                # print('curr width {}'.format(curr_width))
+                # for n in range(curr_fignum):
+                    # if n == 0:
+                        # self.figs_data = curr_data[:, :int(curr_width/2)]
+                    # else:
+                        # self.figs_data = np.dstack((self.figs_data,
+                            # curr_data[:, int(curr_width/2):]))
+                # print(self.figs_data.shape)
+            # reduced_overlap = overlap - self.half_width
+            # stitch(reduced_overlap, drawing)
+            # self.is_over_50_count += 1
+        # else:
+            # self.is_over_50_count == 0
+            # stitch(overlap, drawing)
 
     def trimmer(self, trimvalue):
         if trimvalue == 0:
@@ -506,6 +540,7 @@ class Stitch(QWidget):
             else:
                 tmp = np.dstack((tmp, trimmed_data))
         self.figs_data = tmp
+        self.half_width = int(self.figs_data.shape[1]/2)
         self.upper_fig.canvas.update()
 
     def linear_profile(self, data, pos="r"):
@@ -574,7 +609,7 @@ class Stitch(QWidget):
         self.slider.setRange(0, self.slider_range)
         self.slider.setSliderPosition(0)
         self.slider.update()
-        self.stitch(self.slider_pos)
+        self.stitch_n(self.slider_pos)
         QApplication.restoreOverrideCursor()
 
     def slider_changed(self, value=None):
@@ -585,7 +620,7 @@ class Stitch(QWidget):
             self.slider_pos = value
         self.overlap_percentage = self.slider_pos / self.slider_range * 100
         self.Label.setText("Overlap: {:.1f} %".format(self.overlap_percentage))
-        self.stitch(self.slider_pos)
+        self.stitch_n(self.slider_pos)
 
     def trimmer_changed(self, value):
         self.need_redraw_upper = True
@@ -632,7 +667,7 @@ class Stitch(QWidget):
             tmp = left
             self.figs_data = np.dstack((tmp, right))
             #self.slider_range = int((self.figs_data.shape[0]) / 1)
-            self.stitch(overlap, drawing=False)
+            self.stitch_n(overlap, drawing=False)
             self.slider_changed(overlap)
             data = self.stitched_image.get_array()
 
