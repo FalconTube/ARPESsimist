@@ -280,7 +280,19 @@ class Stitch(QWidget):
         if self.vertical:
             self.slider_range = int((self.figs_data[:, :, 0].shape[0]) / 1)
         else:
-            self.slider_range = int((self.figs_data[:, :, 0].shape[1]) / 1)
+            if self.fignum > 2:
+                self.slider_range = int((self.figs_data[:, :, 0].shape[1]) / 2)
+            else:
+                self.slider_range = int((self.figs_data[:, :, 0].shape[1]) / 1)
+        if self.fignum > 2: 
+            QMessageBox(
+                    QMessageBox.Information,
+                    "Alert",
+                    "Please note, stitching Overlap>50% for more than "+
+                    "3 figures is not yet supported!",
+                    QMessageBox.Ok 
+                    ).exec()
+            self.slider_range = self.slider_range/2
         self.slider = self.add_slider(0, self.slider_range)
         self.slider.setSliderPosition(0)
         self.Label = QLabel(self)
@@ -456,10 +468,8 @@ class Stitch(QWidget):
         def stitch(overlap, drawing=True):
             out = 0
             if overlap > 0:
-                print('overlap {}'.format(overlap))
                 prev_data = None
                 for n in range(self.fignum):
-                    print('fignum {}'.format(self.fignum))
                     current_data = self.figs_data[:, :, n]
 
                     #curr_overlap = current_data[:, overlap:]
@@ -494,15 +504,7 @@ class Stitch(QWidget):
             if drawing:
                 self.ax.draw_artist(self.stitched_image)
                 self.ax.figure.canvas.update()
-        if self.fignum > 2 and overlap >= self.half_width:
-            QMessageBox(
-                    QMessageBox.Information,
-                    "Alert",
-                    "Stitching Overlap >50% for more than 3 figures is<br>"+
-                    " not yet supported!",
-                    QMessageBox.Ok 
-                    ).exec()
-
+        stitch(overlap, drawing)
         # if overlap >= self.half_width:
             # print('IS OVER')
             # if self.is_over_50_count == 0:
@@ -566,7 +568,10 @@ class Stitch(QWidget):
     def calc_overlap_extent(self, extent_in):
         lower = extent_in[0]
         upper = extent_in[1]
-        perc = self.overlap_percentage / 100  #  Only goes to 50% overlap
+        if self.fignum > 2:
+            perc = self.overlap_percentage / 50  #  Only goes to 50% overlap
+        else:
+            perc = self.overlap_percentage / 100  #  Only goes to 50% overlap
         n = self.fignum
         one = (upper - lower) / n
         diff = one * perc
@@ -582,7 +587,7 @@ class Stitch(QWidget):
         stepsize = ((upper - 1) - lower) / 1000
         slider_bar.setSingleStep(stepsize)
         slider_bar.setPageStep(10)
-        slider_bar.setToolTip("0")
+        #slider_bar.setToolTip("0")
         return slider_bar
 
     def update_colormap(self):
@@ -605,7 +610,10 @@ class Stitch(QWidget):
         if self.vertical:
             self.slider_range = int((self.figs_data[:, :, 0].shape[0]) / 1)
         else:
-            self.slider_range = int((self.figs_data[:, :, 0].shape[1]) / 1)
+            if self.fignum > 2:
+                self.slider_range = int((self.figs_data[:, :, 0].shape[1]) / 2)
+            else:
+                self.slider_range = int((self.figs_data[:, :, 0].shape[1]) / 1)
         self.slider.setRange(0, self.slider_range)
         self.slider.setSliderPosition(0)
         self.slider.update()
@@ -618,7 +626,10 @@ class Stitch(QWidget):
             self.slider_pos = changed_slider.value()
         else:
             self.slider_pos = value
-        self.overlap_percentage = self.slider_pos / self.slider_range * 100
+        if self.fignum > 2:
+            self.overlap_percentage = self.slider_pos / self.slider_range * 50
+        else:
+            self.overlap_percentage = self.slider_pos / self.slider_range * 100
         self.Label.setText("Overlap: {:.1f} %".format(self.overlap_percentage))
         self.stitch_n(self.slider_pos)
 
