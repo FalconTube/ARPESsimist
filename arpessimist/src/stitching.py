@@ -26,7 +26,7 @@ from matplotlib.backends.backend_qt5agg import (
 
 from matplotlib.figure import Figure
 
-from .load_sp2 import Sp2_loader
+from .load_sp2 import Sp2_loader, GUI_Loader
 from .sum_ints import SumImages
 
 
@@ -81,36 +81,14 @@ class StitchWindow(QMainWindow):
 
     def get_figdat_normal(self):
         # Choose Data
-        LastDir = "."
-        if not self.settings.value("LastDir") == None:
-            LastDir = self.settings.value("LastDir")
-        try:
-            many_files = QFileDialog.getOpenFileNames(
-                self, "Select one or more files to open", LastDir
-            )
-            QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+        loader = GUI_Loader()
+        figs_data, figs_extents, settings = loader.read_with_gui(is_sp2=True,
+                location_settings=self.settings)
+        fignum = len(figs_extents)
+        self.settings = settings
+        self.start_stitcher(fignum, figs_data, figs_extents)
 
-            LastDir = os.path.dirname(many_files[0][0])
-            self.settings.setValue("LastDir", LastDir)
-            # Start loading Data
-            sp2 = Sp2_loader()
-            # loaded_filenames = sp2.tidy_up_list(many_files[0])
-            loaded_filenames = many_files[0]
-            fignum = len(loaded_filenames)
-            figs_data, figs_extents = sp2.read_multiple_sp2(
-                loaded_filenames, natsort=False
-            )
-
-            self.clear_layout(self.over_layout)
-            # Hand over to Stitcher
-            self.start_stitcher(fignum, figs_data, figs_extents)
-
-            self.instance_counter += 1
-
-        except ValueError:
-            QApplication.restoreOverrideCursor()
-            pass
-        QApplication.restoreOverrideCursor()
+        self.instance_counter += 1
 
     def get_figdat_maps(self):
         LastDir = '.'
