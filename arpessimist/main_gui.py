@@ -236,7 +236,7 @@ class ApplicationWindow(QMainWindow):
 
             self.loaded_filenames = range(self.angle_data.shape[0])
             self.load_multiple_files()
-        except:
+        except ValueError:
             self.p_min = old_pmin
             QApplication.restoreOverrideCursor()
 

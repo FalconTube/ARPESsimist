@@ -1,3 +1,4 @@
+import sys
 import glob
 import os
 import numpy as np
@@ -49,11 +50,11 @@ class Sp2_loader:
                     xdim, ydim, total_counts = [int(i) for i in line.split()]
                     continue
                 if data_set_count == 0:
-                    rawdata.append(float(stripline))
+                    rawdata.append(np.uint32(stripline))
                 if data_set_count == 1:
                     if not both_sets:
                         break
-                    rawdata1.append(float(stripline))
+                    rawdata1.append(np.uint32(stripline))
 
         # Get E range and angle range
         if not self.measurement_ranges:
@@ -78,9 +79,9 @@ class Sp2_loader:
 
         if both_sets:
             data1 = self.reshape_data(rawdata1, ydim)
-            return np.array(data), np.array(data1)
+            return np.array(data, dtype=np.uint32), np.array(data1, dtype=np.uint32)
 
-        return np.array(data), extent
+        return np.array(data, dtype=np.uint32), extent
 
     def read_multiple_sp2(self, filenames, both_sets=False, natsort=True):
         """ Only reads defined sp2 files """
@@ -117,7 +118,7 @@ class Sp2_loader:
         if not self.multi_file_mode:
             thisshape = out_arr.shape
             out_arr = out_arr.reshape(thisshape[0], thisshape[1], 1)
-        return out_arr, ranges_dict
+        return np.array(out_arr, dtye=uint32), ranges_dict
 
     def tidy_up_list(self, inlist):
         """ Remove all files that are not .sp2 """
@@ -196,8 +197,8 @@ class Sp2_loader:
             larger = data
             out_data = False
         else:
-            smaller = data
-            larger = last_set
+            smaller = np.array(data, dtype=uint32)
+            larger = np.array(last_set, dtye=uint32)
 
         x = np.linspace(extent[0], extent[1], smaller.shape[1])
         y = np.linspace(extent[2], extent[3], smaller.shape[0])
@@ -207,36 +208,78 @@ class Sp2_loader:
         yl = np.linspace(extent[2], extent[3], larger.shape[0])
 
         enlarged = f(xl, yl)
-        return enlarged, out_data
+        return np.array(enlarged, dtype=uint32), np.array(out_data, dtye=uint32)
 
 
 class LoadHDF5(object):
     def __init__(self, location):
         self._filelocation = location
-        pmin, pmax, dmin, dmax, Emin, Emax, data = self.load()
-        self._pmin = pmin
-        self._pmax = pmax
-        self._dmin = dmin
-        self._dmax = dmax
-        self._Emin = Emin
-        self._Emax = Emax
+        self.load()
 
-        self.data_stack = np.asarray(data)
-        self.data_stack = np.swapaxes(self.data_stack, 0, 2)
-        self.data_stack = self.data_stack[::-1, :, :]
-        self.extent = [self._dmin, self._dmax, self._Emin, self._Emax]
-        self.extent_stack = [list(self.extent)] * self.data_stack.shape[-1]
 
     def load(self):
-        f = h5.File(self._filelocation, "r")
-        data = f["entry1/analyser/data"]
-        d = f["entry1/analyser/angles"]
-        E = f["entry1/analyser/energies"]
-        p = f["entry1/analyser/sapolar"]
-        return p[0], p[-1], d[0], d[-1], E[0], E[-1], data
+        self.f = h5.File(self._filelocation, "r")
+        self.fkeys = list(self.f.keys())
+        if 'entry1' in list(self.f.keys()):
+            self.load_old_nxs()
+            self.data_stack = np.asarray(self._data)
+            self.data_stack = np.swapaxes(self.data_stack, 0, 2)
+            self.data_stack = self.data_stack[::-1, :, :]
+            self.extent = [self._dmin, self._dmax, self._Emin, self._Emax]
+            self.extent_stack = [list(self.extent)] * self.data_stack.shape[-1]
+        else:
+            self.load_new_nxs()
+
+    def load_old_nxs(self):
+        ''' Load HDF5 files before 05/2018 '''
+        entry = 'entry1'
+        data = self.f["entry1/analyser/data".format(entry)]
+        d = self.f["{}/analyser/angles".format(entry)]
+        E = self.f["{}/analyser/energies".format(entry)]
+        p = self.f["{}/analyser/sapolar".format(entry)]
+        self._pmin = p[0]
+        self._pmax = p[-1]
+        self._dmin = d[0]
+        self._dmax = d[-1]
+        self._Emin = E[0]
+        self._Emax = E[-1]
+        self._data = data
+
+    def load_new_nxs(self):
+        ''' Load HDF5 files after 05/2018 '''
+        found_folder = None
+        out_arr = None
+        extent_stack = []
+        for basefolder in self.fkeys:
+            subfolder = self.f[basefolder]
+            subfkeys = list(subfolder.keys())
+            for lower_folders in natsorted(subfkeys):
+                if not 'MBS_' in lower_folders:
+                    continue
+                # Here we found all data folders
+                datafolder = self.f[basefolder + '/' + lower_folders]
+                data = datafolder['Image32_1']
+                if out_arr is None:
+                    out_arr = data
+                else:
+                    out_arr = np.dstack((out_arr, data))
+                a_min = float(datafolder['XScaleMin_1'][0])
+                a_max = float(datafolder['XScaleMax_1'][0])
+                e_min = float(datafolder['EScaleMin_1'][0])
+                e_max = float(datafolder['EScaleMax_1'][0])
+                extent = [a_min, a_max, e_min, e_max]
+                extent_stack.append(extent)
+
+        # Found all data, make exportable
+        self.data_stack = out_arr
+        self.extent_stack = extent_stack
+
 
     def return_data(self):
-        return self.data_stack, self.extent_stack, self._pmin, self._pmax
+        try:
+            return self.data_stack, self.extent_stack, self._pmin, self._pmax
+        except:
+            return self.data_stack, self.extent_stack, None, None
 
 class GUI_Loader(object):
     def __init__(self, parent=None):
