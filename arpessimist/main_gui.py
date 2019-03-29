@@ -198,7 +198,7 @@ class ApplicationWindow(QMainWindow):
         try:
             LastDir = os.path.dirname(many_files[0][0])
             self.settings.setValue("LastDir", LastDir)
-        except:
+        except ValueError:
             pass
 
         try:
@@ -208,8 +208,9 @@ class ApplicationWindow(QMainWindow):
             self.angle_data, self.angle_extent = sp2.read_multiple_sp2(
                 self.loaded_filenames
             )
+            print(self.angle_data)
             self.load_multiple_files()
-        except:
+        except ValueError:
             self.p_min = old_pmin
         QApplication.restoreOverrideCursor()
 

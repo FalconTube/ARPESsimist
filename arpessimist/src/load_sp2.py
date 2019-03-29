@@ -118,7 +118,7 @@ class Sp2_loader:
         if not self.multi_file_mode:
             thisshape = out_arr.shape
             out_arr = out_arr.reshape(thisshape[0], thisshape[1], 1)
-        return np.array(out_arr, dtye=uint32), ranges_dict
+        return np.array(out_arr, dtype=np.uint32), ranges_dict
 
     def tidy_up_list(self, inlist):
         """ Remove all files that are not .sp2 """
@@ -197,8 +197,8 @@ class Sp2_loader:
             larger = data
             out_data = False
         else:
-            smaller = np.array(data, dtype=uint32)
-            larger = np.array(last_set, dtye=uint32)
+            smaller = np.array(data, dtype=np.uint32)
+            larger = np.array(last_set, dtype=np.uint32)
 
         x = np.linspace(extent[0], extent[1], smaller.shape[1])
         y = np.linspace(extent[2], extent[3], smaller.shape[0])
@@ -208,7 +208,7 @@ class Sp2_loader:
         yl = np.linspace(extent[2], extent[3], larger.shape[0])
 
         enlarged = f(xl, yl)
-        return np.array(enlarged, dtype=uint32), np.array(out_data, dtye=uint32)
+        return np.array(enlarged, dtype=np.uint32), np.array(out_data, dtype=np.uint32)
 
 
 class LoadHDF5(object):
