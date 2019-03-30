@@ -85,6 +85,7 @@ class TwoD_Plotter(MyMplCanvas):
             appwindow.menuBar().addSeparator()
             appwindow.menuBar().addMenu(self.export_menu)
             self.export_menu.addAction("&Save txt", self.save_txt)
+            self.export_menu.addAction("&Save sp2", self.export_sp2)
             self.export_menu.addAction("&Save Figures", self.save_figs)
             self.export_menu.addAction("&Save Maxima", self.save_maxima)
             self.instance_counter_main += 1
@@ -170,6 +171,9 @@ class TwoD_Plotter(MyMplCanvas):
         self.new_current_data = self.processing_data[:, :, self.slider_pos]
         self.new_current_extent = self.processing_extent[self.slider_pos]
 
+    def get_current_data(self):
+        return self.new_current_data, self.new_current_extent
+
     def update_widgets(self):
         self.LineProf.update_data_extent(self.new_current_data, self.new_current_extent)
 
@@ -222,8 +226,10 @@ class TwoD_Plotter(MyMplCanvas):
             3,
         )[0]
         QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-        self.processing_extent = [([x[0] + val, x[1] + val, x[2], x[3]]) for x in self.processing_extent]
-        self.update_current_data()
+        x = self.new_current_extent
+        self.new_current_extent = [x[0] + val, x[1] + val, x[2], x[3]]
+        # self.processing_extent = [([x[0] + val, x[1] + val, x[2], x[3]]) for x in self.processing_extent]
+        # self.update_current_data()
         self.update_widgets()
         self.initialize_2D_plot()
         QApplication.restoreOverrideCursor()
@@ -239,10 +245,38 @@ class TwoD_Plotter(MyMplCanvas):
             3,
         )[0]
         QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-        self.processing_extent = [([x[0], x[1], x[2] + val, x[3] + val]) for x in self.processing_extent]
+        self.new_current_extent = [x[0] + val, x[1] + val, x[2], x[3]]
+        # self.new_current_extent = [([x[0], x[1], x[2] + val, x[3] + val]) for x in self.new_current_extent]
+        # self.processing_extent = [([x[0], x[1], x[2] + val, x[3] + val]) for x in self.processing_extent]
         self.update_current_data()
         self.update_widgets()
         self.initialize_2D_plot()
+        QApplication.restoreOverrideCursor()
+
+    def export_sp2(self):
+        try:
+            location = QFileDialog.getSaveFileName(self, "Choose savename", ".")[0]
+            QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+            data = self.new_current_data
+            shape = data.shape
+            data = np.ravel(data[::-1].T)
+            intens = np.sum(data)
+            extent = self.new_current_extent
+            header = (
+                "P2\n# ERange\t = {} {} # [eV]\n".format(extent[2], extent[3])
+                + "# aRange\t = {} {} # [deg]\n".format(extent[0], extent[1])
+                + "{} {} {}".format(shape[0], shape[1], int(intens))
+            )
+            np.savetxt(
+                location,
+                data.astype(int),
+                fmt="%i",
+                header=header,
+                footer="P2",
+                comments="",
+            )
+        except ValueError:
+            pass
         QApplication.restoreOverrideCursor()
 
     def save_maxima(self):

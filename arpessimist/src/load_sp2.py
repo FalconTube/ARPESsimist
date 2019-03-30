@@ -220,15 +220,32 @@ class LoadHDF5(object):
     def load(self):
         self.f = h5.File(self._filelocation, "r")
         self.fkeys = list(self.f.keys())
-        if 'entry1' in list(self.f.keys()):
+        if 'entry1' in self.fkeys:
             self.load_old_nxs()
             self.data_stack = np.asarray(self._data)
             self.data_stack = np.swapaxes(self.data_stack, 0, 2)
             self.data_stack = self.data_stack[::-1, :, :]
             self.extent = [self._dmin, self._dmax, self._Emin, self._Emax]
             self.extent_stack = [list(self.extent)] * self.data_stack.shape[-1]
+        if 'Defl' in self.fkeys[0]:
+            self.load_deflection_map()
         else:
             self.load_new_nxs()
+
+    def load_deflection_map(self):
+        ''' This is just a temporary solution, but we can get latesst dataset
+        with a loop and parameters easy, if always fixes'''
+        first = self.f[self.fkeys[0]]
+        data =np.array(first['scan_data/data_09'])
+        data  = np.swapaxes(data, 0, 2)
+        data = data[::-1, ::-1]
+        extent_stack = []
+        for i in range(data.shape[-1]):
+            extent = [-12, 14, 84, 98]
+            extent_stack.append(extent)
+
+        self.data_stack = data
+        self.extent_stack = extent_stack
 
     def load_old_nxs(self):
         ''' Load HDF5 files before 05/2018 '''
@@ -248,6 +265,7 @@ class LoadHDF5(object):
     def load_new_nxs(self):
         ''' Load HDF5 files after 05/2018 '''
         found_folder = None
+        phi_count  = 0
         out_arr = None
         extent_stack = []
         for basefolder in self.fkeys:
@@ -258,7 +276,8 @@ class LoadHDF5(object):
                     continue
                 # Here we found all data folders
                 datafolder = self.f[basefolder + '/' + lower_folders]
-                data = datafolder['Image32_1']
+                data = np.array(datafolder['Image32_1'], dtype=np.uint32)\
+                        .T[::-1, ::-1]
                 if out_arr is None:
                     out_arr = data
                 else:
@@ -267,10 +286,17 @@ class LoadHDF5(object):
                 a_max = float(datafolder['XScaleMax_1'][0])
                 e_min = float(datafolder['EScaleMin_1'][0])
                 e_max = float(datafolder['EScaleMax_1'][0])
+                if phi_count == 0:
+                    self._pmin = float(datafolder['Phi'][0])
+                    phi_count += 1
+                else:
+                    self._pmax = float(datafolder['Phi'][0])
+
                 extent = [a_min, a_max, e_min, e_max]
                 extent_stack.append(extent)
 
         # Found all data, make exportable
+        # self.data_stack = np.swapaxes(out_arr, 0, 1)
         self.data_stack = out_arr
         self.extent_stack = extent_stack
 
@@ -294,8 +320,8 @@ class GUI_Loader(object):
                 LastDir = settings.value("LastDir")
             try:
                 many_files = QFileDialog.getOpenFileNames(
-                    self.parent, "Select one or more files to open", LastDir
-                )
+                    self.parent, "Select one or more files to open", LastDir,
+                    filter='*.sp2')
                 QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
 
                 LastDir = os.path.dirname(many_files[0][0])
@@ -319,7 +345,8 @@ class GUI_Loader(object):
                 LastDir = settings.value("LastDir")
             self.statusBar().showMessage("Loading Data...", 2000)
             location = QFileDialog.getOpenFileNames(
-                self.parent, "Select one NXS file to open", directory=LastDir, filter='*.nxs')
+                self.parent, "Select one NXS file to open", directory=LastDir,
+                filter='*.nxs')
             QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
             LastDir = os.path.dirname(location[0][0])
             settings.setValue("LastDir", LastDir)

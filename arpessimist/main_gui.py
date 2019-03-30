@@ -208,7 +208,6 @@ class ApplicationWindow(QMainWindow):
             self.angle_data, self.angle_extent = sp2.read_multiple_sp2(
                 self.loaded_filenames
             )
-            print(self.angle_data)
             self.load_multiple_files()
         except ValueError:
             self.p_min = old_pmin
@@ -270,6 +269,7 @@ class ApplicationWindow(QMainWindow):
         QApplication.restoreOverrideCursor()
 
     def gen_maps(self):
+        print(self.p_min)
         if self.p_min:
             parameters = MapParameterBox(self.map_parameters, pol_available=True)
         else:
@@ -347,7 +347,7 @@ class ApplicationWindow(QMainWindow):
             )
 
             self.KxWin.show()
-        self.p_min = None
+        # self.p_min = None
         QApplication.restoreOverrideCursor()
 
     def single_slice_vertical(self):
@@ -462,6 +462,8 @@ class ApplicationWindow(QMainWindow):
 
     def convert_to_k(self):
         Handler = HandleNielsSpectra()
+        self.new_current_data, self.new_current_extent =\
+                self.new_twoD_widget.get_current_data()
         data_k, extent_k = Handler.convert_single_to_k(
             self.new_current_data, self.new_current_extent
         )
