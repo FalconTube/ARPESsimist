@@ -79,9 +79,9 @@ class Sp2_loader:
 
         if both_sets:
             data1 = self.reshape_data(rawdata1, ydim)
-            return np.array(data, dtype=np.uint32), np.array(data1, dtype=np.uint32)
+            return np.array(data), np.array(data1)
 
-        return np.array(data, dtype=np.uint32), extent
+        return np.array(data), extent
 
     def read_multiple_sp2(self, filenames, both_sets=False, natsort=True):
         """ Only reads defined sp2 files """
@@ -118,7 +118,8 @@ class Sp2_loader:
         if not self.multi_file_mode:
             thisshape = out_arr.shape
             out_arr = out_arr.reshape(thisshape[0], thisshape[1], 1)
-        return np.array(out_arr, dtype=np.uint32), ranges_dict
+        print(out_arr)
+        return np.array(out_arr), ranges_dict
 
     def tidy_up_list(self, inlist):
         """ Remove all files that are not .sp2 """
@@ -237,12 +238,17 @@ class LoadHDF5(object):
         with a loop and parameters easy, if always fixes'''
         first = self.f[self.fkeys[0]]
         data =np.array(first['scan_data/data_09'])
-        data  = np.swapaxes(data, 0, 2)
+        print(data.shape)
+        # data  = np.swapaxes(data, 0, 2)
         data = data[::-1, ::-1]
+        print('Defl Map')
+        # data  = np.swapaxes(data, 1, 2)
+        print(data.shape)
         extent_stack = []
         for i in range(data.shape[-1]):
-            extent = [-12, 14, 84, 98]
+            extent = [-13, 12, 34, 35]
             extent_stack.append(extent)
+        print(len(extent_stack))
 
         self.data_stack = data
         self.extent_stack = extent_stack

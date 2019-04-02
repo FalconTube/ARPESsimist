@@ -221,6 +221,21 @@ use bspline_module
       call db3ink(xgrid,nx,ygrid,ny,zgrid,nz,indata,knot_x,knot_y,knot_z,&
                           iknot,tx,ty,tz,outcoeff,iflag(1))
 
+
+      !print *, 'z'
+      !print *, zgrid
+      !print *, 'y'
+      !print *, ygrid
+      !print *, 'x'
+      !print *, xgrid
+
+      !print *, 'zeval'
+      !print *, zevalgrid
+      !print *, 'yeval'
+      !print *, yevalgrid
+      !print *, 'xeval'
+      !print *, xevalgrid
+
       do countz=1, outz
         zeval = zevalgrid(countz)
         do countx=1, outx
@@ -228,8 +243,8 @@ use bspline_module
           do county=1, outy
             yeval = yevalgrid(county)
             
-            ! call calc_k(zeval, xeval, yeval, inner_sqrt_term, k)
-            k = 0.512317 * SQRT(zeval)
+            call calc_k(zeval, xeval, yeval, inner_sqrt_term, k)
+            !k = 0.512317 * SQRT(zeval)
             kx = xeval/k
             ky = yeval/k
             kz = sqrt(1.D0- kx*kx - ky*ky)
@@ -240,12 +255,6 @@ use bspline_module
             xpoint = -pol_angle * rad
             ypoint = zeval
             zpoint = -az * rad
-            if (isnan(xpoint)) then
-              xpoint = 0d0
-            end if
-            if (isnan(zpoint)) then
-              zpoint = 0d0
-            end if
             ! print *, pol_angle, az
             ! print *, 'x', xpoint, 'y', ypoint, 'z', zpoint
             ! print *, 'z', zpoint

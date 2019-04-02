@@ -235,6 +235,7 @@ class ApplicationWindow(QMainWindow):
             )
 
             self.loaded_filenames = range(self.angle_data.shape[0])
+            print('start loading')
             self.load_multiple_files()
         except ValueError:
             self.p_min = old_pmin
@@ -251,12 +252,16 @@ class ApplicationWindow(QMainWindow):
 
         if not self.hd5mode:
             self._current_labelname = os.path.basename(self.loaded_filenames[0])
+        slider_range = np.linspace(0,100, stack_size) 
 
+
+            # self.loaded_filenames,
+        print(len(slider_range))
         self.data_are_loaded = True
         self.new_twoD_widget = TwoD_Plotter(
             self.processing_data,
             self.processing_extent,
-            self.loaded_filenames,
+            slider_range,
             self.main_widget,
             xlabel=r"Angle [$^\circ{}$]",
             ylabel="Energy [eV]",
@@ -273,7 +278,7 @@ class ApplicationWindow(QMainWindow):
         if self.p_min:
             parameters = MapParameterBox(self.map_parameters, pol_available=True)
         else:
-            parameters = MapParameterBox(self.map_parameters, pol_available=False) 
+            parameters = MapParameterBox(self.map_parameters, pol_available=False)
         if parameters.exec_() == parameters.Accepted:
             outvalues = parameters.get_values()
             self.map_parameters = outvalues
@@ -299,14 +304,15 @@ class ApplicationWindow(QMainWindow):
                 self.p_min,
                 self.p_max,
                 angle_offset=angle_off,
+                p_offset=azi,
                 kxmin=kxmin,
                 kxmax=kxmax,
                 kymin=kymin,
                 kymax=kymax,
             )
-            ke_slice, ky_slice, kx_slice, kxmin, kxmax, kymin, kymax, kx_list, ky_list, E_list = All_maps.slice_K_fortran(
-                ksteps, esteps, azi, tilt, self.use_azi
-            )
+            ke_slice, ky_slice, kx_slice, kxmin, kxmax, kymin, kymax, kx_list,\
+            ky_list, E_list = All_maps.slice_K_fortran(ksteps, esteps, azi, tilt,
+                    self.use_azi)
 
             extent_stack_E = list([[kxmin, kxmax, kymin, kymax]]) * ke_slice.shape[-1]
             extent_stack_ky = (
@@ -371,6 +377,7 @@ class ApplicationWindow(QMainWindow):
             self.p_min,
             self.p_max,
             angle_offset=angle_off,
+            p_offset=0,
             kxmin=kxmin,
             kxmax=kxmax,
             kymin=kymin,
@@ -389,7 +396,6 @@ class ApplicationWindow(QMainWindow):
             ylabel=r"ky [$\mathrm{\AA^{-1}}$]",
         )
         self.KEWin.show()
-        
 
 
     def polar_maps(self):

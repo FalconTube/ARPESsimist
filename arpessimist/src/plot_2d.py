@@ -117,6 +117,7 @@ class TwoD_Plotter(MyMplCanvas):
         self.canvas.draw()
 
     def update_2dplot(self, extent=None):
+        print(self.twoD_data.shape)
         if extent:
             if not self.respect_aspect:
                 x_range = abs(extent[1] - extent[0])
@@ -130,7 +131,7 @@ class TwoD_Plotter(MyMplCanvas):
                 self.old_extent = extent.copy()
             else:
                 self.aspectratio = None
-            
+
         if self.instance_counter == 0:
             self.instance_counter += 1
             self.axes.cla()
