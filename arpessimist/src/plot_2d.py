@@ -63,7 +63,7 @@ class TwoD_Plotter(MyMplCanvas):
 
         # Add LUT Slider
         initial_lut_position = np.amax(self.processing_data) * 0.75
-        self.vmax_slider = self.add_slider(0, np.amax(self.processing_data), "vert")
+        self.vmax_slider = self.add_slider(0, int(np.amax(self.processing_data)), "vert")
         self.vmax_slider.setSliderPosition(initial_lut_position)
         self.vmax_label = QLabel("L\nU\nT", self)
         self.vmax_label.setAlignment(QtCore.Qt.AlignCenter)
@@ -117,7 +117,6 @@ class TwoD_Plotter(MyMplCanvas):
         self.canvas.draw()
 
     def update_2dplot(self, extent=None):
-        print(self.twoD_data.shape)
         if extent:
             if not self.respect_aspect:
                 x_range = abs(extent[1] - extent[0])
@@ -194,7 +193,9 @@ class TwoD_Plotter(MyMplCanvas):
             slider_bar = QSlider(QtCore.Qt.Horizontal, self)
         else:
             slider_bar = QSlider(QtCore.Qt.Vertical, self)
-        slider_bar.setRange(lower, upper - 1)
+        slider_bar.setMinimum(lower)
+        slider_bar.setMaximum(upper-1)
+        #slider_bar.setRange(lower, upper - 1)
         slider_bar.setTickInterval(5)
         slider_bar.setSingleStep(1)
         slider_bar.setPageStep(10)

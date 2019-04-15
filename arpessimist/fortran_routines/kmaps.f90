@@ -97,14 +97,20 @@ use bspline_module
       call db3ink(xgrid,nx,ygrid,ny,zgrid,nz,indata,knot_x,knot_y,knot_z,&
                           iknot,tx,ty,tz,outcoeff,iflag(1))
 
+      print *, 'STARTING NORMAL'
+    !!$omp parallel num_threads(2) private(zeval, xeval, yeval, countz, countx, county) &
+    !!$omp& private(kx, ky, kz, inner_sqrt_term, k, atilt, cospol) &
+    !!$omp& private(pol_angle, xpoint, ypoint, zpoint, outval)
+    !!$omp do
       do countz=1, outz
         zeval = zevalgrid(countz)
         do countx=1, outx
           xeval = xevalgrid(countx)
           do county=1, outy
             yeval = yevalgrid(county)
-            
+
             call calc_k(zeval, xeval, yeval, inner_sqrt_term, k)
+            !k = 0.512317 * SQRT(zeval)
             kx = xeval/k
             ky = yeval/k
             kz = sqrt(1.D0- kx*kx - ky*ky)
@@ -116,6 +122,15 @@ use bspline_module
             xpoint = -pol_angle * rad
             ypoint = atilt * rad
             zpoint = zeval
+            if (isnan(xpoint)) then
+              xpoint = 0d0
+            end if
+            if (isnan(ypoint)) then
+              ypoint = 0d0
+            end if
+            if (isnan(zpoint)) then
+              zpoint = 0d0
+            end if
         
             call db3val(xpoint,ypoint,zpoint,idx,idy,idz,tx,ty,tz,nx,ny,nz,&
                         knot_x,knot_y,knot_z,outcoeff,outval,iflag(2),&
@@ -126,6 +141,9 @@ use bspline_module
           end do  
         end do
       end do
+    !!$omp end do
+    !!$omp end parallel
+
 
   end subroutine kslice_spline
   
@@ -204,7 +222,6 @@ use bspline_module
       double PRECISION :: ky
       double PRECISION :: kz
       double PRECISION :: atilt
-      double PRECISION :: cospol
       double PRECISION :: pol_angle
 
       double PRECISION :: rad
@@ -221,21 +238,10 @@ use bspline_module
       call db3ink(xgrid,nx,ygrid,ny,zgrid,nz,indata,knot_x,knot_y,knot_z,&
                           iknot,tx,ty,tz,outcoeff,iflag(1))
 
-
-      !print *, 'z'
-      !print *, zgrid
-      !print *, 'y'
-      !print *, ygrid
-      !print *, 'x'
-      !print *, xgrid
-
-      !print *, 'zeval'
-      !print *, zevalgrid
-      !print *, 'yeval'
-      !print *, yevalgrid
-      !print *, 'xeval'
-      !print *, xevalgrid
-
+    !!$omp parallel private(zeval, xeval, yeval, countz, countx, county) &
+    !!$omp& private(kx, ky, kz, inner_sqrt_term, k, atilt) &
+    !!$omp& private(pol_angle, xpoint, ypoint, zpoint)
+    !!$omp do
       do countz=1, outz
         zeval = zevalgrid(countz)
         do countx=1, outx
@@ -255,18 +261,32 @@ use bspline_module
             xpoint = -pol_angle * rad
             ypoint = zeval
             zpoint = -az * rad
-            ! print *, pol_angle, az
-            ! print *, 'x', xpoint, 'y', ypoint, 'z', zpoint
-            ! print *, 'z', zpoint
+            !zpoint = zeval
+            !ypoint = -az * rad
+            if (isnan(xpoint)) then
+              xpoint = 0d0
+            end if
+            if (isnan(ypoint)) then
+              ypoint = 0d0
+            end if
+            if (isnan(zpoint)) then
+              zpoint = 0d0
+            end if
         
             call db3val(xpoint,ypoint,zpoint,idx,idy,idz,tx,ty,tz,nx,ny,nz,&
                         knot_x,knot_y,knot_z,outcoeff,outval,iflag(2),&
                         inbvx,inbvy,inbvz,iloy,iloz)
+
             outarray(countx, county, countz) = outval
             
           end do  
+
         end do
+
       end do
+    !!$omp end do
+    !!$omp end parallel
+
 
   end subroutine kslice_spline_horizontal
 

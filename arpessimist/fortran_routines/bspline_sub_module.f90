@@ -2987,6 +2987,7 @@
     real(wp) :: xt
     logical :: extrapolation_allowed  !! if extrapolation is allowed
 
+
     val = 0.0_wp
 
     if (k<1) then

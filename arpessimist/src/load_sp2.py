@@ -50,11 +50,11 @@ class Sp2_loader:
                     xdim, ydim, total_counts = [int(i) for i in line.split()]
                     continue
                 if data_set_count == 0:
-                    rawdata.append(np.uint32(stripline))
+                    rawdata.append(float(stripline))
                 if data_set_count == 1:
                     if not both_sets:
                         break
-                    rawdata1.append(np.uint32(stripline))
+                    rawdata1.append(float(stripline))
 
         # Get E range and angle range
         if not self.measurement_ranges:
@@ -198,8 +198,8 @@ class Sp2_loader:
             larger = data
             out_data = False
         else:
-            smaller = np.array(data, dtype=np.uint32)
-            larger = np.array(last_set, dtype=np.uint32)
+            smaller = np.array(data)
+            larger = np.array(last_set)
 
         x = np.linspace(extent[0], extent[1], smaller.shape[1])
         y = np.linspace(extent[2], extent[3], smaller.shape[0])
@@ -209,7 +209,7 @@ class Sp2_loader:
         yl = np.linspace(extent[2], extent[3], larger.shape[0])
 
         enlarged = f(xl, yl)
-        return np.array(enlarged, dtype=np.uint32), np.array(out_data, dtype=np.uint32)
+        return np.array(enlarged), np.array(out_data)
 
 
 class LoadHDF5(object):
@@ -238,17 +238,14 @@ class LoadHDF5(object):
         with a loop and parameters easy, if always fixes'''
         first = self.f[self.fkeys[0]]
         data =np.array(first['scan_data/data_09'])
-        print(data.shape)
         # data  = np.swapaxes(data, 0, 2)
         data = data[::-1, ::-1]
         print('Defl Map')
         # data  = np.swapaxes(data, 1, 2)
-        print(data.shape)
         extent_stack = []
         for i in range(data.shape[-1]):
             extent = [-13, 12, 34, 35]
             extent_stack.append(extent)
-        print(len(extent_stack))
 
         self.data_stack = data
         self.extent_stack = extent_stack
@@ -282,7 +279,7 @@ class LoadHDF5(object):
                     continue
                 # Here we found all data folders
                 datafolder = self.f[basefolder + '/' + lower_folders]
-                data = np.array(datafolder['Image32_1'], dtype=np.uint32)\
+                data = np.array(datafolder['Image32_1'])\
                         .T[::-1, ::-1]
                 if out_arr is None:
                     out_arr = data

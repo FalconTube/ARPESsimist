@@ -235,7 +235,6 @@ class ApplicationWindow(QMainWindow):
             )
 
             self.loaded_filenames = range(self.angle_data.shape[0])
-            print('start loading')
             self.load_multiple_files()
         except ValueError:
             self.p_min = old_pmin
@@ -252,11 +251,10 @@ class ApplicationWindow(QMainWindow):
 
         if not self.hd5mode:
             self._current_labelname = os.path.basename(self.loaded_filenames[0])
-        slider_range = np.linspace(0,100, stack_size) 
+        slider_range = np.linspace(0,100, stack_size)
 
 
             # self.loaded_filenames,
-        print(len(slider_range))
         self.data_are_loaded = True
         self.new_twoD_widget = TwoD_Plotter(
             self.processing_data,
@@ -274,7 +272,6 @@ class ApplicationWindow(QMainWindow):
         QApplication.restoreOverrideCursor()
 
     def gen_maps(self):
-        print(self.p_min)
         if self.p_min:
             parameters = MapParameterBox(self.map_parameters, pol_available=True)
         else:

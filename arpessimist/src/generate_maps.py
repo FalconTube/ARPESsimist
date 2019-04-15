@@ -25,12 +25,12 @@ class VerticalSlitPolarScan(object):
         ranges_stack,
         map_start,
         map_end,
-        angle_offset=0,
-        p_offset=0,
-        kxmin=-1,
-        kxmax=1,
-        kymin=-1,
-        kymax=1,
+        angle_offset,
+        p_offset,
+        kxmin,
+        kxmax,
+        kymin,
+        kymax,
     ):
         # self.data = np.swapaxes(data_stack, 0, 2)
         self.data = data_stack
@@ -190,6 +190,7 @@ class VerticalSlitPolarScan(object):
         return kSlice.T
 
     def slice_K_fortran(self, dk, dE, azi, tilt, useazi=False, single_slice=False):
+        print('poff {}'.format(self.p_offset))
         """ Performs K Slice in fortran routine """
         # self.data = self.data[:, ::2, ::2]
         if single_slice == False:
@@ -202,6 +203,8 @@ class VerticalSlitPolarScan(object):
             Ecut_range = np.array([single_slice])
         kx_range = np.arange(self.kxmin, self.kxmax+dk, dk)
         ky_range = np.arange(self.kymin, self.kymax+dk, dk)
+        prefac = self.kymax + self.kymin # Somehow there is a stange offset,
+        # This prefac is correcting it
 
         if useazi:
             self.data = np.swapaxes(self.data, 0, 1)
@@ -214,18 +217,13 @@ class VerticalSlitPolarScan(object):
                 + self.angle_offset
             )  # Angle
             indata_y = np.linspace(self.Emin, self.Emax, self.data.shape[1])  # Energy
-            print('inz', indata_z)
-            print('inx', indata_x)
-            print('ky', ky_range)
-            print('kx', kx_range)
-
             kSlice = kmaps.kslice_spline_horizontal(
                 indata_x,
                 indata_y,
                 indata_z,
                 self.data,
                 kx_range,
-                ky_range,
+                ky_range-prefac,
                 Ecut_range,
                 tilt,
                 azi,
