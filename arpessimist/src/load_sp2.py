@@ -83,6 +83,79 @@ class Sp2_loader:
 
         return np.array(data), extent
 
+    def read_with_gui(self, filetype='sp2', location_settings=None, sort=True):
+        settings = location_settings
+        if filetype == 'sp2':
+            # Choose Data
+            LastDir = "."
+            if not settings.value("LastDir") == None:
+                LastDir = settings.value("LastDir")
+            try:
+                many_files = QFileDialog.getOpenFileNames(
+                    self.parent, "Select one or more files to open", LastDir,
+                    filter='*.sp2')
+                QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+
+                LastDir = os.path.dirname(many_files[0][0])
+                settings.setValue("LastDir", LastDir)
+                # Start loading Data
+                sp2 = Sp2_loader()
+                # loaded_filenames = sp2.tidy_up_list(many_files[0])
+                loaded_filenames = many_files[0]
+                fignum = len(loaded_filenames)
+                figs_data, figs_extents = sp2.read_multiple_sp2(
+                    loaded_filenames, natsort=False
+                )
+                QApplication.restoreOverrideCursor()
+                return figs_data, figs_extents, settings
+            except ValueError:
+                return
+
+        if filetype == 'nxs':
+            LastDir = "."
+            if not settings.value("LastDir") == None:
+                LastDir = settings.value("LastDir")
+            self.statusBar().showMessage("Loading Data...", 2000)
+            location = QFileDialog.getOpenFileNames(
+                self.parent, "Select one NXS file to open", directory=LastDir,
+                filter='*.nxs')
+            QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+            LastDir = os.path.dirname(location[0][0])
+            settings.setValue("LastDir", LastDir)
+
+            location = str(location[0][0])
+            self.hd5mode = True
+            H5loader = LoadHDF5(location)
+            angle_data, angle_extent, p_min, p_max = (
+                H5loader.return_data()
+            )
+            QApplication.restoreOverrideCursor()
+            return angle_data, angle_extent, p_min, p_max, settings
+
+        if filetype == 'antares':
+            # Choose Data
+            LastDir = "."
+            if not settings.value("LastDir") == None:
+                LastDir = settings.value("LastDir")
+            try:
+                many_files = QFileDialog.getOpenFileNames(
+                    self.parent, "Select one or more files to open", LastDir,
+                    filter='*.txt')
+                QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+
+                LastDir = os.path.dirname(many_files[0][0])
+                settings.setValue("LastDir", LastDir)
+                # Start loading Data
+                loader = AntaresTxt()
+                # loaded_filenames = sp2.tidy_up_list(many_files[0])
+                loaded_filenames = many_files[0]
+                fignum = len(loaded_filenames)
+                figs_data, figs_extents = loader.read_multiple(loaded_filenames)
+                QApplication.restoreOverrideCursor()
+                return figs_data, figs_extents, settings
+            except ValueError:
+                return
+
     def read_multiple_sp2(self, filenames, both_sets=False, natsort=True):
         """ Only reads defined sp2 files """
         if len(filenames) == 1:
@@ -137,53 +210,6 @@ class Sp2_loader:
         data = np.swapaxes(indata, 0, 1)[::-1]
         return data
 
-    def read_with_gui(self, is_sp2=True, location_settings=None, sort=True):
-        settings = location_settings
-        if is_sp2:
-            # Choose Data
-            LastDir = "."
-            if not settings.value("LastDir") == None:
-                LastDir = settings.value("LastDir")
-            try:
-                many_files = QFileDialog.getOpenFileNames(
-                    self.parent, "Select one or more files to open", LastDir
-                )
-                QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-
-                LastDir = os.path.dirname(many_files[0][0])
-                settings.setValue("LastDir", LastDir)
-                # Start loading Data
-                sp2 = Sp2_loader()
-                # loaded_filenames = sp2.tidy_up_list(many_files[0])
-                loaded_filenames = many_files[0]
-                fignum = len(loaded_filenames)
-                figs_data, figs_extents = sp2.read_multiple_sp2(
-                    loaded_filenames, natsort=False
-                )
-                QApplication.restoreOverrideCursor()
-                return figs_data, figs_extents, settings
-            except ValueError:
-                return
-
-        else:
-            LastDir = "."
-            if not settings.value("LastDir") == None:
-                LastDir = settings.value("LastDir")
-            self.statusBar().showMessage("Loading Data...", 2000)
-            location = QFileDialog.getOpenFileNames(
-                self.parent, "Select one NXS file to open", directory=LastDir, filter='*.nxs')
-            QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-            LastDir = os.path.dirname(location[0][0])
-            settings.setValue("LastDir", LastDir)
-
-            location = str(location[0][0])
-            self.hd5mode = True
-            H5loader = LoadHDF5(location)
-            angle_data, angle_extent, p_min, p_max = (
-                H5loader.return_data()
-            )
-            QApplication.restoreOverrideCursor()
-            return angle_data, angle_extent, p_min, p_max, settings
 
     def interpolate_data(self, out_arr, data, extent):
         out_data = True
@@ -238,12 +264,13 @@ class LoadHDF5(object):
         with a loop and parameters easy, if always fixes'''
         first = self.f[self.fkeys[0]]
         data =np.array(first['scan_data/data_09'])
-        # data  = np.swapaxes(data, 0, 2)
+        data  = np.swapaxes(data, 0, 2)
         data = data[::-1, ::-1]
         print('Defl Map')
         # data  = np.swapaxes(data, 1, 2)
         extent_stack = []
         for i in range(data.shape[-1]):
+            # TODO: Change static extent
             extent = [-13, 12, 34, 35]
             extent_stack.append(extent)
 
@@ -269,6 +296,7 @@ class LoadHDF5(object):
         ''' Load HDF5 files after 05/2018 '''
         found_folder = None
         phi_count  = 0
+        data_count = 0
         out_arr = None
         extent_stack = []
         for basefolder in self.fkeys:
@@ -294,11 +322,23 @@ class LoadHDF5(object):
                     phi_count += 1
                 else:
                     self._pmax = float(datafolder['Phi'][0])
+                data_count += 1
 
+                # Normal Stack with energy with angle
                 extent = [a_min, a_max, e_min, e_max]
+
+                # Stack with energy with angle
                 extent_stack.append(extent)
 
         # Found all data, make exportable
+        len_extent = len(extent_stack)
+        # for i in extent_stack:
+            # i[0] = self._pmin
+            # i[1] = self._pmax
+        print('pmin {}, pmax {}'.format(self._pmin, self._pmax))
+        print('data count {}'.format(data_count))
+        print(out_arr.shape)
+        print('len extent {}'.format)
         # self.data_stack = np.swapaxes(out_arr, 0, 1)
         self.data_stack = out_arr
         self.extent_stack = extent_stack
@@ -310,13 +350,69 @@ class LoadHDF5(object):
         except:
             return self.data_stack, self.extent_stack, None, None
 
+class AntaresTxt:
+    ''' Load single files from antares beamline for stitching '''
+    def __init__(self):
+        pass
+
+    def read_info(self, filename):
+        infos = {}
+        with open(filename, 'r') as f:
+            infocount = 0
+            is_info = True
+            for n, line in enumerate(f):
+                stripline = line.strip()
+                if stripline == 'DATA:':
+                    infocount += 1
+                    is_info = False
+                # If it is info
+                if is_info:
+                    infocount += 1
+                    linevals = stripline.split('\t')
+                    if len(linevals) < 2:
+                        key = stripline
+                        infos[key] = ' '
+                        continue
+                    key, value = stripline.split('\t')
+                    infos[key] = value
+                else:
+                    break
+        return infos, infocount
+
+    def get_file(self, filename):
+        info, skip_head = self.read_info(filename)
+        data = np.genfromtxt(filename, skip_header=skip_head)
+        # plt.imshow(data)
+        # plt.show()
+        return data, info
+
+    def read_multiple(self, filename_list):
+        extent_stack = []
+        for n, i in enumerate(filename_list):
+            thisdat, info = self.get_file(i)
+            # Put data on stack
+            if n == 0:
+                data_stack = np.asarray(thisdat)
+            else:
+                data_stack = np.dstack((data_stack, thisdat))
+
+            # Get extent and add to stack
+            emin = float(info['Start K.E.'])
+            emax = float(info['End K.E.'])
+            amin = float(info['XScaleMin'])
+            amax = float(info['XScaleMax'])
+            extent_stack.append([amin, amax, emin, emax])
+        return data_stack, extent_stack
+
+
+
 class GUI_Loader(object):
     def __init__(self, parent=None):
         self.parent = parent
 
-    def read_with_gui(self, is_sp2=True, location_settings=None, sort=True):
+    def read_with_gui(self, filetype='sp2', location_settings=None, sort=True):
         settings = location_settings
-        if is_sp2:
+        if filetype == 'sp2':
             # Choose Data
             LastDir = "."
             if not settings.value("LastDir") == None:
@@ -342,7 +438,7 @@ class GUI_Loader(object):
             except ValueError:
                 return
 
-        else:
+        if filetype == 'nxs':
             LastDir = "."
             if not settings.value("LastDir") == None:
                 LastDir = settings.value("LastDir")
@@ -362,3 +458,29 @@ class GUI_Loader(object):
             )
             QApplication.restoreOverrideCursor()
             return angle_data, angle_extent, p_min, p_max, settings
+
+        if filetype == 'antares':
+            # Choose Data
+            LastDir = "."
+            if not settings.value("LastDir") == None:
+                LastDir = settings.value("LastDir")
+            try:
+                many_files = QFileDialog.getOpenFileNames(
+                    self.parent, "Select one or more files to open", LastDir,
+                    filter='*.txt')
+                QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+
+                LastDir = os.path.dirname(many_files[0][0])
+                settings.setValue("LastDir", LastDir)
+                # Start loading Data
+                loader = AntaresTxt()
+                # loaded_filenames = sp2.tidy_up_list(many_files[0])
+                loaded_filenames = many_files[0]
+                fignum = len(loaded_filenames)
+                print(loaded_filenames)
+                figs_data, figs_extents = loader.read_multiple(loaded_filenames)
+                print('finished loading')
+                QApplication.restoreOverrideCursor()
+                return figs_data, figs_extents, settings
+            except ValueError:
+                return

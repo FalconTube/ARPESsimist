@@ -8,6 +8,14 @@ This program is an attempt to create a free and open-source way of evaluating AR
 
 ## Installation
 
+### Windows
+A pre-built, standalone `.exe` file can be found on this page. This can directly be run on any Windows 10 machine without further installation.
+It is possible, that this file may be recognized as a virus, which is due to the compilation process using `PyInstaller`. More information on that topic can be found at this link:  
+
+### Linux
+
+*Pip install is in the works!*
+
 Clone this repository using `git` or download it directly and extract it anywhere, e.g.
 
 ```git clone https://github.com/FalconTube/ARPESsimist.git```
@@ -30,7 +38,6 @@ In addition, a fortran compiler (e. g. gfortran) is required to compile the
 f90 routines for your respective system. This compiler can be installed in the
 respective ways, listed below. Further information is available at https://gcc.gnu.org/wiki/GFortranBinaries. 
 
-### Linux
 
 Debian based:
 
@@ -54,11 +61,11 @@ Install [MinGW](http://mingw-w64.org/doku.php) to make use of the fortran compil
 
 In order to test your fortran installation, open a terminal and enter `gfortran`. If it states something like "fatal error: no input files", then you are good to go!
 
-Open a terminal at `<Your_install_location>/fortran_routines/` and execute `compile.sh` using `bash compile.sh` (should also work on Windows with MinGW installed. If not, extract the respective commands from the script manually).
+Open a terminal at `<Your_install_location>/arpessimist/fortran_routines/` and execute `compile.sh` using `bash compile.sh` (should also work on Windows with MinGW installed. If not, extract the respective commands from the script manually).
 
 ## General Usage
 
-Start the software by calling `python3 main_gui.py`. This will open an empty window with a file menu in its top left position. From here, you can load multiple `.sp2` data or a single `.nxs` (`hdf5` format) file.
+Start the software by calling `python3 start_progs.py`. This will open an empty window with a file menu in its top left position. From here, you can load multiple `.sp2` data or a single `.nxs` (`hdf5` format) file.
 
 ![Empty window](https://github.com/FalconTube/ARPESsimist/blob/master/arpessimist/src/images/empty_win.png)
 
@@ -66,11 +73,11 @@ After loading a set of data, more widgets will populate the main window, like th
 
 ![Main window](https://github.com/FalconTube/ARPESsimist/blob/master/arpessimist/src/images/main_win.png)
 
-Here you have the options to change the displayed 2D image (bottom slider), the LUT (right slider) and to make lineprofiles (select and right click). Zooming in to the 2D image will automatically adjust the ranges of the respective lineprofiles. All of the obtained plots can be extracted as both data points and the plots themselves using the `Export` button at the top.
+<!-- Here you have the options to change the displayed 2D image (bottom slider), the LUT (right slider) and to make lineprofiles (select and right click). Zooming in to the 2D image will automatically adjust the ranges of the respective lineprofiles. All of the obtained plots can be extracted as both data points and the plots themselves using the `Export` button at the top.
 
 Another major point is the creation of a 3D Map in k-space. This can be performed for both polar and azimuthal maps, using the `Mapping` button. After entering the desired k-range and resolution (step sizes), the software will execute fortran routines to evaluate the map. At the time of writing, the main program still is unresponsive while performing the calculation.
 
-After successful calculation, three new windows (with the same style as the main window) will open. These show the respective slices through all three dimensions, namely Energy, kx and ky.
+After successful calculation, three new windows (with the same style as the main window) will open. These show the respective slices through all three dimensions, namely Energy, kx and ky. -->
 
 ## Bugs and Features
 

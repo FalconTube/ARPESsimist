@@ -38,6 +38,7 @@ class StitchWindow(QMainWindow):
         self.statusbar = self.statusBar()
         self.vertical = vertical
         self.instance_counter = 0
+        self.file_type = 'sp2'
         self.settings = QtCore.QSettings("Stitching", "StitchWin")
         if not self.settings.value("geometry") == None:
             self.restoreGeometry(self.settings.value("geometry"))
@@ -61,6 +62,7 @@ class StitchWindow(QMainWindow):
         # File Menu
         self.file_menu = QMenu("&File", self)
         self.file_menu.addAction("&Load Data", self.get_figdat_normal)
+        self.file_menu.addAction("&Load Antares Data", self.get_antares)
         self.file_menu.addAction("&Load Map Stitching", self.get_figdat_maps)
         self.file_menu.addAction(
             "&Quit", self.fileQuit, QtCore.Qt.CTRL + QtCore.Qt.Key_Q
@@ -79,16 +81,26 @@ class StitchWindow(QMainWindow):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("ARPESsimist - Stitching")
 
-    def get_figdat_normal(self):
-        # Choose Data
+    def load_with_gui(self):
         loader = GUI_Loader()
-        figs_data, figs_extents, settings = loader.read_with_gui(is_sp2=True,
+        figs_data, figs_extents, settings = loader.read_with_gui(
+                filetype=self.file_type,
                 location_settings=self.settings)
         fignum = len(figs_extents)
         self.settings = settings
         self.start_stitcher(fignum, figs_data, figs_extents)
 
         self.instance_counter += 1
+
+    def get_figdat_normal(self):
+        # Choose Data
+        self.file_type = 'sp2'
+        self.load_with_gui()
+
+    def get_antares(self):
+        self.file_type = 'antares'
+        self.load_with_gui()
+
 
     def get_figdat_maps(self):
         LastDir = '.'
@@ -120,7 +132,6 @@ class StitchWindow(QMainWindow):
             self.clear_layout(self.over_layout)
             # Hand over to Stitcher
             self.start_stitcher(2, figs_data, figs_extents, loaded_filenames)
-            
 
         except ValueError:
             pass
