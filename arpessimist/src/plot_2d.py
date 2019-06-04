@@ -244,13 +244,14 @@ class TwoD_Plotter(MyMplCanvas):
             0,
             -50,
             50,
-            3,
+            4,
         )[0]
         QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-        self.new_current_extent = [x[0] + val, x[1] + val, x[2], x[3]]
+        x = self.new_current_extent
+        self.new_current_extent = [x[0], x[1], x[2] + val, x[3] + val]
         # self.new_current_extent = [([x[0], x[1], x[2] + val, x[3] + val]) for x in self.new_current_extent]
         # self.processing_extent = [([x[0], x[1], x[2] + val, x[3] + val]) for x in self.processing_extent]
-        self.update_current_data()
+        # self.update_current_data()
         self.update_widgets()
         self.initialize_2D_plot()
         QApplication.restoreOverrideCursor()
