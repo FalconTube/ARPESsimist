@@ -558,12 +558,12 @@ class Stitch(QWidget):
         lower = extent_in[0]
         upper = extent_in[1]
         if self.fignum > 2:
-            perc = self.overlap_percentage / 50  #  Only goes to 50% overlap
+            perc = self.overlap_percentage / 50 #  Only goes to 50% overlap
         else:
             perc = self.overlap_percentage / 100  #  Only goes to 50% overlap
         n = self.fignum
         one = (upper - lower) / n
-        diff = one * perc
+        diff = one * perc/2
         upper = upper - ((n - 1) * diff)
         extent_in[1] = upper
         return extent_in
