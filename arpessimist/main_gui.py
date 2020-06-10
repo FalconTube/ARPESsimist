@@ -20,7 +20,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QIcon, QScreen, QPixmap
 
-from .src.load_sp2 import Sp2_loader, LoadHDF5
+from .src.load_sp2 import Sp2_loader, LoadHDF5, AntaresTxt
 from .src.plot_2d import TwoD_Plotter
 from .src.mpl_canvas_class import MyMplCanvas
 from .src.data_treatment import HandleNielsSpectra
@@ -78,6 +78,7 @@ class ApplicationWindow(QMainWindow):
         # Set up File Menu
         self.file_menu = QMenu("&File", self)
         self.file_menu.addAction("&Load Sp2 Files", self.choose_sp2)
+        self.file_menu.addAction("&Load MBS Files", self.choose_antares)
         self.file_menu.addAction("&Load NXS Files", self.choose_nxs)
         self.file_menu.addAction(
             "&Quit", self.fileQuit, QtCore.Qt.CTRL + QtCore.Qt.Key_Q
@@ -193,7 +194,7 @@ class ApplicationWindow(QMainWindow):
 
         many_files = QFileDialog.getOpenFileNames(
             self, "Select one or more files to open", directory=LastDir,
-           filter='*.sp2')
+           filter='[*.sp2]')
         QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         try:
             LastDir = os.path.dirname(many_files[0][0])
@@ -213,6 +214,36 @@ class ApplicationWindow(QMainWindow):
             self.p_min = old_pmin
         QApplication.restoreOverrideCursor()
 
+    def choose_antares(self):
+        old_pmin = self.p_min
+        self.p_min = None
+        LastDir = "."
+        if not self.settings.value("LastDir") == None:
+            LastDir = self.settings.value("LastDir")
+
+        many_files = QFileDialog.getOpenFileNames(
+            self, "Select one or more files to open", directory=LastDir,
+           filter='*.txt')
+        QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+        try:
+            LastDir = os.path.dirname(many_files[0][0])
+            self.settings.setValue("LastDir", LastDir)
+        except:
+            pass
+
+        try:
+            self.statusBar().showMessage("Loading Data...", 2000)
+            Ant = AntaresTxt()
+            self.loaded_filenames = many_files[0]
+            self.angle_data, self.angle_extent = Ant.read_multiple(
+                # many_files[0]
+                self.loaded_filenames
+            )
+            self.load_multiple_files()
+        except ValueError:
+            self.p_min = old_pmin
+        QApplication.restoreOverrideCursor()
+
     def choose_nxs(self):
         old_pmin = self.p_min
         self.p_min = None
@@ -222,7 +253,8 @@ class ApplicationWindow(QMainWindow):
                 LastDir = self.settings.value("LastDir")
             self.statusBar().showMessage("Loading Data...", 2000)
             location = QFileDialog.getOpenFileNames(
-                self, "Select one NXS file to open", directory=LastDir, filter='*.nxs')
+                # self, "Select one NXS file to open", directory=LastDir, filter='*.nxs')
+                self, "Select one NXS file to open", directory=LastDir, filter='*.krx')
             QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
             LastDir = os.path.dirname(location[0][0])
             self.settings.setValue("LastDir", LastDir)
@@ -259,7 +291,7 @@ class ApplicationWindow(QMainWindow):
         self.new_twoD_widget = TwoD_Plotter(
             self.processing_data,
             self.processing_extent,
-            slider_range,
+            self.loaded_filenames,
             self.main_widget,
             xlabel=r"Angle [$^\circ{}$]",
             ylabel="Energy [eV]",

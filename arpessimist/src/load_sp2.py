@@ -191,7 +191,7 @@ class Sp2_loader:
         if not self.multi_file_mode:
             thisshape = out_arr.shape
             out_arr = out_arr.reshape(thisshape[0], thisshape[1], 1)
-        print(out_arr)
+        # print(out_arr)
         return np.array(out_arr), ranges_dict
 
     def tidy_up_list(self, inlist):
@@ -384,7 +384,7 @@ class AntaresTxt:
         data = np.genfromtxt(filename, skip_header=skip_head)
         # plt.imshow(data)
         # plt.show()
-        return data, info
+        return data[::-1, ::-1], info
 
     def read_multiple(self, filename_list):
         extent_stack = []
@@ -392,9 +392,11 @@ class AntaresTxt:
             thisdat, info = self.get_file(i)
             # Put data on stack
             if n == 0:
-                data_stack = np.asarray(thisdat)
+                data_stack = np.empty((thisdat.shape[0],thisdat.shape[1], 0))
+                data_stack = np.dstack((data_stack, thisdat))
             else:
                 data_stack = np.dstack((data_stack, thisdat))
+            print(data_stack.shape)
 
             # Get extent and add to stack
             emin = float(info['Start K.E.'])
