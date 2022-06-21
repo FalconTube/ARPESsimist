@@ -1,7 +1,7 @@
 PyWavelets
 h5py
 matplotlib
-numpy==1.16
+numpy==1.22.0
 scipy
 natsort
 PyQt5
